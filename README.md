@@ -113,6 +113,7 @@ Danach:
 | `npm run size` | Bundle-Size-Budget prüfen (web ≤ 100 kB gzip) |
 | `npm run depcheck` | Circular-Dependency-Check (Monorepo) |
 | `npm run pkg:validate` | package.json-Struktur in allen Workspaces validieren |
+| `npm run verify:lockfile` | Alle installierten Pakete gegen lockfile verifizieren |
 | `npm run format` | Prettier formatiert den Code |
 
 ## Tests

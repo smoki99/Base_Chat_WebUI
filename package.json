@@ -25,6 +25,7 @@
     "size": "npx size-limit",
     "depcheck": "depcruise --config .dependency-cruiser.cjs apps packages",
     "pkg:validate": "node -e \"['.', 'apps/api', 'apps/web', 'packages/shared'].forEach(p => { JSON.parse(require('fs').readFileSync(p + '/package.json')); console.log('✓ ' + p) })\"",
+    "verify:lockfile": "node scripts/verify-lockfile.cjs",
     "prepare": "husky"
   },
   "size-limit": [
