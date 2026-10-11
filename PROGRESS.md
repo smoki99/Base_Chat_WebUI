@@ -12,54 +12,54 @@ getestet (Unit + E2E) und CI- grün.
 
 ## Plan (Etappen)
 
-| # | Etappe | Status |
-|---|--------|--------|
-| 1 | Progress-Datei anlegen | ✅ |
-| 2 | Monorepo-Grundgerüst (npm workspaces, `packages/shared`) | ✅ |
-| 3 | Express-Backend (`apps/server`) mit CRUD-API | ✅ |
-| 4 | React-Frontend (`apps/web`, Vite + React 19) | ✅ |
-| 5 | Bootstrap + Material Design UI (Startseite) | ✅ |
-| 6 | Unit-Tests (Vitest, RTL) | ✅ |
-| 7 | E2E-Tests (Playwright) | ✅ |
-| 8 | CI (GitHub Actions) | ✅ |
-| 9 | ESLint + Prettier + TypeScript strikt | ✅ |
-| 10 | README + Doku + Agenten-Regeln (`.clinerules`, `CLAUDE.md`) | ✅ |
-| 11 | UX-States: Skeleton, Empty State, Error+Retry, Toast | ✅ |
-| 12 | Double-Submit-Prävention (Add + Delete) | ⬜ |
-| 13 | Security-Header (helmet) | ⬜ |
-| 14 | Rate-Limiting | ⬜ |
-| 15 | Fail-Closed CORS (Production) | ⬜ |
-| 16 | CI: Least Privilege + Timeout + Concurrency | ⬜ |
-| 17 | AGENTS.md (agent-agnostisch) | ⬜ |
-| 18 | `npm run check` (ein Befehl) | ⬜ |
-| 19 | Validierungs-Schemas (zod) in shared | ⬜ |
-| 20 | Express 4 → 5 | ⬜ |
-| 21 | Web: `lib/api.ts` + `useTodos`-Hook | ⬜ |
-| 22 | Vitest-Coverage mit Schwellwert | ⬜ |
-| 23 | Prettier-Check in CI | ⬜ |
-| 24 | SAST + Secret-Scanning (CodeQL + gitleaks) | ⬜ |
-| 25 | DoD + Guardrails in Agent-Regeln | ⬜ |
-| 26 | API-Vertrag als `docs/API.md` | ⬜ |
+| #   | Etappe                                                      | Status |
+| --- | ----------------------------------------------------------- | ------ |
+| 1   | Progress-Datei anlegen                                      | ✅     |
+| 2   | Monorepo-Grundgerüst (npm workspaces, `packages/shared`)    | ✅     |
+| 3   | Express-Backend (`apps/server`) mit CRUD-API                | ✅     |
+| 4   | React-Frontend (`apps/web`, Vite + React 19)                | ✅     |
+| 5   | Bootstrap + Material Design UI (Startseite)                 | ✅     |
+| 6   | Unit-Tests (Vitest, RTL)                                    | ✅     |
+| 7   | E2E-Tests (Playwright)                                      | ✅     |
+| 8   | CI (GitHub Actions)                                         | ✅     |
+| 9   | ESLint + Prettier + TypeScript strikt                       | ✅     |
+| 10  | README + Doku + Agenten-Regeln (`.clinerules`, `CLAUDE.md`) | ✅     |
+| 11  | UX-States: Skeleton, Empty State, Error+Retry, Toast        | ✅     |
+| 12  | Double-Submit-Prävention (Add + Delete)                     | ⬜     |
+| 13  | Security-Header (helmet)                                    | ⬜     |
+| 14  | Rate-Limiting                                               | ⬜     |
+| 15  | Fail-Closed CORS (Production)                               | ⬜     |
+| 16  | CI: Least Privilege + Timeout + Concurrency                 | ⬜     |
+| 17  | AGENTS.md (agent-agnostisch)                                | ⬜     |
+| 18  | `npm run check` (ein Befehl)                                | ⬜     |
+| 19  | Validierungs-Schemas (zod) in shared                        | ⬜     |
+| 20  | Express 4 → 5                                               | ✅     |
+| 21  | Web: `lib/api.ts` + `useTodos`-Hook                         | ⬜     |
+| 22  | Vitest-Coverage mit Schwellwert                             | ⬜     |
+| 23  | Prettier-Check in CI                                        | ⬜     |
+| 24  | SAST + Secret-Scanning (CodeQL + gitleaks)                  | ⬜     |
+| 25  | DoD + Guardrails in Agent-Regeln                            | ⬜     |
+| 26  | API-Vertrag als `docs/API.md`                               | ⬜     |
 
 ## Backlog — Härtung (Stories 0006–0020)
 
-| Story | Thema | Priorität | Status |
-|-------|-------|-----------|--------|
-| [0006](stories/Story-0006.md) | Double-Submit-Prävention (Add + Delete) | High | ⬜ |
-| [0007](stories/Story-0007.md) | Security-Header (helmet) | High | ⬜ |
-| [0008](stories/Story-0008.md) | Rate-Limiting | High | ⬜ |
-| [0009](stories/Story-0009.md) | Fail-Closed CORS (Production) | High | ⬜ |
-| [0010](stories/Story-0010.md) | CI: Least Privilege + Timeout + Concurrency | High | ⬜ |
-| [0011](stories/Story-0011.md) | AGENTS.md (agent-agnostisch) | High | ⬜ |
-| [0012](stories/Story-0012.md) | `npm run check` (ein Befehl) | High | ⬜ |
-| [0013](stories/Story-0013.md) | Validierungs-Schemas (zod) in shared | Medium | ⬜ |
-| [0014](stories/Story-0014.md) | Express 4 → 5 | Medium | ⬜ |
-| [0015](stories/Story-0015.md) | Web: `lib/api.ts` + `useTodos`-Hook | Medium | ⬜ |
-| [0016](stories/Story-0016.md) | Vitest-Coverage mit Schwellwert | Medium | ⬜ |
-| [0017](stories/Story-0017.md) | Prettier-Check in CI | Medium | ⬜ |
-| [0018](stories/Story-0018.md) | SAST + Secret-Scanning (CodeQL + gitleaks) | Medium | ⬜ |
-| [0019](stories/Story-0019.md) | DoD + Guardrails in Agent-Regeln | Medium | ⬜ |
-| [0020](stories/Story-0020.md) | API-Vertrag als `docs/API.md` | Medium | ⬜ |
+| Story                              | Thema                                       | Priorität | Status |
+| ---------------------------------- | ------------------------------------------- | --------- | ------ |
+| [0006](stories/Story-0006.md)      | Double-Submit-Prävention (Add + Delete)     | High      | ⬜     |
+| [0007](stories/Story-0007.md)      | Security-Header (helmet)                    | High      | ⬜     |
+| [0008](stories/Story-0008.md)      | Rate-Limiting                               | High      | ⬜     |
+| [0009](stories/Story-0009.md)      | Fail-Closed CORS (Production)               | High      | ⬜     |
+| [0010](stories/Story-0010.md)      | CI: Least Privilege + Timeout + Concurrency | High      | ⬜     |
+| [0011](stories/Story-0011.md)      | AGENTS.md (agent-agnostisch)                | High      | ⬜     |
+| [0012](stories/Story-0012.md)      | `npm run check` (ein Befehl)                | High      | ⬜     |
+| [0013](stories/Story-0013.md)      | Validierungs-Schemas (zod) in shared        | Medium    | ⬜     |
+| [0007](docs/stories/Story-0007.md) | Express 4 → 5                               | Medium    | ✅     |
+| [0015](stories/Story-0015.md)      | Web: `lib/api.ts` + `useTodos`-Hook         | Medium    | ⬜     |
+| [0016](stories/Story-0016.md)      | Vitest-Coverage mit Schwellwert             | Medium    | ⬜     |
+| [0017](stories/Story-0017.md)      | Prettier-Check in CI                        | Medium    | ⬜     |
+| [0018](stories/Story-0018.md)      | SAST + Secret-Scanning (CodeQL + gitleaks)  | Medium    | ⬜     |
+| [0019](stories/Story-0019.md)      | DoD + Guardrails in Agent-Regeln            | Medium    | ⬜     |
+| [0020](stories/Story-0020.md)      | API-Vertrag als `docs/API.md`               | Medium    | ⬜     |
 
 > Quelle: Code-Review (Qualität / Sicherheit / KI-Fähigkeit), 2026-07-01.
 > Reihenfolge-Vorschlag: 0012 → 0006 → 0007 → 0008 → 0009 → 0010 → 0011 → 0013 → 0014 → 0015 → 0016 → 0017 → 0018 → 0019 → 0020.
@@ -175,8 +175,8 @@ getestet (Unit + E2E) und CI- grün.
 
 - `apps/server`: Express 4.21 + TypeScript 5.8
 - `src/index.ts`: `cors()`, `express.json()`, Health-Endpoint, Error-Handler
-- `src/routes/todoRoutes.ts`: CRUD (`GET/POST /api/todos`, `PATCH/DELETE
-  /api/todos/:id`), In-Memory-Store
+- `apps/api/src/routes/todos.ts`: CRUD (`GET/POST /api/todos`, `PATCH/DELETE
+/api/todos/:id`), In-Memory-Store
 - `src/store.ts`: `TodoStore` (Array + `Map`-Index)
 - `npm run dev`: `tsx watch` (Hot-Reload)
 

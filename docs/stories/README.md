@@ -4,19 +4,19 @@
 
 ## Aktive Stories (0006–0016)
 
-| #    | Titel                                       | Phase          | Status   |
-| ---- | ------------------------------------------- | -------------- | -------- |
-| 0006 | `npm run check` (ein Befehl für alle Gates) | 1 – Fundament  | ⬜ offen |
-| 0007 | Express 4 → 5                               | 1 – Fundament  | ⬜ offen |
-| 0008 | Prettier-Check in CI                        | 2 – CI-Hygiene | ⬜ offen |
-| 0009 | CI: timeout-minutes + concurrency           | 2 – CI-Hygiene | ⬜ offen |
-| 0010 | SAST + Secret-Scanning (CodeQL + gitleaks)  | 2 – CI-Hygiene | ⬜ offen |
-| 0011 | Vitest-Coverage mit Schwellwert             | 3 – Quality    | ⬜ offen |
-| 0012 | Security-Header (helmet)                    | 3 – Quality    | ⬜ offen |
-| 0013 | Double-Submit-Prävention (Add + Delete)     | 4 – Web        | ⬜ offen |
-| 0014 | Web: `lib/api.ts` + `useTodos`-Hook         | 4 – Web        | ⬜ offen |
-| 0015 | AGENTS.md (agent-agnostisch) + Guardrails   | 5 – Meta       | ⬜ offen |
-| 0016 | API-Vertrag als `docs/API.md`               | 5 – Meta       | ⬜ offen |
+| #    | Titel                                       | Phase          | Status      |
+| ---- | ------------------------------------------- | -------------- | ----------- |
+| 0006 | `npm run check` (ein Befehl für alle Gates) | 1 – Fundament  | ⬜ offen    |
+| 0007 | Express 4 → 5                               | 1 – Fundament  | ✅ erledigt |
+| 0008 | Prettier-Check in CI                        | 2 – CI-Hygiene | ⬜ offen    |
+| 0009 | CI: timeout-minutes + concurrency           | 2 – CI-Hygiene | ⬜ offen    |
+| 0010 | SAST + Secret-Scanning (CodeQL + gitleaks)  | 2 – CI-Hygiene | ⬜ offen    |
+| 0011 | Vitest-Coverage mit Schwellwert             | 3 – Quality    | ⬜ offen    |
+| 0012 | Security-Header (helmet)                    | 3 – Quality    | ⬜ offen    |
+| 0013 | Double-Submit-Prävention (Add + Delete)     | 4 – Web        | ⬜ offen    |
+| 0014 | Web: `lib/api.ts` + `useTodos`-Hook         | 4 – Web        | ⬜ offen    |
+| 0015 | AGENTS.md (agent-agnostisch) + Guardrails   | 5 – Meta       | ⬜ offen    |
+| 0016 | API-Vertrag als `docs/API.md`               | 5 – Meta       | ⬜ offen    |
 
 ## Abgeschlossene Stories
 
