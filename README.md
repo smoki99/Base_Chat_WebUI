@@ -108,7 +108,8 @@ Danach:
 | `npm run test:e2e` | Playwright-E2E (headless Chromium); startet API + Web automatisch |
 | `npm run typecheck` | TypeScript Typecheck (strict) |
 | `npm run knip` | Dead Code & unused Dependencies detectieren |
-| `npm run audit` | Security-Scan (npm audit, Level high+) |
+| `npm run audit` | Security-Scan (npm audit, Production-Deps, Level high+) |
+| `npm run audit:signatures` | Sigstore-Signaturverifikation aller Pakete |
 | `npm run size` | Bundle-Size-Budget prüfen (web ≤ 100 kB gzip) |
 | `npm run depcheck` | Circular-Dependency-Check (Monorepo) |
 | `npm run pkg:validate` | package.json-Struktur in allen Workspaces validieren |
@@ -132,15 +133,51 @@ Danach:
 `pull_request` (`master`), `workflow_dispatch`.
 
 1. `npm ci`
-2. `npm run typecheck`
-3. `npm run lint`
-4. `npm test` (Unit)
-5. `npm run build`
-6. `npx playwright install --with-deps chromium`
-7. `npm run test:e2e -w web`
+2. `npm audit --omit=dev --audit-level=high`
+3. Unexpected-Package-Check (installierte Pakete vs. lockfile)
+4. `npm run typecheck`
+5. `npm run lint`
+6. `npx knip`
+7. `npm audit --audit-level=high`
+8. `npm run depcheck`
+9. `npm run pkg:validate`
+10. `npm test` (Unit)
+11. `npm run build`
+12. `npm run size`
+13. `npx playwright install --with-deps chromium`
+14. `npm run test:e2e -w web`
 
 Die Actions laufen nativ auf **Node 24** (`actions/checkout@v7`,
 `actions/setup-node@v7`).
+
+## Supply Chain Security
+
+| Maßnahme | Wo |
+|---|---|
+| Integrity-Hash (SHA-512) | `package-lock.json` – npm verifiziert bei jedem Install |
+| `npm ci` (frozen lockfile) | CI – schlägt fehl bei inkonsistentem lockfile |
+| `npm audit --omit=dev --audit-level=high` | Skript + CI – Production-Deps |
+| **`npm audit signatures`** | Skript + CI – Sigstore-Verifikation aller Paket-Signaturen |
+| **Exakte Version-Pinning** | `.npmrc` → `save-exact=true` – neue Deps werden exakt gepinnt |
+| **Corepack `packageManager`** | `package.json` → `npm@11.8.0` – deterministische npm-Version |
+| **Unexpected-Package-Check** | CI – vergleicht installierte Pakete mit lockfile |
+| Knip (unused deps) | Skript + CI – reduziert Angriffsfläche |
+
+### Neues Paket hinzufügen – Checkliste
+
+```bash
+# 1. Metadaten & Reputation prüfen
+npm view <pkg> maintainers repository time.modified
+
+# 2. Dry-Run: Was würde installiert werden?
+npm install --dry-run <pkg>
+
+# 3. Installieren (exakte Version via save-exact)
+npm install -D <pkg>
+
+# 4. Lockfile-Diff reviewen
+git diff package-lock.json
+```
 
 ## Konventionen
 

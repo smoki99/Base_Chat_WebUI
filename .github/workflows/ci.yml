@@ -22,11 +22,27 @@ jobs:
           cache: npm
 
       - run: npm ci
+      - run: npm audit --omit=dev --audit-level=high
+      - run: npm audit signatures
+      - name: Check for unexpected packages
+        run: |
+          npm ls --all --json > /tmp/installed.json
+          node -e "
+            const lock = require('./package-lock.json');
+            const installed = require('/tmp/installed.json');
+            const lockPkgs = new Set(Object.keys(lock.packages).filter(k => k));
+            const instPkgs = new Set(Object.keys(installed).filter(k => k && !k.startsWith('node_modules/')));
+            const unexpected = [...instPkgs].filter(p => !lockPkgs.has(p));
+            if (unexpected.length) {
+              console.error('Unexpected packages:', unexpected.join(', '));
+              process.exit(1);
+            }
+            console.log('✓ All installed packages are in lockfile');
+          "
 
       - run: npm run typecheck
       - run: npm run lint
       - run: npx knip
-      - run: npm audit --audit-level=high
       - run: npm run depcheck
       - run: npm run pkg:validate
       - run: npm test

@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "license": "MIT",
+  "packageManager": "npm@11.8.0",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -19,7 +20,8 @@
     "typecheck": "npm run typecheck --workspaces",
     "format": "prettier --write .",
     "knip": "knip",
-    "audit": "npm audit --audit-level=high",
+    "audit": "npm audit --omit=dev --audit-level=high",
+    "audit:signatures": "npm audit signatures",
     "size": "npx size-limit",
     "depcheck": "depcruise --config .dependency-cruiser.cjs apps packages",
     "pkg:validate": "node -e \"['.', 'apps/api', 'apps/web', 'packages/shared'].forEach(p => { JSON.parse(require('fs').readFileSync(p + '/package.json')); console.log('✓ ' + p) })\"",

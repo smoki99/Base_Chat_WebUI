@@ -19,3 +19,5 @@
 | 2026-10-11         | `eslint-plugin-react-hooks`                                | React-spezifische Lint-Regeln (Hooks, Deps) – fängt typische LLM-Generationsfehler |
 | 2026-10-11         | `size-limit` als Bundle-Budget (web ≤ 100 kB)              | Harte Gate gegen Code-Bloat; LLMs fügen gerne unnötige Dependencies ein |
 | 2026-10-11         | `dependency-cruiser` für Circular-Import-Detection         | Monorepo-Health: fängt Import-Zyklen `shared ↔ apps` früh |
+| 2026-10-11         | `.npmrc` mit `save-exact=true`; `npm audit signatures`    | Supply-Chain-Schutz: Sigstore-Signaturverifikation + exakte Version-Pinning neuer Deps |
+| 2026-10-11         | `packageManager: npm@11.8.0` (Corepack)                    | Deterministische npm-Version lokal und in CI – verhindert Version-Drift |
