@@ -9,8 +9,8 @@ apps/web = React 19 + Vite (nur UI) · apps/api = Express (REST) · packages/sha
 2. Kleine Schritte. Eine Aufgabe = eine kohärente Änderung.
 3. Vor Änderungen: relevante Dateien LESEN, nichts annehmen.
 4. Keine neuen Dependencies ohne Rückfrage.
-5. NIE "fertig" melden oder committen, ohne vorher ALLE Checks erfolgreich ausgeführt zu haben:
-   `npm run typecheck` · `npm run lint` · `npm test` · `npm run build`
+5. NIE "fertig" melden oder committen, ohne vorher `npm run check` erfolgreich ausgeführt zu haben:
+   `npm run check` = typecheck + lint + test + build in allen Workspaces, bricht bei erstem Fehler ab.
    → `build` ist Pflicht, weil die CI `npm run build --workspaces` ausführt und
    ein fehlendes Script in EINEM Workspace den gesamten Loop bricht.
 6. Keine Secrets im Code. Config kommt aus .env (Vorlage: .env.example).
@@ -40,8 +40,7 @@ apps/web = React 19 + Vite (nur UI) · apps/api = Express (REST) · packages/sha
 ## Befehle
 
 - dev: npm run dev (web + api parallel)
-- tests: npm test · typecheck: npm run typecheck · lint: npm run lint
-- build: npm run build (api: tsc · web: vite build · shared: no-op)
+- check: npm run check (typecheck + lint + test + build, alle Workspaces)
 - e2e: npx playwright install chromium && npm run test:e2e -w web
 
 ## Memory

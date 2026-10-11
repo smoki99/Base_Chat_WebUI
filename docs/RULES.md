@@ -19,13 +19,10 @@
 
 ## 3. Qualitäts-Gate (vor JEDEM Commit)
 
-> NIE "fertig" melden oder committen, ohne vorher **ALLE** Checks erfolgreich ausgeführt zu haben:
+> NIE „fertig" melden oder committen, ohne vorher **ALLE** Checks erfolgreich ausgeführt zu haben:
 
 ```bash
-npm run typecheck   # tsc --noEmit in allen Workspaces
-npm run lint        # eslint in allen Workspaces
-npm test            # vitest in allen Workspaces
-npm run build       # tsc (api) + vite build (web) + no-op (shared)
+npm run check   # typecheck + lint + test + build – alle Workspaces, bricht bei erstem Fehler ab
 ```
 
 **Warum `build`?**
