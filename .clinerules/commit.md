@@ -1,5 +1,7 @@
-Führe nacheinander aus: `npm run typecheck`, `npm run lint`, `npm test`.
+Führe nacheinander aus: `npm run typecheck`, `npm run lint`, `npm test`,
+`npm run test:e2e -w web` (Playwright-Headless-Baseline; API+Web starten automatisch).
 Bei Fehlern: behebe sie und wiederhole, bis alles grün ist.
+Hinweis: E2E braucht einmalig `npx playwright install chromium` (Browser-Binaries).
 
 Danach: `git status` und `git diff --staged` (oder `git diff`) prüfen,
 um die geänderten Dateien zu verstehen.
