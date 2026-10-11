@@ -2,11 +2,26 @@
   "name": "web",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "echo 'web dev server (TODO: add vite)'",
-    "build": "tsc",
+    "dev": "vite",
+    "build": "vite build",
     "lint": "eslint .",
-    "test": "echo 'no tests yet'",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^19",
+    "react-dom": "^19"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6",
+    "@testing-library/react": "^16",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^4",
+    "jsdom": "^26",
+    "vite": "^7",
+    "vitest": "^5"
   }
 }
