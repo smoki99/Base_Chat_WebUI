@@ -64,6 +64,10 @@ npm run test:e2e -w web
   - `feat(api): todo-Validierung für POST und PATCH hinzufügen`
   - `fix(shared): build-Script als No-Op für CI-Workspace-Loop ergänzen`
   - `chore: ESLint-Config auf flat config migrieren`
+- **NIE direkt auf `master` pushen.** Änderungen gehen ausschließlich über einen Pull Request.
+  - Workflow: `feature/…`-Branch → Commits → `git push origin <branch>` → PR → CI grün → Merge.
+  - Am Ende einer Aufgabe: Branch pushen und **„fertig, bereit für PR"** melden.
+  - Kein `git checkout master && git merge …` ohne explizite Freigabe.
 
 ## 7. Security & Config
 
