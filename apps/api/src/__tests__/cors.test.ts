@@ -32,7 +32,22 @@ describe('CORS', () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
       const res = await request(app).get('/api/todos').set('Origin', 'http://evil.test');
-      expect(res.status).toBeGreaterThanOrEqual(400);
+      expect(res.status).toBe(403);
+      expect(res.headers['access-control-allow-origin']).toBeUndefined();
+    } finally {
+      consoleSpy.mockRestore();
+    }
+  });
+
+  it('blocks a preflight OPTIONS request for a disallowed origin', async () => {
+    vi.stubEnv('CORS_ORIGIN', ALLOWED);
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const res = await request(app)
+        .options('/api/todos')
+        .set('Origin', 'http://evil.test')
+        .set('Access-Control-Request-Method', 'GET');
+      expect(res.status).toBe(403);
       expect(res.headers['access-control-allow-origin']).toBeUndefined();
     } finally {
       consoleSpy.mockRestore();
