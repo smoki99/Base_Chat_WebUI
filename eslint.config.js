@@ -6,5 +6,15 @@ export default tseslint.config(
   { ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
+  {
+    rules: {
+      // Convention: unused args/vars prefixed with `_` are intentional
+      // (e.g. Express error middleware requires 4 params).
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
+    },
+  },
   prettier,
 );

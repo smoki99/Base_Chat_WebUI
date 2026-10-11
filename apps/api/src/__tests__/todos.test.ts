@@ -26,3 +26,18 @@ describe('GET /api/todos', () => {
     expect(first).toHaveProperty('done');
   });
 });
+
+describe('error handling', () => {
+  it('returns 404 with ApiError shape for unknown routes', async () => {
+    const res = await request(app).get('/nonexistent');
+    expect(res.status).toBe(404);
+    expect(res.body).toHaveProperty('error');
+    expect(res.body.error).toHaveProperty('message');
+    expect(res.body.error.message).toBe('Not found');
+  });
+
+  it('does not leak a data field on error responses', async () => {
+    const res = await request(app).get('/nonexistent');
+    expect(res.body).not.toHaveProperty('data');
+  });
+});

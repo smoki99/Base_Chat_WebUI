@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import type { ApiResponse, Todo } from 'shared';
+import { isApiError } from 'shared';
+import type { ApiResult, Todo } from 'shared';
 
 export default function TodoList() {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -9,8 +10,16 @@ export default function TodoList() {
   useEffect(() => {
     const apiBase = import.meta.env.VITE_API_URL ?? '';
     fetch(`${apiBase}/api/todos`)
-      .then((res) => res.json())
-      .then((json: ApiResponse<Todo[]>) => setTodos(json.data))
+      .then(async (res) => {
+        const json = (await res.json()) as ApiResult<Todo[]>;
+        if (isApiError(json)) {
+          throw new Error(json.error.message);
+        }
+        if (!res.ok || !Array.isArray(json.data)) {
+          throw new Error(`Request failed with status ${res.status}`);
+        }
+        setTodos(json.data);
+      })
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);

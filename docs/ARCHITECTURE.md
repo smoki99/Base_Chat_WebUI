@@ -49,6 +49,11 @@ export interface ApiError {
 }
 
 export type ApiResult<T> = ApiResponse<T> | ApiError;
+
+/** Type guard: narrows ApiResult<T> to ApiError. */
+export function isApiError<T>(result: ApiResult<T>): result is ApiError;
+/** Type guard: narrows ApiResult<T> to ApiResponse<T>. */
+export function isApiSuccess<T>(result: ApiResult<T>): result is ApiResponse<T>;
 ```
 
 ### Import-Beispiele
