@@ -29,9 +29,14 @@ describe('CORS', () => {
 
   it('blocks an origin that is not in the allowlist', async () => {
     vi.stubEnv('CORS_ORIGIN', ALLOWED);
-    const res = await request(app).get('/api/todos').set('Origin', 'http://evil.test');
-    expect(res.status).toBeGreaterThanOrEqual(400);
-    expect(res.headers['access-control-allow-origin']).toBeUndefined();
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const res = await request(app).get('/api/todos').set('Origin', 'http://evil.test');
+      expect(res.status).toBeGreaterThanOrEqual(400);
+      expect(res.headers['access-control-allow-origin']).toBeUndefined();
+    } finally {
+      consoleSpy.mockRestore();
+    }
   });
 
   it('allows any origin when CORS_ORIGIN is empty (dev convenience)', async () => {

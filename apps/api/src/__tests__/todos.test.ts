@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import request from 'supertest';
 import app from '../app';
 
@@ -42,13 +42,18 @@ describe('error handling', () => {
   });
 
   it('returns 400 with ApiError shape for an invalid JSON body', async () => {
-    const res = await request(app)
-      .post('/api/todos')
-      .set('Content-Type', 'application/json')
-      .send('{invalid json');
-    expect(res.status).toBe(400);
-    expect(res.body).toHaveProperty('error');
-    expect(res.body.error).toHaveProperty('message');
-    expect(res.body.error.message).toBe('Invalid request body');
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const res = await request(app)
+        .post('/api/todos')
+        .set('Content-Type', 'application/json')
+        .send('{invalid json');
+      expect(res.status).toBe(400);
+      expect(res.body).toHaveProperty('error');
+      expect(res.body.error).toHaveProperty('message');
+      expect(res.body.error.message).toBe('Invalid request body');
+    } finally {
+      consoleSpy.mockRestore();
+    }
   });
 });
