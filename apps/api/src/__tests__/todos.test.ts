@@ -40,4 +40,15 @@ describe('error handling', () => {
     const res = await request(app).get('/nonexistent');
     expect(res.body).not.toHaveProperty('data');
   });
+
+  it('returns 400 with ApiError shape for an invalid JSON body', async () => {
+    const res = await request(app)
+      .post('/api/todos')
+      .set('Content-Type', 'application/json')
+      .send('{invalid json');
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('error');
+    expect(res.body.error).toHaveProperty('message');
+    expect(res.body.error.message).toBe('Invalid request body');
+  });
 });
