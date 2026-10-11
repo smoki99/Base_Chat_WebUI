@@ -1,10 +1,5 @@
 /** Todo domain logic – in-memory for now. */
-
-export interface Todo {
-  id: number;
-  title: string;
-  done: boolean;
-}
+import type { Todo } from 'shared';
 
 const todos: Todo[] = [
   { id: 1, title: 'Learn TypeScript', done: true },

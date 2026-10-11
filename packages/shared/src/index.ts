@@ -1,5 +1,11 @@
 /** Shared types and DTOs for all workspaces. */
 
+export interface Todo {
+  id: number;
+  title: string;
+  done: boolean;
+}
+
 export interface ApiResponse<T> {
   data: T;
 }

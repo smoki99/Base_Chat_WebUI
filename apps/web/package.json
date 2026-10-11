@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "react": "^19",
-    "react-dom": "^19"
+    "react-dom": "^19",
+    "shared": "*"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6",
