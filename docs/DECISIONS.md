@@ -10,3 +10,4 @@
 | 2026-11-10 | Prettier als einziger Formatter | Separation of Concerns: ESLint = Regeln, Prettier = Styling |
 | 2026-11-10 | Gemeinsame Typen in packages/shared | Keine Duplizierung, Single Source of Truth |
 | 2026-11-10 | API-Antwortformat `{data}` / `{error:{message}}` | Konsistenter Vertrag zwischen Web und API |
+| 2026-11-10 | GitHub Actions CI (Node 24, Trigger `master` + `feature/*`) | Automatische typecheck/lint/test/build-Checks auf jedem Push/PR; keine Secrets, selbst-contained Tests |

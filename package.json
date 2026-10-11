@@ -3,6 +3,9 @@
   "private": true,
   "type": "module",
   "workspaces": ["apps/*", "packages/*"],
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "concurrently -n web,api -c cyan,yellow \"npm run dev -w web\" \"npm run dev -w api\"",
     "build": "npm run build --workspaces",
