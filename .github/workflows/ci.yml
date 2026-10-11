@@ -27,8 +27,11 @@ jobs:
       - run: npm run lint
       - run: npx knip
       - run: npm audit --audit-level=high
+      - run: npm run depcheck
+      - run: npm run pkg:validate
       - run: npm test
       - run: npm run build
+      - run: npm run size
 
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e -w web

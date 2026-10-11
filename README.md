@@ -109,6 +109,9 @@ Danach:
 | `npm run typecheck` | TypeScript Typecheck (strict) |
 | `npm run knip` | Dead Code & unused Dependencies detectieren |
 | `npm run audit` | Security-Scan (npm audit, Level high+) |
+| `npm run size` | Bundle-Size-Budget prüfen (web ≤ 100 kB gzip) |
+| `npm run depcheck` | Circular-Dependency-Check (Monorepo) |
+| `npm run pkg:validate` | package.json-Struktur in allen Workspaces validieren |
 | `npm run format` | Prettier formatiert den Code |
 
 ## Tests

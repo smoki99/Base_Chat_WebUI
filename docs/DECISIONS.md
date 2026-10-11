@@ -16,3 +16,6 @@
 | 2026-10-11         | Bootstrap v5 (CSS) statt Tailwind CSS                     | Einfachere Integration ohne Build-Step, große Community, Bootstrap-Utility-Klassen direkt in JSX verwendbar |
 | 2026-10-11         | Material Design 3 als Design-Language                      | Konsistentes, modernes Look & Feel; MD3-Tokens (Farbe, Elevation, Typografie) als CSS-Custom-Properties in `index.css` |
 | 2026-10-11         | In-memory Storage (keine Datenbank)                        | Boilerplate-Zweck: Click-Dummy ohne Persistenz; `todoService.ts` als Swap-Punkt für echte DB (z. B. SQLite, Postgres) |
+| 2026-10-11         | `eslint-plugin-react-hooks`                                | React-spezifische Lint-Regeln (Hooks, Deps) – fängt typische LLM-Generationsfehler |
+| 2026-10-11         | `size-limit` als Bundle-Budget (web ≤ 100 kB)              | Harte Gate gegen Code-Bloat; LLMs fügen gerne unnötige Dependencies ein |
+| 2026-10-11         | `dependency-cruiser` für Circular-Import-Detection         | Monorepo-Health: fängt Import-Zyklen `shared ↔ apps` früh |
