@@ -1,0 +1,12 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "usernamehw.errorlens",
+    "eamodio.gitlens",
+    "EditorConfig.EditorConfig",
+    "humao.rest-client",
+    "gruntfreesoftware.todo-tree",
+    "bradlc.vscode-tailwindcss"
+  ]
+}

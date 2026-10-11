@@ -1,0 +1,18 @@
+{
+  "name": "myapp",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "concurrently -n web,api -c cyan,yellow \"npm run dev -w web\" \"npm run dev -w api\"",
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces",
+    "test": "npm run test --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "concurrently": "^9",
+    "prettier": "^3",
+    "typescript": "^5.9"
+  }
+}

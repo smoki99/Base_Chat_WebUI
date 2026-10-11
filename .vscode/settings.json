@@ -1,0 +1,8 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": { "source.fixAll.eslint": "explicit" },
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "search.exclude": { "**/node_modules": true, "**/dist": true },
+  "files.eol": "\n"
+}
