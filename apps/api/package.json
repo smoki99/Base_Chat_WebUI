@@ -10,10 +10,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.21",
     "shared": "*"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.17",
     "@types/express": "^4.17",
     "@types/node": "^22",
     "@types/supertest": "^6",

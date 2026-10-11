@@ -76,10 +76,15 @@ Danach:
 | Variable | Beschreibung | Default |
 |----------|-------------|---------|
 | `PORT` | API-Port | `3001` |
+| `CORS_ORIGIN` | Erlaubte CORS-Origin(s) für die API (prod), kommagetrennt | leer (alle) |
 | `VITE_API_URL` | API-Basis-URL für das Web (prod) | `http://localhost:3001` |
 
 > In der Entwicklung übernimmt der **Vite-Proxy** (`/api` → `localhost:3001`),
 > `VITE_API_URL` wird dann nicht benötigt.
+>
+> Für separate Origins in Produktion: `CORS_ORIGIN` auf der API setzen – oder
+> (empfohlen) Web + API hinter einem Reverse Proxy (same-origin) ausliefern.
+> Details: `docs/ARCHITECTURE.md` → „CORS & Prod-Deployment".
 
 ## Befehle
 

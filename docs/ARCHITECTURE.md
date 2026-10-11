@@ -112,6 +112,49 @@ In der Entwicklung proxys Vite `/api/*` auf `http://localhost:3001`,
 somit ist `VITE_API_URL` in dev nicht erforderlich.
 In Produktion wird `VITE_API_URL` aus der Environment gesetzt.
 
+### CORS & Prod-Deployment
+
+In der Entwicklung proxys Vite `/api/*` auf `http://localhost:3001` (same-origin),
+somit ist CORS in dev nicht relevant. In Produktion hängen Web und API typischerweise
+an **unterschiedlichen Origins** – hier braucht der Browser CORS-Header oder einen
+same-origin-Aufbau. Zwei Wege:
+
+**Option A – CORS-Middleware (separate Origins):**
+Die API liefert `Access-Control-Allow-Origin` für erlaubte Origins. Die erlaubten
+Origins werden über `CORS_ORIGIN` (kommagetrennt) konfiguriert. Leer = alle Origins
+erlauben (**nur für dev**!).
+
+```env
+CORS_ORIGIN=https://app.example.com
+```
+
+**Option B (empfohlen) – same-origin via Reverse Proxy:**
+Web-Static und API werden hinter derselben Domain ausgeliefert (z. B. nginx).
+CORS fällt dann komplett weg:
+
+```nginx
+server {
+  listen 80;
+  server_name app.example.com;
+
+  # Web-Static (Build-Output von apps/web)
+  location / {
+    root /var/www/myapp/web/dist;
+    try_files $uri /index.html;
+  }
+
+  # API-Proxy
+  location /api/ {
+    proxy_pass http://127.0.0.1:3001;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  }
+}
+```
+
+> Empfehlung: **B** als Standard (keine Cross-Origin-Requests), **A** als
+> Sicherheitsnetz, falls Web und API tatsächlich an separaten Origins laufen.
+
 ## Regeln
 
 1. **Gemeinsame Typen** leben ausschließlich in `packages/shared`.
