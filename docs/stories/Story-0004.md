@@ -1,8 +1,9 @@
 # Story-0004: Dependency- und Package-Hygiene im Monorepo
 
-**Status:** offen
+**Status:** ✅ erledigt
 **Priorität:** Mittel
 **Zugehöriger Audit-Befund:** #5, #9, #10
+**Abgeschlossen am:** 11.10.2026
 
 ## Kontext
 
@@ -21,14 +22,14 @@ Drei Hygiene-Punkte:
 
 ## Tasks
 
-- [ ] `apps/web/package.json`: `@testing-library/user-event` von `dependencies` in `devDependencies` verschieben
-- [ ] `apps/api/package.json` + `apps/web/package.json`: `"shared": "*"` → `"shared": "1.0.0"`
-- [ ] `packages/shared/package.json`: `build`-Script entfernen; `tsconfig.json`: `outDir`/`rootDir`-Override prüfen (bei `--noEmit` entbehrlich)
-- [ ] Lockfile-Update: `npm install` am Root (Workspaces), Diff sichten
-- [ ] `npm run build -w web` weiterhin grün (Vite-Build unverändert)
+- [x] `apps/web/package.json`: `@testing-library/user-event` von `dependencies` in `devDependencies` verschieben
+- [x] `apps/api/package.json` + `apps/web/package.json`: `"shared": "*"` → `"shared": "1.0.0"`
+- [x] `packages/shared/package.json`: `build`-Script entfernen; `tsconfig.json`: `outDir`/`rootDir`-Override prüfen (bei `--noEmit` entbehrlich)
+- [x] Lockfile-Update: `npm install` am Root (Workspaces), Diff sichten
+- [x] `npm run build -w web` weiterhin grün (Vite-Build unverändert)
 
 ## Definition of Done
 
-- [ ] `npm ci` auf Clean-Checkout grün
-- [ ] `npm run typecheck`, `npm run lint`, `npm test`, `npm run build -w web` alle grün
-- [ ] `npx knip` am Root ohne neue Befunde
+- [x] `npm ci` auf Clean-Checkout grün
+- [x] `npm run typecheck`, `npm run lint`, `npm test`, `npm run build -w web` alle grün
+- [x] `npx knip` am Root ohne neue Befunde

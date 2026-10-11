@@ -2,22 +2,23 @@
 
 > Wichtige Architektur- und Tooling-Entscheidungen, chronologisch.
 
-| Datum (YYYY-MM-DD) | Entscheidung                                                | Begründung                                                                                             |
-| ------------------ | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| 2026-10-11         | npm Workspaces statt Yarn/pnpm                              | Einfache, lock-free Pakete; npm ist überall vorinstalliert                                             |
-| 2026-10-11         | TypeScript strict + noUncheckedIndexedAccess                | Maximale Typsicherheit, weniger Runtime-Bugs                                                           |
-| 2026-10-11         | ESLint flat config + typescript-eslint                      | Moderner Standard (ESLint 9), ein Config für alle Workspaces                                           |
-| 2026-10-11         | Prettier als einziger Formatter                             | Separation of Concerns: ESLint = Regeln, Prettier = Styling                                            |
-| 2026-10-11         | Gemeinsame Typen in packages/shared                         | Keine Duplizierung, Single Source of Truth                                                             |
-| 2026-10-11         | API-Antwortformat `{data}` / `{error:{message}}`            | Konsistenter Vertrag zwischen Web und API                                                              |
-| 2026-10-11         | GitHub Actions CI (Node 24, Trigger `master` + `feature/*`) | Automatische typecheck/lint/test/build-Checks auf jedem Push/PR; keine Secrets, selbst-contained Tests |
-| 2026-10-11         | MIT-Lizenz                                                  | Open-Source-Standard, maximale Nutzungsfreiheit, `license`-Feld in allen package.json                  |
-| 2026-10-11         | Playwright (Chromium, headless) als E2E-Baseline in `apps/web` | UI-Smoke-Test: Website antwortet, React mounted, API-Pfad geprüft; `webServer` startet API+Web mit Readiness, CI-Integration |
-| 2026-10-11         | Bootstrap v5 (CSS) statt Tailwind CSS                     | Einfachere Integration ohne Build-Step, große Community, Bootstrap-Utility-Klassen direkt in JSX verwendbar |
-| 2026-10-11         | Material Design 3 als Design-Language                      | Konsistentes, modernes Look & Feel; MD3-Tokens (Farbe, Elevation, Typografie) als CSS-Custom-Properties in `index.css` |
-| 2026-10-11         | In-memory Storage (keine Datenbank)                        | Boilerplate-Zweck: Click-Dummy ohne Persistenz; `todoService.ts` als Swap-Punkt für echte DB (z. B. SQLite, Postgres) |
-| 2026-10-11         | `eslint-plugin-react-hooks`                                | React-spezifische Lint-Regeln (Hooks, Deps) – fängt typische LLM-Generationsfehler |
-| 2026-10-11         | `size-limit` als Bundle-Budget (web ≤ 100 kB)              | Harte Gate gegen Code-Bloat; LLMs fügen gerne unnötige Dependencies ein |
-| 2026-10-11         | `dependency-cruiser` für Circular-Import-Detection         | Monorepo-Health: fängt Import-Zyklen `shared ↔ apps` früh |
-| 2026-10-11         | `.npmrc` mit `save-exact=true`; `npm audit signatures`    | Supply-Chain-Schutz: Sigstore-Signaturverifikation + exakte Version-Pinning neuer Deps |
-| 2026-10-11         | `packageManager: npm@11.8.0` (Corepack)                    | Deterministische npm-Version lokal und in CI – verhindert Version-Drift |
+| Datum (YYYY-MM-DD) | Entscheidung                                                   | Begründung                                                                                                                                         |
+| ------------------ | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-11         | npm Workspaces statt Yarn/pnpm                                 | Einfache, lock-free Pakete; npm ist überall vorinstalliert                                                                                         |
+| 2026-10-11         | TypeScript strict + noUncheckedIndexedAccess                   | Maximale Typsicherheit, weniger Runtime-Bugs                                                                                                       |
+| 2026-10-11         | ESLint flat config + typescript-eslint                         | Moderner Standard (ESLint 9), ein Config für alle Workspaces                                                                                       |
+| 2026-10-11         | Prettier als einziger Formatter                                | Separation of Concerns: ESLint = Regeln, Prettier = Styling                                                                                        |
+| 2026-10-11         | Gemeinsame Typen in packages/shared                            | Keine Duplizierung, Single Source of Truth                                                                                                         |
+| 2026-10-11         | API-Antwortformat `{data}` / `{error:{message}}`               | Konsistenter Vertrag zwischen Web und API                                                                                                          |
+| 2026-10-11         | GitHub Actions CI (Node 24, Trigger `master` + `feature/*`)    | Automatische typecheck/lint/test/build-Checks auf jedem Push/PR; keine Secrets, selbst-contained Tests                                             |
+| 2026-10-11         | MIT-Lizenz                                                     | Open-Source-Standard, maximale Nutzungsfreiheit, `license`-Feld in allen package.json                                                              |
+| 2026-10-11         | Playwright (Chromium, headless) als E2E-Baseline in `apps/web` | UI-Smoke-Test: Website antwortet, React mounted, API-Pfad geprüft; `webServer` startet API+Web mit Readiness, CI-Integration                       |
+| 2026-10-11         | Bootstrap v5 (CSS) statt Tailwind CSS                          | Einfachere Integration ohne Build-Step, große Community, Bootstrap-Utility-Klassen direkt in JSX verwendbar                                        |
+| 2026-10-11         | Material Design 3 als Design-Language                          | Konsistentes, modernes Look & Feel; MD3-Tokens (Farbe, Elevation, Typografie) als CSS-Custom-Properties in `index.css`                             |
+| 2026-10-11         | In-memory Storage (keine Datenbank)                            | Boilerplate-Zweck: Click-Dummy ohne Persistenz; `todoService.ts` als Swap-Punkt für echte DB (z. B. SQLite, Postgres)                              |
+| 2026-10-11         | `eslint-plugin-react-hooks`                                    | React-spezifische Lint-Regeln (Hooks, Deps) – fängt typische LLM-Generationsfehler                                                                 |
+| 2026-10-11         | `size-limit` als Bundle-Budget (web ≤ 100 kB)                  | Harte Gate gegen Code-Bloat; LLMs fügen gerne unnötige Dependencies ein                                                                            |
+| 2026-10-11         | `dependency-cruiser` für Circular-Import-Detection             | Monorepo-Health: fängt Import-Zyklen `shared ↔ apps` früh                                                                                          |
+| 2026-10-11         | `.npmrc` mit `save-exact=true`; `npm audit signatures`         | Supply-Chain-Schutz: Sigstore-Signaturverifikation + exakte Version-Pinning neuer Deps                                                             |
+| 2026-10-11         | `packageManager: npm@11.8.0` (Corepack)                        | Deterministische npm-Version lokal und in CI – verhindert Version-Drift                                                                            |
+| 2026-10-11         | No-Op `build`-Script in `packages/shared`                      | `npm run build --workspaces` erwartet ein `build`-Script in JEDEM Workspace; Source-only-Pakete brauchen ein No-Op, damit der CI-Loop nicht bricht |

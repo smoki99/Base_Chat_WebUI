@@ -6,9 +6,9 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
-    "build": "tsc",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "echo 'no tests yet'"
+    "test": "echo 'no tests yet'",
+    "build": "echo 'no build needed (source-only package)'"
   }
 }
