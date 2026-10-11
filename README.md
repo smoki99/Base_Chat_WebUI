@@ -107,6 +107,8 @@ Danach:
 | `npm run test` | Unit-Tests in allen Workspaces (Vitest) |
 | `npm run test:e2e` | Playwright-E2E (headless Chromium); startet API + Web automatisch |
 | `npm run typecheck` | TypeScript Typecheck (strict) |
+| `npm run knip` | Dead Code & unused Dependencies detectieren |
+| `npm run audit` | Security-Scan (npm audit, Level high+) |
 | `npm run format` | Prettier formatiert den Code |
 
 ## Tests

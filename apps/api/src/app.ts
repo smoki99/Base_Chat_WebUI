@@ -5,6 +5,7 @@ import { healthRouter } from './routes/health';
 import { todoRouter } from './routes/todos';
 
 const app = express();
+app.disable('x-powered-by');
 
 // CORS – allowed origins from CORS_ORIGIN (comma-separated).
 // Empty/unset = allow all (dev convenience). Evaluated per request.

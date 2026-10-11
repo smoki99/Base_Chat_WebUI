@@ -3,7 +3,10 @@
   "private": true,
   "type": "module",
   "license": "MIT",
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "engines": {
     "node": ">=24"
   },
@@ -14,13 +17,26 @@
     "test": "npm run test --workspaces",
     "test:e2e": "npm run test:e2e -w web",
     "typecheck": "npm run typecheck --workspaces",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "knip": "knip",
+    "audit": "npm audit --audit-level=high",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": ["eslint --fix", "prettier --write"],
+    "*.{json,md,css,html}": ["prettier --write"]
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
     "@eslint/js": "^9",
     "concurrently": "^9",
     "eslint": "^9",
     "eslint-config-prettier": "^10",
+    "eslint-plugin-sonarjs": "^4.2.2",
+    "husky": "^9.1.7",
+    "knip": "^6.41.0",
+    "lint-staged": "^17.6.0",
     "prettier": "^3",
     "typescript": "^5.9",
     "typescript-eslint": "^8"

@@ -1,0 +1,7 @@
+{
+  "workspaces": {
+    "apps/api": {},
+    "apps/web": {},
+    "packages/shared": {}
+  }
+}
