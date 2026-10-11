@@ -25,9 +25,7 @@ UI und Server-Status divergieren.
 
 - [x] `TodoList.tsx`: Inflight-Tracking pro Todo-ID einführen (z. B. `useRef<Set<number>>`), im `handleToggle` prüfen, bei Fehler/Erfolg im `finally` entfernen
 - [x] Zweites Toggle während Inflight: frühes `return` (kein PATCH, kein Zustandswechsel)
-- [x] Web-Test ergänzen (Mock-Strategie der bestehenden Tests in `apps/web/src` beibehalten):
-      - simuliere ungelösten PATCH → zweiter Klick wird ignoriert
-      - löse ersten PATCH mit Fehler → Zustand = Ausgangszustand
+- [x] Web-Test ergänzen (Mock-Strategie der bestehenden Tests in `apps/web/src` beibehalten): - simuliere ungelösten PATCH → zweiter Klick wird ignoriert - löse ersten PATCH mit Fehler → Zustand = Ausgangszustand
 - [x] Bestehende Toggle-/Rollback-Tests unverändert lassen
 
 ## Definition of Done

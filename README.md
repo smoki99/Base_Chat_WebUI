@@ -4,10 +4,10 @@ TypeScript (strict) Monorepo mit npm Workspaces.
 
 ## Stack
 
-| Layer | Tech |
-|-------|------|
-| `apps/web` | React 19 + Vite (nur UI) |
-| `apps/api` | Express (REST) |
+| Layer             | Tech                                            |
+| ----------------- | ----------------------------------------------- |
+| `apps/web`        | React 19 + Vite (nur UI)                        |
+| `apps/api`        | Express (REST)                                  |
 | `packages/shared` | Gemeinsame Typen & DTOs (reines TS, keine Deps) |
 
 ## Struktur
@@ -78,17 +78,18 @@ npm run dev
 ```
 
 Danach:
+
 - **Web:** http://localhost:5173
 - **API:** http://localhost:3001
 - **Health-Check:** http://localhost:3001/health
 
 ### Environment-Variablen
 
-| Variable | Beschreibung | Default |
-|----------|-------------|---------|
-| `PORT` | API-Port | `3001` |
-| `CORS_ORIGIN` | Erlaubte CORS-Origin(s) für die API (prod), kommagetrennt | leer (alle) |
-| `VITE_API_URL` | API-Basis-URL für das Web (prod) | `http://localhost:3001` |
+| Variable       | Beschreibung                                              | Default                 |
+| -------------- | --------------------------------------------------------- | ----------------------- |
+| `PORT`         | API-Port                                                  | `3001`                  |
+| `CORS_ORIGIN`  | Erlaubte CORS-Origin(s) für die API (prod), kommagetrennt | leer (alle)             |
+| `VITE_API_URL` | API-Basis-URL für das Web (prod)                          | `http://localhost:3001` |
 
 > In der Entwicklung übernimmt der **Vite-Proxy** (`/api` → `localhost:3001`),
 > `VITE_API_URL` wird dann nicht benötigt.
@@ -99,22 +100,23 @@ Danach:
 
 ## Befehle
 
-| Command | Beschreibung |
-|---------|--------------|
-| `npm run dev` | Web + API parallel starten (concurrently) |
-| `npm run build` | Alle Workspaces bauen |
-| `npm run lint` | ESLint auf allen Workspaces |
-| `npm run test` | Unit-Tests in allen Workspaces (Vitest) |
-| `npm run test:e2e` | Playwright-E2E (headless Chromium); startet API + Web automatisch |
-| `npm run typecheck` | TypeScript Typecheck (strict) |
-| `npm run knip` | Dead Code & unused Dependencies detectieren |
-| `npm run audit` | Security-Scan (npm audit, Production-Deps, Level high+) |
-| `npm run audit:signatures` | Sigstore-Signaturverifikation aller Pakete |
-| `npm run size` | Bundle-Size-Budget prüfen (web ≤ 100 kB gzip) |
-| `npm run depcheck` | Circular-Dependency-Check (Monorepo) |
-| `npm run pkg:validate` | package.json-Struktur in allen Workspaces validieren |
-| `npm run verify:lockfile` | Alle installierten Pakete gegen lockfile verifizieren |
-| `npm run format` | Prettier formatiert den Code |
+| Command                    | Beschreibung                                                                     |
+| -------------------------- | -------------------------------------------------------------------------------- |
+| `npm run check`            | **Alle 4 Gates** (typecheck + lint + test + build) – bricht bei erstem Fehler ab |
+| `npm run dev`              | Web + API parallel starten (concurrently)                                        |
+| `npm run build`            | Alle Workspaces bauen                                                            |
+| `npm run lint`             | ESLint auf allen Workspaces                                                      |
+| `npm run test`             | Unit-Tests in allen Workspaces (Vitest)                                          |
+| `npm run test:e2e`         | Playwright-E2E (headless Chromium); startet API + Web automatisch                |
+| `npm run typecheck`        | TypeScript Typecheck (strict)                                                    |
+| `npm run knip`             | Dead Code & unused Dependencies detectieren                                      |
+| `npm run audit`            | Security-Scan (npm audit, Production-Deps, Level high+)                          |
+| `npm run audit:signatures` | Sigstore-Signaturverifikation aller Pakete                                       |
+| `npm run size`             | Bundle-Size-Budget prüfen (web ≤ 100 kB gzip)                                    |
+| `npm run depcheck`         | Circular-Dependency-Check (Monorepo)                                             |
+| `npm run pkg:validate`     | package.json-Struktur in allen Workspaces validieren                             |
+| `npm run verify:lockfile`  | Alle installierten Pakete gegen lockfile verifizieren                            |
+| `npm run format`           | Prettier formatiert den Code                                                     |
 
 ## Tests
 
@@ -153,16 +155,16 @@ Die Actions laufen nativ auf **Node 24** (`actions/checkout@v7`,
 
 ## Supply Chain Security
 
-| Maßnahme | Wo |
-|---|---|
-| Integrity-Hash (SHA-512) | `package-lock.json` – npm verifiziert bei jedem Install |
-| `npm ci` (frozen lockfile) | CI – schlägt fehl bei inkonsistentem lockfile |
-| `npm audit --omit=dev --audit-level=high` | Skript + CI – Production-Deps |
-| **`npm audit signatures`** | Skript + CI – Sigstore-Verifikation aller Paket-Signaturen |
-| **Exakte Version-Pinning** | `.npmrc` → `save-exact=true` – neue Deps werden exakt gepinnt |
-| **Corepack `packageManager`** | `package.json` → `npm@11.8.0` – deterministische npm-Version |
-| **Unexpected-Package-Check** | CI – vergleicht installierte Pakete mit lockfile |
-| Knip (unused deps) | Skript + CI – reduziert Angriffsfläche |
+| Maßnahme                                  | Wo                                                            |
+| ----------------------------------------- | ------------------------------------------------------------- |
+| Integrity-Hash (SHA-512)                  | `package-lock.json` – npm verifiziert bei jedem Install       |
+| `npm ci` (frozen lockfile)                | CI – schlägt fehl bei inkonsistentem lockfile                 |
+| `npm audit --omit=dev --audit-level=high` | Skript + CI – Production-Deps                                 |
+| **`npm audit signatures`**                | Skript + CI – Sigstore-Verifikation aller Paket-Signaturen    |
+| **Exakte Version-Pinning**                | `.npmrc` → `save-exact=true` – neue Deps werden exakt gepinnt |
+| **Corepack `packageManager`**             | `package.json` → `npm@11.8.0` – deterministische npm-Version  |
+| **Unexpected-Package-Check**              | CI – vergleicht installierte Pakete mit lockfile              |
+| Knip (unused deps)                        | Skript + CI – reduziert Angriffsfläche                        |
 
 ### Neues Paket hinzufügen – Checkliste
 
