@@ -40,6 +40,17 @@ export interface Todo {
   done: boolean;
 }
 
+/** Payload for creating a todo. */
+export interface CreateTodo {
+  title: string;
+}
+
+/** Payload for updating a todo (partial). */
+export interface UpdateTodo {
+  title?: string;
+  done?: boolean;
+}
+
 export interface ApiResponse<T> {
   data: T;
 }
@@ -103,6 +114,9 @@ dieses Format und werden in der Web-App zur Typisierung der Fetch-Antworten verw
 | `src/__tests__/` | Komponenten-Tests (Vitest + React Testing Library) |
 | `src/test/setup.ts` | Test-Setup (`@testing-library/jest-dom`) |
 | `src/main.tsx` | React Entry Point |
+| `src/index.css` | Material Design 3 CSS (Bootstrap + MD3-Tokens) |
+| `e2e/` | Playwright-E2E-Tests (headless Chromium) |
+| `playwright.config.ts` | E2E-Konfiguration (webServer startet API + Web) |
 | `vite.config.ts` | Vite-Plugin, Dev-Proxy, Vitest-Config |
 | `index.html` | Vite HTML-Entry |
 

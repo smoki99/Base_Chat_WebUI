@@ -6,7 +6,6 @@
     "eamodio.gitlens",
     "EditorConfig.EditorConfig",
     "humao.rest-client",
-    "gruntfreesoftware.todo-tree",
-    "bradlc.vscode-tailwindcss"
+    "gruntfreesoftware.todo-tree"
   ]
 }

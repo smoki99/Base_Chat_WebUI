@@ -13,3 +13,6 @@
 | 2026-10-11         | GitHub Actions CI (Node 24, Trigger `master` + `feature/*`) | Automatische typecheck/lint/test/build-Checks auf jedem Push/PR; keine Secrets, selbst-contained Tests |
 | 2026-10-11         | MIT-Lizenz                                                  | Open-Source-Standard, maximale Nutzungsfreiheit, `license`-Feld in allen package.json                  |
 | 2026-10-11         | Playwright (Chromium, headless) als E2E-Baseline in `apps/web` | UI-Smoke-Test: Website antwortet, React mounted, API-Pfad geprüft; `webServer` startet API+Web mit Readiness, CI-Integration |
+| 2026-10-11         | Bootstrap v5 (CSS) statt Tailwind CSS                     | Einfachere Integration ohne Build-Step, große Community, Bootstrap-Utility-Klassen direkt in JSX verwendbar |
+| 2026-10-11         | Material Design 3 als Design-Language                      | Konsistentes, modernes Look & Feel; MD3-Tokens (Farbe, Elevation, Typografie) als CSS-Custom-Properties in `index.css` |
+| 2026-10-11         | In-memory Storage (keine Datenbank)                        | Boilerplate-Zweck: Click-Dummy ohne Persistenz; `todoService.ts` als Swap-Punkt für echte DB (z. B. SQLite, Postgres) |

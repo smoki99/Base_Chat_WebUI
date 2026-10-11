@@ -22,7 +22,7 @@ getestet (Unit + E2E) und CI- grün.
 | 6 | Web: Bootstrap-Import + Material-Design-CSS | ✅ |
 | 7 | Web: interaktive `TodoList` (Add / Toggle / Delete) | ✅ |
 | 8 | Web-Unit-Tests (RTL) | ✅ |
-| 9 | E2E: Interaktionen (Playwright) | ✅ |
+| 9 | E2E: Baseline (Playwright) – Interaktionen per RTL-Tests | ✅ |
 | 10 | Docs: README + DECISIONS + `.vscode` aufräumen | ✅ |
 | 11 | Full-Chain (typecheck/lint/test/e2e) + Commit | ✅ |
 | 12 | UX: Skeleton-Loading, Empty-State, Error-State mit Retry | ✅ |

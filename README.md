@@ -39,7 +39,8 @@ myapp/
 │       └── package.json
 ├── docs/
 │   ├── ARCHITECTURE.md
-│   └── DECISIONS.md
+│   ├── DECISIONS.md
+│   └── PROGRESS.md
 ├── .github/
 │   └── workflows/ci.yml      # GitHub Actions (Node 24)
 ├── .clinerules/
