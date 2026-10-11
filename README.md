@@ -26,10 +26,12 @@ myapp/
 │   └── web/                  # React + Vite Frontend
 │       ├── src/
 │       │   ├── components/   # React-Komponenten
-│       │   ├── __tests__/    # RTL-Tests
+│       │   ├── __tests__/    # RTL-Tests (Vitest)
 │       │   └── main.tsx      # React Entry
+│       ├── e2e/              # Playwright-E2E (headless Chromium)
 │       ├── index.html        # Vite Entry
-│       ├── vite.config.ts    # Proxy + Vitest-Config
+│       ├── playwright.config.ts  # E2E: webServer (API + Web)
+│       ├── vite.config.ts    # Proxy + Vitest-Config (e2e/ excluded)
 │       └── package.json
 ├── packages/
 │   └── shared/               # Gemeinsame Typen/DTOs
@@ -38,20 +40,25 @@ myapp/
 ├── docs/
 │   ├── ARCHITECTURE.md
 │   └── DECISIONS.md
+├── .github/
+│   └── workflows/ci.yml      # GitHub Actions (Node 24)
 ├── .clinerules/
 ├── .env.example
+├── .nvmrc                    # Node 24
+├── .editorconfig
+├── .prettierrc
 ├── eslint.config.js
 ├── package.json
 ├── tsconfig.base.json
-└── .prettierrc
+└── LICENSE
 ```
 
 ## Setup
 
 ### Voraussetzungen
 
-- **Node.js ≥ 20** (LTS)
-- **npm ≥ 10**
+- **Node.js ≥ 24** (LTS) – siehe `.nvmrc` + `engines` in `package.json`
+- **npm ≥ 10** (Node 24 liefert npm 11.x)
 
 ### Installation & Start
 
@@ -62,7 +69,10 @@ npm install
 # 2. Environment-Variabeln kopieren
 cp .env.example .env
 
-# 3. Dev-Server starten (web + api parallel)
+# 3. (nur für E2E) Playwright-Browser installieren
+npx playwright install chromium
+
+# 4. Dev-Server starten (web + api parallel)
 npm run dev
 ```
 
@@ -93,9 +103,38 @@ Danach:
 | `npm run dev` | Web + API parallel starten (concurrently) |
 | `npm run build` | Alle Workspaces bauen |
 | `npm run lint` | ESLint auf allen Workspaces |
-| `npm run test` | Tests in allen Workspaces (Vitest) |
+| `npm run test` | Unit-Tests in allen Workspaces (Vitest) |
+| `npm run test:e2e` | Playwright-E2E (headless Chromium); startet API + Web automatisch |
 | `npm run typecheck` | TypeScript Typecheck (strict) |
 | `npm run format` | Prettier formatiert den Code |
+
+## Tests
+
+- **Unit (Vitest):** `npm test`
+  - `apps/api` via Supertest · `apps/web` via React Testing Library + jsdom.
+  - `e2e/**` wird aus dem Vitest-Run explizit ausgeschlossen.
+- **E2E (Playwright, headless Chromium):** `npm run test:e2e`
+  - Startet **API + Web automatisch** über `webServer` mit Readiness
+    (`/health` bzw. Port 5173) – kein manuelles `npm run dev`.
+  - Vor dem ersten Lauf einmalig: `npx playwright install chromium`.
+  - Deckt ab: `GET /` (200, `text/html`), `GET /index.html` (200),
+    React-Mount, seeded-Todos, keine Page-/Console-Errors.
+
+## CI (GitHub Actions)
+
+`.github/workflows/ci.yml` — Trigger: `push` (`master`, `feature/*`),
+`pull_request` (`master`), `workflow_dispatch`.
+
+1. `npm ci`
+2. `npm run typecheck`
+3. `npm run lint`
+4. `npm test` (Unit)
+5. `npm run build`
+6. `npx playwright install --with-deps chromium`
+7. `npm run test:e2e -w web`
+
+Die Actions laufen nativ auf **Node 24** (`actions/checkout@v7`,
+`actions/setup-node@v7`).
 
 ## Konventionen
 

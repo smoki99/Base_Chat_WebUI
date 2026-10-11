@@ -12,6 +12,7 @@
     "build": "npm run build --workspaces",
     "lint": "npm run lint --workspaces",
     "test": "npm run test --workspaces",
+    "test:e2e": "npm run test:e2e -w web",
     "typecheck": "npm run typecheck --workspaces",
     "format": "prettier --write ."
   },
