@@ -30,7 +30,7 @@ describe('todo CRUD (POST / PATCH / DELETE)', () => {
     it('returns 400 for an empty title', async () => {
       const res = await request(app).post('/api/todos').send({ title: '   ' });
       expect(res.status).toBe(400);
-      expect(json<{ error: { message: string } }>(res).error.message).toBe('Invalid request body');
+      expect(json<{ error: { message: string } }>(res).error.message).toBe('Title darf nicht leer sein.');
     });
 
     it('returns 400 for a missing body', async () => {
@@ -62,6 +62,20 @@ describe('todo CRUD (POST / PATCH / DELETE)', () => {
       const created = await createTodo('Patch target');
       const res = await request(app).patch(`/api/todos/${created.id}`).send({});
       expect(res.status).toBe(400);
+    });
+
+    it('returns 400 for a whitespace-only title', async () => {
+      const created = await createTodo('Patch title');
+      const res = await request(app).patch(`/api/todos/${created.id}`).send({ title: '   ' });
+      expect(res.status).toBe(400);
+      expect(json<{ error: { message: string } }>(res).error.message).toBe('Title darf nicht leer sein.');
+    });
+
+    it('returns 400 for a non-boolean done value', async () => {
+      const created = await createTodo('Patch done');
+      const res = await request(app).patch(`/api/todos/${created.id}`).send({ done: 'yes' });
+      expect(res.status).toBe(400);
+      expect(json<{ error: { message: string } }>(res).error.message).toBe('Done muss ein boolean Wert sein.');
     });
 
     it('returns 404 for an unknown id', async () => {

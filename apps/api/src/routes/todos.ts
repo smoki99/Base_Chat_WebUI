@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import type { CreateTodo, UpdateTodo } from 'shared';
 import * as todoService from '../services/todoService';
+import { ValidationError } from '../services/todoService';
 
 const router = Router();
 
@@ -12,11 +13,20 @@ router.get('/api/todos', (_req, res) => {
 /** POST /api/todos – create a todo. */
 router.post('/api/todos', (req, res) => {
   const body = req.body as CreateTodo | undefined;
-  if (!body || typeof body.title !== 'string' || body.title.trim() === '') {
-    res.status(400).json({ error: { message: 'Invalid request body' } });
+  if (!body) {
+    res.status(400).json({ error: { message: 'Title darf nicht leer sein.' } });
     return;
   }
-  res.status(201).json({ data: todoService.createTodo(body) });
+  try {
+    const todo = todoService.createTodo(body);
+    res.status(201).json({ data: todo });
+  } catch (err) {
+    if (err instanceof ValidationError) {
+      res.status(400).json({ error: { message: err.message } });
+      return;
+    }
+    throw err;
+  }
 });
 
 /** PATCH /api/todos/:id – update a todo (toggle / rename). */
@@ -28,12 +38,20 @@ router.patch('/api/todos/:id', (req, res) => {
     res.status(400).json({ error: { message: 'Invalid request body' } });
     return;
   }
-  const todo = todoService.updateTodo(id, body);
-  if (!todo) {
-    res.status(404).json({ error: { message: 'Not found' } });
-    return;
+  try {
+    const todo = todoService.updateTodo(id, body);
+    if (!todo) {
+      res.status(404).json({ error: { message: 'Not found' } });
+      return;
+    }
+    res.json({ data: todo });
+  } catch (err) {
+    if (err instanceof ValidationError) {
+      res.status(400).json({ error: { message: err.message } });
+      return;
+    }
+    throw err;
   }
-  res.json({ data: todo });
 });
 
 /** DELETE /api/todos/:id – delete a todo. */
