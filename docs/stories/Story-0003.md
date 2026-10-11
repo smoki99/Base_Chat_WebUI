@@ -1,8 +1,9 @@
 # Story-0003: Optimistisches Toggle vor Doppelklick-Race schützen
 
-**Status:** offen
+**Status:** ✅ erledigt
 **Priorität:** Mittel
 **Zugehöriger Audit-Befund:** #4
+**Abgeschlossen am:** 11.10.2026
 
 ## Kontext
 
@@ -22,15 +23,15 @@ UI und Server-Status divergieren.
 
 ## Tasks
 
-- [ ] `TodoList.tsx`: Inflight-Tracking pro Todo-ID einführen (z. B. `useRef<Set<number>>`), im `handleToggle` prüfen, bei Fehler/Erfolg im `finally` entfernen
-- [ ] Zweites Toggle während Inflight: frühes `return` (kein PATCH, kein Zustandswechsel)
-- [ ] Web-Test ergänzen (Mock-Strategie der bestehenden Tests in `apps/web/src` beibehalten):
+- [x] `TodoList.tsx`: Inflight-Tracking pro Todo-ID einführen (z. B. `useRef<Set<number>>`), im `handleToggle` prüfen, bei Fehler/Erfolg im `finally` entfernen
+- [x] Zweites Toggle während Inflight: frühes `return` (kein PATCH, kein Zustandswechsel)
+- [x] Web-Test ergänzen (Mock-Strategie der bestehenden Tests in `apps/web/src` beibehalten):
       - simuliere ungelösten PATCH → zweiter Klick wird ignoriert
       - löse ersten PATCH mit Fehler → Zustand = Ausgangszustand
-- [ ] Bestehende Toggle-/Rollback-Tests unverändert lassen
+- [x] Bestehende Toggle-/Rollback-Tests unverändert lassen
 
 ## Definition of Done
 
-- [ ] `npm test -w web` grün
-- [ ] `npm run typecheck` und `npm run lint` grün
-- [ ] Manueller Check: Doppelklick im Dev-Server erzeugt exakt 1 PATCH (Network-Tab)
+- [x] `npm test -w web` grün
+- [x] `npm run typecheck` und `npm run lint` grün
+- [x] Manueller Check: Doppelklick im Dev-Server erzeugt exakt 1 PATCH (Network-Tab)

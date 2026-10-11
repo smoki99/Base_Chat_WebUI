@@ -213,6 +213,106 @@ describe('TodoList', () => {
     );
   });
 
+  it('ignores a second toggle while the first PATCH is still in-flight', async () => {
+    const item = { id: 1, title: 'Test', done: false };
+    let resolvePatch!: (value: unknown) => void;
+    const fetchMock = vi.fn(((_input: unknown, init?: RequestInit) => {
+      if (init?.method === 'PATCH') {
+        return new Promise((resolve) => { resolvePatch = resolve; });
+      }
+      return Promise.resolve(ok({ data: [item] }));
+    }) as unknown as typeof fetch);
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<TodoList />);
+    const checkbox = await screen.findByRole('checkbox', { name: /test/i });
+    const user = userEvent.setup();
+
+    await user.click(checkbox); // first toggle – starts PATCH
+    await user.click(checkbox); // second toggle – should be ignored
+
+    const patchCalls = fetchMock.mock.calls.filter((c) => c[1]?.method === 'PATCH');
+    expect(patchCalls).toHaveLength(1);
+
+    resolvePatch(ok({ data: item }));
+  });
+
+  it('rolls back to original state when the in-flight PATCH fails', async () => {
+    const item = { id: 1, title: 'Test', done: false };
+    const fetchMock = vi.fn(async (_input: unknown, init?: RequestInit) => {
+      if (init?.method === 'PATCH') {
+        return { ok: false, status: 500, json: () => Promise.resolve({ error: { message: 'Server error' } }) };
+      }
+      return ok({ data: [item] });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<TodoList />);
+    const checkbox = await screen.findByRole('checkbox', { name: /test/i });
+    const user = userEvent.setup();
+
+    await user.click(checkbox);
+
+    // State should be rolled back to original (unchecked)
+    await waitFor(() => expect(checkbox).not.toBeChecked());
+  });
+
+  it('allows toggling again after the in-flight PATCH completes', async () => {
+    const item = { id: 1, title: 'Test', done: false };
+    let resolvePatch!: (value: unknown) => void;
+    const fetchMock = vi.fn(((_input: unknown, init?: RequestInit) => {
+      if (init?.method === 'PATCH') {
+        return new Promise((resolve) => { resolvePatch = resolve; });
+      }
+      return Promise.resolve(ok({ data: [item] }));
+    }) as unknown as typeof fetch);
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<TodoList />);
+    const checkbox = await screen.findByRole('checkbox', { name: /test/i });
+    const user = userEvent.setup();
+
+    await user.click(checkbox); // first toggle – starts PATCH
+    await user.click(checkbox); // second toggle – ignored (in-flight)
+
+    resolvePatch(ok({ data: { ...item, done: true } }));
+    await Promise.resolve(); // let the microtask queue flush
+
+    await user.click(checkbox); // third toggle – should work (lock released)
+
+    const patchCalls = fetchMock.mock.calls.filter((c) => c[1]?.method === 'PATCH');
+    expect(patchCalls).toHaveLength(2);
+  });
+
+  it('allows toggling different todos in parallel', async () => {
+    const todos = [
+      { id: 1, title: 'First', done: false },
+      { id: 2, title: 'Second', done: false },
+    ];
+    let patchCount = 0;
+    const resolvers: Array<(value: unknown) => void> = [];
+    const fetchMock = vi.fn(((_input: unknown, init?: RequestInit) => {
+      if (init?.method === 'PATCH') {
+        patchCount++;
+        return new Promise((resolve) => { resolvers.push(resolve); });
+      }
+      return Promise.resolve(ok({ data: todos }));
+    }) as unknown as typeof fetch);
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<TodoList />);
+    const cb1 = await screen.findByRole('checkbox', { name: /first/i });
+    const cb2 = screen.findByRole('checkbox', { name: /second/i });
+    const user = userEvent.setup();
+
+    await user.click(cb1);
+    await user.click(await cb2);
+
+    expect(patchCount).toBe(2); // both PATCHes sent in parallel
+
+    resolvers.forEach((r) => r(ok({ data: todos[0] })));
+  });
+
   it('deletes a todo via DELETE and removes it from the list', async () => {
     vi.stubGlobal(
       'fetch',

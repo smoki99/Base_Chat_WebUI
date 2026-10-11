@@ -15,6 +15,7 @@ export default function TodoList() {
   const [title, setTitle] = useState('');
   const [toast, setToast] = useState<Toast | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inflightToggles = useRef<Set<number>>(new Set());
 
   function showToast(message: string, type: Toast['type']) {
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -67,9 +68,11 @@ export default function TodoList() {
   }
 
   async function handleToggle(todo: Todo) {
+    if (inflightToggles.current.has(todo.id)) return;
     const previous = todo.done;
     const payload: UpdateTodo = { done: !previous };
     setTodos((prev) => prev.map((t) => (t.id === todo.id ? { ...t, done: !previous } : t)));
+    inflightToggles.current.add(todo.id);
     try {
       const res = await fetch(`${apiBase}/api/todos/${todo.id}`, {
         method: 'PATCH',
@@ -80,6 +83,8 @@ export default function TodoList() {
     } catch (err) {
       setTodos((prev) => prev.map((t) => (t.id === todo.id ? { ...t, done: previous } : t)));
       setError((err as Error).message);
+    } finally {
+      inflightToggles.current.delete(todo.id);
     }
   }
 
