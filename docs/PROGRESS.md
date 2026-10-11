@@ -25,8 +25,31 @@ getestet (Unit + E2E) und CI- grün.
 | 9 | E2E: Interaktionen (Playwright) | ✅ |
 | 10 | Docs: README + DECISIONS + `.vscode` aufräumen | ✅ |
 | 11 | Full-Chain (typecheck/lint/test/e2e) + Commit | ✅ |
+| 12 | UX: Skeleton-Loading, Empty-State, Error-State mit Retry | ✅ |
+| 13 | UX: Material-Toast (Erfolg/Fehler) | ✅ |
+| 14 | Web-Tests: neue States (Skeleton, Empty, Error, Toast, Retry) | ✅ |
+| 15 | Full-Chain final (typecheck/lint/test/e2e) | ✅ |
 
 ## Changelog
+
+### 2026-10-11 — UX-States (Skeleton, Empty, Error+Retry, Toast)
+
+- **Skeleton Loading**: Animierter Lade-State (3 pulsierende Bars) mit
+  `aria-busy="true"` und `aria-label="Lädt…"`.
+- **Error-State**: Vollbild-Fehleransicht mit Icon, Fehlermeldung und
+  „Erneut versuchen“-Button. Bei partiellen Fehlern (Liste geladen,
+  aber Mutation gescheitert) zusätzlich Alert mit Retry-Button.
+- **Empty-State**: Freundlicher Hinweis mit Icon, wenn keine Todos vorhanden.
+- **Material Toast**: Slide-in-Toast (2,5 s Auto-Dismiss) mit `toast-success`
+  / `toast-error` Varianten und Material-Elevation.
+- **CSS**: Skeleton-Pulse, Toast-Animation, Empty-/Error-States in
+  `index.css` als Material-3-Styles.
+- **Tests (neu)**:
+  - Skeleton sichtbar solange Fetch offen ist, verschwindet nach Response
+  - Empty-State bei leerer Liste
+  - Error-State mit Retry-Button, Retry ruft Fetch erneut auf
+  - Success-Toast nach Add und Delete
+  - Alle 11 Web-Tests grün
 
 ### 2026-10-11 — Interaktivität + Bootstrap Material Design
 

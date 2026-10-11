@@ -94,3 +94,84 @@ body {
   color: var(--md-outline);
   font-size: 0.85rem;
 }
+
+/* --- Skeleton Loading --- */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.skeleton-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 0;
+}
+
+.skeleton-bar {
+  height: 1.25rem;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #e8e5f0 25%, #f4f2fb 50%, #e8e5f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+/* --- Error State --- */
+.error-state {
+  padding: 2rem 1rem;
+}
+
+.error-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* --- Empty State --- */
+.empty-state {
+  padding: 2.5rem 1rem;
+  color: var(--md-outline);
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+/* --- Material Toast --- */
+@keyframes toast-in {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.toast-md {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  box-shadow: var(--md-elev-2);
+  animation: toast-in 0.25s ease-out;
+  margin-bottom: 1rem;
+}
+
+.toast-success {
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+
+.toast-success .toast-icon {
+  color: #2e7d32;
+  font-weight: 700;
+}
+
+.toast-error {
+  background: #fbe9e7;
+  color: #b71c1c;
+}
+
+.toast-error .toast-icon {
+  color: #d32f2f;
+  font-weight: 700;
+}
