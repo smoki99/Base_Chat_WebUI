@@ -13,6 +13,11 @@ apps/web = React 19 + Vite (nur UI) · apps/api = Express (REST) · packages/sha
 7. Bei Unsicherheit: Frage stellen statt raten.
 8. Git: Conventional Commits (feat:, fix:, chore:), kurzer deutscher Subject.
 
+## Thinking & Reasoning
+- Halte interne Denkprozesse (think-Tags) extrem kurz und prägnant (max. 3–5 Sätze).
+- Kein Overthinking oder redundante Analyse.
+- Direkt zum Punkt: Antwort, Plan oder Code sofort ausgeben.
+
 ## Architektur
 - Gemeinsame Typen/DTOs immer in packages/shared definieren, nie duplizieren.
 - API-Antworten immer in Form: { "data": ... } oder { "error": { "message": ... } }.

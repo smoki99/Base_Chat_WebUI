@@ -1,0 +1,12 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo 'api dev server (TODO: add express)'",
+    "build": "tsc",
+    "lint": "eslint .",
+    "test": "echo 'no tests yet'",
+    "typecheck": "tsc --noEmit"
+  }
+}

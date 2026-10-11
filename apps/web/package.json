@@ -1,0 +1,12 @@
+{
+  "name": "web",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo 'web dev server (TODO: add vite)'",
+    "build": "tsc",
+    "lint": "eslint .",
+    "test": "echo 'no tests yet'",
+    "typecheck": "tsc --noEmit"
+  }
+}
