@@ -4,7 +4,7 @@
 **Priority:** Medium
 **Bereich:** `.github/workflows/ci.yml`, `package.json`
 **Review-Befund:** `eslint` läuft in CI, aber `prettier` (Formatierung) wird
-nicht geprüft – Inkonsistente Formatierung溜
+nicht geprüft – inkonsistente Formatierung bleibt unbemerkt.
 
 ## Kontext
 

@@ -17,4 +17,18 @@ Workspaces.
 - [ ] `package.json` (root) bekommt: `"check": "turbo run typecheck lint test"`
 - [ ] `npm run check` führt `typecheck`, `lint` und `test` in allen
       Workspaces aus und bricht bei erstem Fehler ab
-- [ ] `README.md` Quick-Start: `npm run check` als „alle Gates
+- [ ] `README.md` Quick-Start: `npm run check` als "alle Gates"
+- [ ] `AGENTS.md` (Story-0011): `npm run check` als Hauptbefehl
+- [ ] CI: separate Steps optional durch `npm run check` ersetzen
+      (siehe Story-0010)
+
+## Tasks
+
+- [ ] Root `package.json`: `check`-Skript ergänzen
+- [ ] `README.md`: Quick-Start aktualisieren
+- [ ] Test: `npm run check` lokal ausführen → grün
+
+## Definition of Done
+
+`npm run check` führt alle Gates in allen Workspaces aus; README und
+AGENTS.md verweisen darauf.
