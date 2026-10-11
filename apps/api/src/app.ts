@@ -19,7 +19,7 @@ app.use(
       if (origin === undefined || origin === '' || allowed.length === 0 || allowed.includes(origin)) {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        callback(Object.assign(new Error('Not allowed by CORS'), { status: 403 }));
       }
     },
   }),
@@ -38,7 +38,8 @@ app.use((_req: Request, res: Response) => {
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err);
   const status = (err as { status?: number }).status ?? 500;
-  const message = status === 400 ? 'Invalid request body' : 'Internal server error';
+  const statusMessages: Record<number, string> = { 400: 'Invalid request body', 403: 'Forbidden' };
+  const message = statusMessages[status] ?? 'Internal server error';
   res.status(status).json({ error: { message } });
 });
 

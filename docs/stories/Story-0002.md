@@ -1,8 +1,9 @@
 # Story-0002: CORS-Verstöße mit 403 statt 500 melden
 
-**Status:** offen
+**Status:** ✅ erledigt
 **Priorität:** Hoch
 **Zugehöriger Audit-Befund:** #2
+**Abgeschlossen am:** 11.10.2026
 
 ## Kontext
 
@@ -18,19 +19,19 @@ Der zentrale Error-Handler sieht keine `status`-Eigenschaft → antwortet mit
 
 ## Akzeptanzkriterien
 
-1. **Given** eine Anfrage mit disallowtem `Origin` **When** sie `POST /api/todos` erreicht **Then** `403 Forbidden` mit `{ "error": { "message": ... } }`.
-2. **Given** ein Preflight (`OPTIONS`) mit disallowtem `Origin` **Then** `403 Forbidden` (kein `Access-Control-Allow-Origin`-Header).
-3. Erlaubte Origins (inkl. `*` und `localhost:5173` im Dev-Default) verhalten sich wie bisher: `200` bzw. erfolgreiche Preflight-Antwort.
-4. Die Fehlermeldung gibt keine internen Details preis.
+1. ✅ **Given** eine Anfrage mit disallowtem `Origin` **When** sie `POST /api/todos` erreicht **Then** `403 Forbidden` mit `{ "error": { "message": ... } }`.
+2. ✅ **Given** ein Preflight (`OPTIONS`) mit disallowtem `Origin` **Then** `403 Forbidden` (kein `Access-Control-Allow-Origin`-Header).
+3. ✅ Erlaubte Origins (inkl. `*` und `localhost:5173` im Dev-Default) verhalten sich wie bisher: `200` bzw. erfolgreiche Preflight-Antwort.
+4. ✅ Die Fehlermeldung gibt keine internen Details preis.
 
 ## Tasks
 
-- [ ] `app.ts`: CORS-Fehler mit Status 403 markieren (typsicher, z. B. `Object.assign(new Error('CORS: Origin nicht erlaubt'), { status: 403 })` oder kleine `HttpError`-Klasse)
-- [ ] Zentralem Error-Handler ggf. expliziten Fall für `err.status === 403` prüfen/sichern
-- [ ] `app.test.ts`: CORS-Tests von `status >= 400` auf exakt `403` verschärfen (beide Fälle: normal + Preflight)
-- [ ] Bestehende Erfolgscases (erlaubte Origin, `*`) unverändert lassen
+- [x] `app.ts`: CORS-Fehler mit Status 403 markieren (typsicher, z. B. `Object.assign(new Error('Not allowed by CORS'), { status: 403 })`)
+- [x] Zentralem Error-Handler expliziten Fall für `err.status === 403` gesichert (Message: `Forbidden`)
+- [x] `cors.test.ts`: CORS-Tests von `status >= 400` auf exakt `403` verschärft (beide Fälle: normal + Preflight)
+- [x] Bestehende Erfolgscases (erlaubte Origin, `*`) unverändert gelassen
 
 ## Definition of Done
 
-- [ ] `npm test -w api` grün (inkl. verschärfter 403-Assertions)
-- [ ] `npm run typecheck` und `npm run lint` grün
+- [x] `npm test -w api` grün (inkl. verschärfter 403-Assertions)
+- [x] `npm run typecheck` und `npm run lint` grün
