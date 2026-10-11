@@ -6,6 +6,17 @@ export interface Todo {
   done: boolean;
 }
 
+/** Payload for creating a todo. */
+export interface CreateTodo {
+  title: string;
+}
+
+/** Payload for updating a todo (partial). */
+export interface UpdateTodo {
+  title?: string;
+  done?: boolean;
+}
+
 export interface ApiResponse<T> {
   data: T;
 }

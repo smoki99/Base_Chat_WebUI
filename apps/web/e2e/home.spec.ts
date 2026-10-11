@@ -27,7 +27,7 @@ test.describe('Baseline – home page', () => {
     await page.goto('/');
 
     // HTML shell is correct
-    await expect(page).toHaveTitle('myapp');
+    await expect(page).toHaveTitle('Todo App');
     await expect(page.locator('#root')).toBeAttached();
 
     // JS bundle executed and React mounted
