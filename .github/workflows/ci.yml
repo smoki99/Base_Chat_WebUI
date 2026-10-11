@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  actions: write
 
 jobs:
   ci:
@@ -38,3 +39,12 @@ jobs:
 
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e -w web
+
+      - name: Upload Playwright results (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-results
+          path: apps/web/test-results/
+          retention-days: 30
+          if-no-files-found: warn

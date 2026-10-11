@@ -1,6 +1,6 @@
 # Story-0005: CI- und Supply-Chain-Härtung (Dependabot + E2E-Artifacts)
 
-**Status:** offen
+**Status:** erledigt
 **Priorität:** Mittel
 **Zugehöriger Audit-Befund:** #6, #7
 
@@ -20,7 +20,7 @@
 
 ## Tasks
 
-- [ ] `.github/dependabot.yml` anlegen:
+- [x] `.github/dependabot.yml` anlegen:
 
       ```yaml
       version: 2
@@ -35,7 +35,7 @@
             interval: weekly
       ```
 
-- [ ] `ci.yml`: nach dem E2E-Step Artifact-Upload ergänzen (Version an die im Repo verwendete `actions/*`-Generation anpassen, z. B. v4+):
+- [x] `ci.yml`: nach dem E2E-Step Artifact-Upload ergänzen (Version an die im Repo verwendete `actions/*`-Generation anpassen, z. B. v4+):
 
       ```yaml
       - name: Upload Playwright report (on failure)
@@ -50,10 +50,10 @@
           if-no-files-found: ignore
       ```
 
-- [ ] Workflow lokal validieren (z. B. `actionlint` oder GitHub-UI)
+- [x] Workflow lokal validieren (z. B. `actionlint` oder GitHub-UI)
 
 ## Definition of Done
 
-- [ ] `.github/dependabot.yml` committed
-- [ ] CI-Lauf grün; bei simuliertem E2E-Failure ist das Artifact im Actions-Tab sichtbar
-- [ ] Keine Änderung am Test-Code oder an den Dependencies
+- [x] `.github/dependabot.yml` committed
+- [x] CI-Lauf grün; bei simuliertem E2E-Failure ist das Artifact im Actions-Tab sichtbar
+- [x] Keine Änderung am Test-Code oder an den Dependencies
