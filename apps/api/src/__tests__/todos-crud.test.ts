@@ -30,7 +30,7 @@ describe('todo CRUD (POST / PATCH / DELETE)', () => {
     it('returns 400 for an empty title', async () => {
       const res = await request(app).post('/api/todos').send({ title: '   ' });
       expect(res.status).toBe(400);
-      expect(json<{ error: { message: string } }>(res).error.message).toBe('Invalid request body');
+      expect(json<{ error: { message: string } }>(res).error.message).toBe('Title darf nicht leer sein.');
     });
 
     it('returns 400 for a missing body', async () => {
@@ -61,6 +61,40 @@ describe('todo CRUD (POST / PATCH / DELETE)', () => {
     it('returns 400 for an empty patch body', async () => {
       const created = await createTodo('Patch target');
       const res = await request(app).patch(`/api/todos/${created.id}`).send({});
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 400 for a whitespace-only title', async () => {
+      const created = await createTodo('Patch title');
+      const res = await request(app).patch(`/api/todos/${created.id}`).send({ title: '   ' });
+      expect(res.status).toBe(400);
+      expect(json<{ error: { message: string } }>(res).error.message).toBe('Title darf nicht leer sein.');
+      // Verify no mutation occurred (all-or-nothing guarantee)
+      const list = await request(app).get('/api/todos');
+      const todo = json<{ data: { id: number; title: string; done: boolean }[] }>(list).data.find((t) => t.id === created.id)!;
+      expect(todo.title).toBe('Patch title');
+      expect(todo.done).toBe(false);
+    });
+
+    it('returns 400 for a non-boolean done value', async () => {
+      const created = await createTodo('Patch done');
+      const res = await request(app).patch(`/api/todos/${created.id}`).send({ done: 'yes' });
+      expect(res.status).toBe(400);
+      expect(json<{ error: { message: string } }>(res).error.message).toBe('Done muss ein boolean Wert sein.');
+      // Verify no mutation occurred (all-or-nothing guarantee)
+      const list = await request(app).get('/api/todos');
+      const todo = json<{ data: { id: number; title: string; done: boolean }[] }>(list).data.find((t) => t.id === created.id)!;
+      expect(todo.done).toBe(false);
+    });
+
+    it('returns 400 for a non-string title on PATCH', async () => {
+      const created = await createTodo('Patch type');
+      const res = await request(app).patch(`/api/todos/${created.id}`).send({ title: 123 });
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 400 for a non-string title on POST', async () => {
+      const res = await request(app).post('/api/todos').send({ title: 123 });
       expect(res.status).toBe(400);
     });
 

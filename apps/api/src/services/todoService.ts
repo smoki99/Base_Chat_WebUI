@@ -1,6 +1,13 @@
 /** Todo domain logic – in-memory for now. */
 import type { CreateTodo, Todo, UpdateTodo } from 'shared';
 
+export class ValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ValidationError';
+  }
+}
+
 const todos: Todo[] = [
   { id: 1, title: 'Learn TypeScript', done: true },
   { id: 2, title: 'Build an API', done: false },
@@ -14,12 +21,25 @@ export function getTodos(): Todo[] {
 }
 
 export function createTodo(input: CreateTodo): Todo {
+  if (typeof input.title !== 'string' || input.title.trim() === '') {
+    throw new ValidationError('Title darf nicht leer sein.');
+  }
   const todo: Todo = { id: nextId++, title: input.title.trim(), done: false };
   todos.push(todo);
   return { ...todo };
 }
 
 export function updateTodo(id: number, input: UpdateTodo): Todo | undefined {
+  // Validate all fields before any mutation (all-or-nothing)
+  if (input.title !== undefined) {
+    if (typeof input.title !== 'string' || input.title.trim() === '') {
+      throw new ValidationError('Title darf nicht leer sein.');
+    }
+  }
+  if (input.done !== undefined && typeof input.done !== 'boolean') {
+    throw new ValidationError('Done muss ein boolean Wert sein.');
+  }
+
   const todo = todos.find((t) => t.id === id);
   if (!todo) return undefined;
   if (input.title !== undefined) todo.title = input.title.trim();
