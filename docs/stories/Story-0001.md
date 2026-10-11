@@ -4,7 +4,7 @@
 **Priorität:** Hoch
 **Zugehöriger Audit-Befund:** #1 (leerer Titel), #3 (nicht-boolean `done`)
 **Commit:** `6865cb3`
-**Abgeschlossen am:** 10.11.2026
+**Abgeschlossen am:** 11.10.2026
 
 ## Kontext
 
@@ -30,7 +30,7 @@ POST und PATCH sollen dieselben Validierungsregeln haben.
 
 - [x] `todoService.ts`: `updateTodo` um Validierung ergänzen (Title-Check nur wenn `title` mitgegeben wird; `done`-Typcheck nur wenn `done` mitgegeben wird)
 - [x] `todoService.ts`: Fehlersituationen über denselben Fehlerpfad wie `createTodo` (400) werfen
-- [x] `todoService.test.ts`: Testfälle für leeren Titel und nicht-boolean `done` bei PATCH ergänzen
+- [x] `todos-crud.test.ts`: Testfälle für leeren Titel und nicht-boolean `done` bei PATCH ergänzen
 - [x] Bestehende CRUD-Tests unverändert lassen
 
 ## Definition of Done

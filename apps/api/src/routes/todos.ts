@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import type { CreateTodo, UpdateTodo } from 'shared';
 import * as todoService from '../services/todoService';
-import { ValidationError } from '../services/todoService';
 
 const router = Router();
 
@@ -21,7 +20,7 @@ router.post('/api/todos', (req, res) => {
     const todo = todoService.createTodo(body);
     res.status(201).json({ data: todo });
   } catch (err) {
-    if (err instanceof ValidationError) {
+    if (err instanceof todoService.ValidationError) {
       res.status(400).json({ error: { message: err.message } });
       return;
     }
@@ -46,7 +45,7 @@ router.patch('/api/todos/:id', (req, res) => {
     }
     res.json({ data: todo });
   } catch (err) {
-    if (err instanceof ValidationError) {
+    if (err instanceof todoService.ValidationError) {
       res.status(400).json({ error: { message: err.message } });
       return;
     }
