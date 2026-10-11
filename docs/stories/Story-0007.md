@@ -28,5 +28,5 @@ Basis.
 ## Definition of Done
 
 - [x] `npm run typecheck && npm run lint && npm test && npm run build`
-- [x] `express@^5` in `apps/api/package.json`
+- [x] `express@5.3.0` in `apps/api/package.json` (exakt-Pin bei Major-Bump)
 - [x] Alle 41 Tests grün
