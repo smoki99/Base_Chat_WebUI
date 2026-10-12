@@ -127,6 +127,73 @@ Löscht ein Todo.
 
 ---
 
+## Chat
+
+### POST /api/chat
+
+Sendet eine Chat-Nachricht an den aktiven Provider.
+
+**Request-Body**
+
+| Feld      | Typ    | Pflicht | Beschreibung                              |
+| --------- | ------ | ------- | ----------------------------------------- |
+| `message` | string | ✅      | Nachricht (nicht leer, max. 2000 Zeichen) |
+
+```json
+{ "message": "Hallo!" }
+```
+
+**Response `201`**
+
+```json
+{
+  "data": {
+    "id": "a1b2c3",
+    "role": "assistant",
+    "content": "Hallo! Wie kann ich helfen?",
+    "timestamp": "2026-12-10T10:00:00.000Z"
+  }
+}
+```
+
+**Fehler**
+
+| Status | Körper                                                                     | Bedingung                              |
+| ------ | -------------------------------------------------------------------------- | -------------------------------------- |
+| `400`  | `{ "error": { "message": "Message darf nicht leer sein." } }`              | `message` fehlt, leer oder kein String |
+| `400`  | `{ "error": { "message": "Message darf höchstens 2000 Zeichen haben." } }` | `message` länger als 2000 Zeichen      |
+| `502`  | `{ "error": { "message": "Chat provider failed: ..." } }`                  | Provider-Fehler (Timeout, API-Fehler)  |
+
+---
+
+### GET /api/chat/health
+
+Liefert den Status des aktiven Chat-Providers.
+
+**Response `200`**
+
+```json
+{
+  "data": {
+    "provider": "mock",
+    "status": "ok"
+  }
+}
+```
+
+**Response `502`** (Provider nicht erreichbar)
+
+```json
+{
+  "data": {
+    "provider": "openai",
+    "status": "error"
+  }
+}
+```
+
+---
+
 ## Fehler-Format (gemeinsam)
 
 Alle Fehlerantworten folgen demselben Schema:
@@ -146,13 +213,16 @@ Alle Fehlerantworten folgen demselben Schema:
 
 ## Typ-Referenz (packages/shared)
 
-| Typ              | Definition                                     |
-| ---------------- | ---------------------------------------------- |
-| `Todo`           | `{ id: number; title: string; done: boolean }` |
-| `CreateTodo`     | `{ title: string }`                            |
-| `UpdateTodo`     | `{ title?: string; done?: boolean }`           |
-| `ApiResponse<T>` | `{ data: T }`                                  |
-| `ApiError`       | `{ error: { message: string } }`               |
-| `ApiResult<T>`   | `ApiResponse<T> \| ApiError`                   |
+| Typ              | Definition                                                                        |
+| ---------------- | --------------------------------------------------------------------------------- |
+| `Todo`           | `{ id: number; title: string; done: boolean }`                                    |
+| `CreateTodo`     | `{ title: string }`                                                               |
+| `UpdateTodo`     | `{ title?: string; done?: boolean }`                                              |
+| `ApiResponse<T>` | `{ data: T }`                                                                     |
+| `ApiError`       | `{ error: { message: string } }`                                                  |
+| `ApiResult<T>`   | `ApiResponse<T> \| ApiError`                                                      |
+| `ChatMessage`    | `{ id: string; role: "user" \| "assistant"; content: string; timestamp: string }` |
+| `ChatRequest`    | `{ message: string }`                                                             |
+| `ChatHealth`     | `{ provider: string; status: "ok" \| "error" }`                                   |
 
-> Quelle: `packages/shared/src/index.ts`
+> Quelle: `packages/shared/src/index.ts` und `apps/api/src/types/chat.ts`
