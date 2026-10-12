@@ -124,9 +124,10 @@ export function createOpenAIProvider(options: OpenAIProviderOptions = {}): ChatP
       choice = json.choices?.[0];
       content = choice?.message?.content;
     }
-    // Fallback: LLM produced no text but tools returned useful results.
+    // Fallback: LLM produced no text (null or empty) but tools returned useful results.
     const finalContent =
-      content ?? (lastToolResults.length > 0 ? lastToolResults.join('\n\n') : '');
+      (content && content.trim()) ||
+      (lastToolResults.length > 0 ? lastToolResults.join('\n\n') : '');
     if (!finalContent) {
       throw new Error(`LLM API returned no content after ${round} tool round(s)`);
     }
