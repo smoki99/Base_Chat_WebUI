@@ -18,7 +18,7 @@ export interface McpServerConfig {
   env?: Record<string, string>;
 }
 
-export interface McpConnection {
+interface McpConnection {
   serverName: string;
   tools: ToolDefinition[];
   callTool(name: string, args: Record<string, unknown>): Promise<string>;
@@ -45,7 +45,7 @@ let nextId = 1;
  * Connect to an MCP server via stdio and return an active connection.
  * Resolves once the `initialize` handshake is complete.
  */
-export async function connectMcpServer(config: McpServerConfig): Promise<McpConnection> {
+async function connectMcpServer(config: McpServerConfig): Promise<McpConnection> {
   const child = spawn(config.command, config.args ?? [], {
     stdio: ['pipe', 'pipe', 'pipe'],
     env: { ...process.env, ...config.env },
