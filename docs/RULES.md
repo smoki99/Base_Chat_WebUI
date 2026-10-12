@@ -1,4 +1,4 @@
-# KI-Regeln (Projekt: myapp)
+# KI-Regeln (Projekt: Base_Chat_WebUI)
 
 > Kanonische Regeln für alle KI-Agenten (Cline, Copilot, etc.).
 > Diese Datei wird bei jedem Agent-Run automatisch geladen.
@@ -71,7 +71,7 @@ Story-XXXX: <type>(<scope>): <kurzes deutsches Subject>
 Beispiele:
 
 ```
-Story-0014: refactor(web): Web in lib/api + useTodos-Hook trennen
+Story-0014: feat(web): Chat-UI mit Nachrichtenfluss aufbauen
 Story-0011: feat(api): Coverage-Schwellwert einrichten
 fix(api): CORS-Origin-Liste für Produktion ergänzen   ← ohne Story
 ```

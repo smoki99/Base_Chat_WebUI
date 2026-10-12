@@ -21,7 +21,7 @@
                        ▼
 ┌────────────────────────────────────────────────────────────┐
 │  packages/shared                                           │
-│  – Todo, ApiResponse<T>, ApiError, ApiResult<T>            │
+│  – ChatMessage, ApiResponse<T>, ApiError, ApiResult<T>   │
 │  – Gemeinsame Typen & DTOs für alle Workspaces             │
 │  – Keine eigenen Dependencies (reines TS)                  │
 └────────────────────────────────────────────────────────────┘
@@ -34,21 +34,16 @@ definiert und von beiden Apps importiert:
 
 ```ts
 // packages/shared/src/index.ts
-export interface Todo {
-  id: number;
-  title: string;
-  done: boolean;
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  createdAt: string; // ISO-8601
 }
 
-/** Payload for creating a todo. */
-export interface CreateTodo {
-  title: string;
-}
-
-/** Payload for updating a todo (partial). */
-export interface UpdateTodo {
-  title?: string;
-  done?: boolean;
+/** Payload for sending a chat message. */
+export interface CreateChatMessage {
+  content: string;
 }
 
 export interface ApiResponse<T> {
@@ -70,11 +65,11 @@ export function isApiSuccess<T>(result: ApiResult<T>): result is ApiResponse<T>;
 ### Import-Beispiele
 
 ```ts
-// apps/api/src/services/todoService.ts
-import type { Todo } from 'shared';
+// apps/api/src/services/chatService.ts
+import type { ChatMessage } from 'shared';
 
-// apps/web/src/components/TodoList.tsx
-import type { ApiResponse, Todo } from 'shared';
+// apps/web/src/components/Chat.tsx
+import type { ApiResponse, ChatMessage } from 'shared';
 ```
 
 > **Regel:** Keine lokalen Typ-Duplikate. Neue Typen/DTOs immer in `packages/shared`.
@@ -155,7 +150,7 @@ server {
 
   # Web-Static (Build-Output von apps/web)
   location / {
-    root /var/www/myapp/web/dist;
+    root /var/www/chat/web/dist;
     try_files $uri /index.html;
   }
 
