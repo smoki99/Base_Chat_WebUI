@@ -98,13 +98,15 @@ dieses Format und werden in der Web-App zur Typisierung der Fetch-Antworten verw
 
 ## apps/api – Struktur
 
-| Verzeichnis      | Zweck                                                  |
-| ---------------- | ------------------------------------------------------ |
-| `src/routes/`    | HTTP-Endpunkte: Routing, Request/Response, Validierung |
-| `src/services/`  | Business-Logik: rein, ohne HTTP-Abhängigkeiten         |
-| `src/app.ts`     | Express-App-Instanz (export für Tests)                 |
-| `src/index.ts`   | Server-Start (`app.listen`)                            |
-| `src/__tests__/` | Integrationstests (Vitest + Supertest)                 |
+| Verzeichnis               | Zweck                                                        |
+| ------------------------- | ------------------------------------------------------------ |
+| `src/routes/`             | HTTP-Endpunkte: Routing, Request/Response, Validierung       |
+| `src/services/`           | Business-Logik: rein, ohne HTTP-Abhängigkeiten               |
+| `src/services/providers/` | Chat-Provider-Implementierungen (`mock`, `openai`)           |
+| `src/config/`             | JSON-Konfiguration laden & validieren (`chatbot.rules.json`) |
+| `src/app.ts`              | Express-App-Instanz (export für Tests)                       |
+| `src/index.ts`            | Server-Start (`app.listen`)                                  |
+| `src/__tests__/`          | Integrationstests (Vitest + Supertest)                       |
 
 ## apps/web – Struktur
 

@@ -21,6 +21,8 @@ myapp/
 │   │   │   ├── index.ts      # Server-Start
 │   │   │   ├── routes/       # HTTP-Endpunkte
 │   │   │   ├── services/     # Business-Logik
+│   │   │   │   └── providers/ # Chat-Provider (mock, openai)
+│   │   │   ├── config/       # JSON-Konfiguration (chatbot.rules.json)
 │   │   │   └── __tests__/    # Supertest-Tests
 │   │   └── package.json
 │   └── web/                  # React + Vite Frontend
@@ -85,11 +87,16 @@ Danach:
 
 ### Environment-Variablen
 
-| Variable       | Beschreibung                                              | Default                 |
-| -------------- | --------------------------------------------------------- | ----------------------- |
-| `PORT`         | API-Port                                                  | `3001`                  |
-| `CORS_ORIGIN`  | Erlaubte CORS-Origin(s) für die API (prod), kommagetrennt | leer (alle)             |
-| `VITE_API_URL` | API-Basis-URL für das Web (prod)                          | `http://localhost:3001` |
+| Variable             | Beschreibung                                                                 | Default                 |
+| -------------------- | ---------------------------------------------------------------------------- | ----------------------- |
+| `PORT`               | API-Port                                                                     | `3001`                  |
+| `CORS_ORIGIN`        | Erlaubte CORS-Origin(s) für die API (prod), kommagetrennt                    | leer (alle)             |
+| `VITE_API_URL`       | API-Basis-URL für das Web (prod)                                             | `http://localhost:3001` |
+| `CHAT_PROVIDER`      | Aktiver Chat-Provider: `mock` oder `openai`                                  | `mock`                  |
+| `OPENAI_BASE_URL`    | Basis-URL für OpenAI-kompatible Endpunkte (z. B. `http://localhost:1234/v1`) | leer                    |
+| `OPENAI_API_KEY`     | API-Key (leer = kein Header, z. B. für lokale Modelle)                       | leer                    |
+| `OPENAI_MODEL`       | Modellname (z. B. `gpt-4o`, `llama3.1-8b`)                                   | leer                    |
+| `CHATBOT_RULES_FILE` | Pfad zur `chatbot.rules.json` (leer = eingebauter Default)                   | leer                    |
 
 > In der Entwicklung übernimmt der **Vite-Proxy** (`/api` → `localhost:3001`),
 > `VITE_API_URL` wird dann nicht benötigt.
@@ -120,13 +127,15 @@ Danach:
 
 ## API
 
-| Method   | Path             | Beschreibung       |
-| -------- | ---------------- | ------------------ |
-| `GET`    | `/health`        | Liveness-Check     |
-| `GET`    | `/api/todos`     | Alle Todos abrufen |
-| `POST`   | `/api/todos`     | Neues Todo anlegen |
-| `PATCH`  | `/api/todos/:id` | Todo aktualisieren |
-| `DELETE` | `/api/todos/:id` | Todo löschen       |
+| Method   | Path               | Beschreibung                      |
+| -------- | ------------------ | --------------------------------- |
+| `GET`    | `/health`          | Liveness-Check                    |
+| `GET`    | `/api/todos`       | Alle Todos abrufen                |
+| `POST`   | `/api/todos`       | Neues Todo anlegen                |
+| `PATCH`  | `/api/todos/:id`   | Todo aktualisieren                |
+| `DELETE` | `/api/todos/:id`   | Todo löschen                      |
+| `POST`   | `/api/chat`        | Chat-Nachricht an Provider senden |
+| `GET`    | `/api/chat/health` | Provider-Healthcheck              |
 
 → Vollständige Doku mit Request/Response-Beispielen: [`docs/API.md`](./docs/API.md)
 
