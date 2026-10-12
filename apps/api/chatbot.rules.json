@@ -1,0 +1,18 @@
+{
+  "keywords": [
+    { "keyword": "hallo", "responses": ["Hallo! Wie kann ich helfen?"] },
+    { "keyword": "guten tag", "responses": ["Hallo! Wie kann ich helfen?"] },
+    { "keyword": "guten morgen", "responses": ["Guten Morgen! Was kann ich für dich tun?"] },
+    { "keyword": "guten abend", "responses": ["Guten Abend! Wie kann ich helfen?"] },
+    { "keyword": "tshirt", "responses": ["Wir haben T-Shirts in S, M, L und XL."] },
+    { "keyword": "shirt", "responses": ["Wir haben T-Shirts in S, M, L und XL."] },
+    { "keyword": "bye", "responses": ["Auf Wiedersehen!", "Bis bald! 👋"] },
+    { "keyword": "tschüss", "responses": ["Auf Wiedersehen!", "Tschüss!"] },
+    { "keyword": "auf wiedersehen", "responses": ["Auf Wiedersehen!", "Bis dann!"] }
+  ],
+  "randomResponses": [
+    "Interesting! Tell me more. 🤖",
+    "Noted! (random mock answer #1)",
+    "I'm a mock bot, but I love small talk. (random mock answer #2)"
+  ]
+}
