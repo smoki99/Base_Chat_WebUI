@@ -251,3 +251,72 @@ body {
 .chat-composer .form-control {
   flex: 1;
 }
+
+/* --- Chat Typing Indicator --- */
+@keyframes typing-bounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-6px);
+  }
+}
+
+.chat-typing {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  align-self: flex-start;
+  padding: 0.55rem 0.9rem;
+  border-radius: 16px;
+  background: #f4f2fb;
+  box-shadow: var(--md-elev-1);
+  margin: 0.25rem;
+}
+
+.chat-typing-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.chat-typing-dots .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--md-primary);
+  animation: typing-bounce 1.2s ease-in-out infinite;
+}
+
+.chat-typing-dots .dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.chat-typing-dots .dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.chat-typing-label {
+  font-size: 0.8rem;
+  color: var(--md-outline);
+}
+
+/* --- Chat Message Status --- */
+.chat-status {
+  font-weight: 600;
+  margin-left: 0.15rem;
+}
+
+.chat-status--error {
+  color: #d32f2f;
+}
+
+.chat-msg--sending {
+  opacity: 0.7;
+}
+
+.chat-msg--error {
+  outline: 2px solid #d32f2f;
+  outline-offset: 1px;
+}

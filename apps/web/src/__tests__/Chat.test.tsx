@@ -9,6 +9,27 @@ function mockApi(payload: unknown) {
     .mockResolvedValue({ ok: true, json: async () => payload } as unknown as Response);
 }
 
+/** Returns a mock fetch that can be resolved manually (for async state tests). */
+function mockApiDeferred() {
+  let resolveFn: (value: unknown) => void;
+  const promise = new Promise((resolve) => {
+    resolveFn = resolve;
+  });
+
+  const spy = vi.spyOn(globalThis, 'fetch').mockReturnValue(
+    new Promise<Response>((resolve) => {
+      promise.then((payload) =>
+        resolve({ ok: true, json: async () => payload } as unknown as Response)
+      );
+    })
+  );
+
+  return {
+    spy,
+    resolve: (payload: unknown) => resolveFn!(payload),
+  };
+}
+
 afterEach(() => {
   vi.restoreAllMocks();
 });
@@ -56,5 +77,56 @@ describe('Chat', () => {
     await user.click(screen.getByRole('button', { name: 'Senden' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Serverfehler');
+  });
+
+  test('shows the typing indicator while waiting for the assistant reply', async () => {
+    const { resolve } = mockApiDeferred();
+    const user = userEvent.setup();
+    render(<Chat />);
+
+    await user.type(screen.getByRole('textbox'), 'Hallo');
+    await user.click(screen.getByRole('button', { name: 'Senden' }));
+
+    // Typing indicator should be visible while the request is in flight
+    expect(screen.getByText('Bot schreibt …')).toBeInTheDocument();
+
+    // Resolve the deferred response
+    resolve({ data: { id: 'r1', content: 'Hallo zurück!' } });
+    expect(await screen.findByText('Hallo zurück!')).toBeInTheDocument();
+
+    // Typing indicator should be gone after the response arrives
+    expect(screen.queryByText('Bot schreibt …')).not.toBeInTheDocument();
+  });
+
+  test('shows a sending indicator on the user message while the request is in flight', async () => {
+    const { resolve } = mockApiDeferred();
+    const user = userEvent.setup();
+    render(<Chat />);
+
+    await user.type(screen.getByRole('textbox'), 'Hallo');
+    await user.click(screen.getByRole('button', { name: 'Senden' }));
+
+    // While sending, the user message should have a sending indicator
+    expect(screen.getByLabelText('Wird gesendet')).toBeInTheDocument();
+
+    resolve({ data: { id: 'r1', content: 'Ok!' } });
+    await screen.findByText('Ok!');
+
+    // After success, the sending indicator should be gone
+    expect(screen.queryByLabelText('Wird gesendet')).not.toBeInTheDocument();
+  });
+
+  test('shows an error indicator on the user message when the request fails', async () => {
+    mockApi({ error: { message: 'Netzwerkfehler' } });
+    const user = userEvent.setup();
+    render(<Chat />);
+
+    await user.type(screen.getByRole('textbox'), 'Hallo');
+    await user.click(screen.getByRole('button', { name: 'Senden' }));
+
+    // Error indicator on the user message
+    expect(await screen.findByLabelText('Sendefehler')).toBeInTheDocument();
+    // Alert banner with the error message
+    expect(screen.getByRole('alert')).toHaveTextContent('Netzwerkfehler');
   });
 });
