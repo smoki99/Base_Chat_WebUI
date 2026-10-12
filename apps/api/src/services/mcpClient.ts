@@ -136,10 +136,10 @@ async function connectMcpServer(config: McpServerConfig): Promise<McpConnection>
     tools,
     async callTool(name: string, args: Record<string, unknown>): Promise<string> {
       const result = (await sendRequest('tools/call', { name, arguments: args })) as {
-        content?: Array<{ type: string; text?: string }>;
+        content?: Array<{ type: string; text?: string; resource?: { text?: string } }>;
       };
-      const text = result?.content?.map((c) => c.text ?? '').join('\n');
-      return text ?? '(no output)';
+      const text = result?.content?.map((c) => c.text ?? c.resource?.text ?? '').join('\n');
+      return text || '(no output)';
     },
     close: () => {
       pending.forEach((p) => p.reject(new Error('MCP connection closed')));

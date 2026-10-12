@@ -106,7 +106,9 @@ export function createOpenAIProvider(options: OpenAIProviderOptions = {}): ChatP
     while (choice?.message?.tool_calls?.length && round < 3) {
       round++;
       for (const toolCall of choice.message.tool_calls) {
-        console.log(`[openai] Tool call (round ${round}): ${toolCall.function.name}`);
+        console.log(
+          `[openai] Tool call (round ${round}): ${toolCall.function.name} args=${toolCall.function.arguments}`
+        );
         let result: string;
         try {
           result = await executeToolCall(toolCall, replyOpts?.toolHandlers);
@@ -127,6 +129,10 @@ export function createOpenAIProvider(options: OpenAIProviderOptions = {}): ChatP
     const toolFallback = lastToolResults.filter((r) => r.trim()).join('\n\n');
     const finalContent = (content && content.trim()) || toolFallback;
     if (!finalContent) {
+      console.log(
+        `[openai] DEBUG: content=${JSON.stringify(content)}, ` +
+          `lastToolResults=${JSON.stringify(lastToolResults.map((r) => r.length))}`
+      );
       throw new Error(`LLM API returned no content after ${round} tool round(s)`);
     }
     return { json, content: finalContent };
