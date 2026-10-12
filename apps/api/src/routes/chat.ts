@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { chatService } from '../services/chatService';
 import type { HealthStatus } from '../types/chat';
+import type { ChatResponse } from 'shared';
 
 export const chatRouter = Router();
 
@@ -33,8 +34,7 @@ chatRouter.get('/api/chat/health', async (_req, res) => {
 });
 
 // POST /api/chat – send a user message, get a bot reply.
-// Body parsing is handled globally in app.ts (express.json, 10kb limit),
-// consistent with the todos router.
+// Body parsing is handled globally in app.ts (express.json, 10kb limit).
 chatRouter.post('/api/chat', async (req, res, next) => {
   const message = (req.body as { message?: unknown })?.message;
   if (typeof message !== 'string' || message.trim().length === 0) {
@@ -48,7 +48,7 @@ chatRouter.post('/api/chat', async (req, res, next) => {
   }
   try {
     const reply = await chatService.respond(trimmed);
-    res.status(201).json({ data: reply });
+    res.status(201).json({ data: reply } satisfies ChatResponse);
   } catch (error) {
     next(error);
   }

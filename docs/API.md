@@ -20,115 +20,6 @@ Liveness-Probe – prüft, ob die API erreichbar ist.
 
 ---
 
-### GET /api/todos
-
-Listet alle Todos auf.
-
-**Response `200`**
-
-```json
-{
-  "data": [
-    { "id": 1, "title": "Einkaufen", "done": false },
-    { "id": 2, "title": "Code review", "done": true }
-  ]
-}
-```
-
----
-
-### POST /api/todos
-
-Legt ein neues Todo an.
-
-**Request-Body**
-
-| Feld    | Typ    | Pflicht | Beschreibung       |
-| ------- | ------ | ------- | ------------------ |
-| `title` | string | ✅      | Titel (nicht leer) |
-
-```json
-{ "title": "Einkaufen" }
-```
-
-**Response `201`**
-
-```json
-{ "data": { "id": 3, "title": "Einkaufen", "done": false } }
-```
-
-**Fehler**
-
-| Status | Körper                                                      | Bedingung                            |
-| ------ | ----------------------------------------------------------- | ------------------------------------ |
-| `400`  | `{ "error": { "message": "Title darf nicht leer sein." } }` | `title` fehlt, leer oder kein String |
-
----
-
-### PATCH /api/todos/:id
-
-Aktualisiert ein bestehendes Todo (Titel und/oder `done`-Flag).
-
-**Path-Parameter**
-
-| Parameter | Typ    | Beschreibung |
-| --------- | ------ | ------------ |
-| `id`      | number | ID des Todos |
-
-**Request-Body** (mindestens ein Feld)
-
-| Feld    | Typ     | Beschreibung      |
-| ------- | ------- | ----------------- |
-| `title` | string  | Neuer Titel       |
-| `done`  | boolean | Fertig-Markierung |
-
-```json
-{ "done": true }
-```
-
-```json
-{ "title": "Umformuliert", "done": false }
-```
-
-**Response `200`**
-
-```json
-{ "data": { "id": 3, "title": "Einkaufen", "done": true } }
-```
-
-**Fehler**
-
-| Status | Körper                                                           | Bedingung                     |
-| ------ | ---------------------------------------------------------------- | ----------------------------- |
-| `400`  | `{ "error": { "message": "Invalid request body" } }`             | Body leer oder ungültige ID   |
-| `400`  | `{ "error": { "message": "Title darf nicht leer sein." } }`      | `title` leer oder kein String |
-| `400`  | `{ "error": { "message": "Done muss ein boolean Wert sein." } }` | `done` kein Boolean           |
-| `404`  | `{ "error": { "message": "Not found" } }`                        | Todo mit ID existiert nicht   |
-
----
-
-### DELETE /api/todos/:id
-
-Löscht ein Todo.
-
-**Path-Parameter**
-
-| Parameter | Typ    | Beschreibung |
-| --------- | ------ | ------------ |
-| `id`      | number | ID des Todos |
-
-**Response `204`** – kein Body.
-
-**Fehler**
-
-| Status | Körper                                    | Bedingung            |
-| ------ | ----------------------------------------- | -------------------- |
-| `404`  | `{ "error": { "message": "Not found" } }` | Todo existiert nicht |
-
----
-
-## Chat
-
 ### POST /api/chat
 
 Sendet eine Chat-Nachricht an den aktiven Provider.
@@ -213,14 +104,11 @@ Alle Fehlerantworten folgen demselben Schema:
 
 ## Typ-Referenz (packages/shared)
 
-| Typ              | Definition                                     |
-| ---------------- | ---------------------------------------------- |
-| `Todo`           | `{ id: number; title: string; done: boolean }` |
-| `CreateTodo`     | `{ title: string }`                            |
-| `UpdateTodo`     | `{ title?: string; done?: boolean }`           |
-| `ApiResponse<T>` | `{ data: T }`                                  |
-| `ApiError`       | `{ error: { message: string } }`               |
-| `ApiResult<T>`   | `ApiResponse<T> \| ApiError`                   |
+| Typ              | Definition                       |
+| ---------------- | -------------------------------- |
+| `ApiResponse<T>` | `{ data: T }`                    |
+| `ApiError`       | `{ error: { message: string } }` |
+| `ApiResult<T>`   | `ApiResponse<T> \| ApiError`     |
 
 > Quelle: `packages/shared/src/index.ts`
 

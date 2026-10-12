@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import type { ChatMessage as WireChatMessage } from 'shared';
 
 export interface ChatMessage {
   id: string;
@@ -8,7 +9,7 @@ export interface ChatMessage {
 }
 
 interface ChatApiResponse {
-  data?: { id: string; content: string };
+  data?: WireChatMessage;
   error?: { message: string };
 }
 

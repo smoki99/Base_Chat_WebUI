@@ -1,10 +1,8 @@
 // Chat message returned by the chat provider (API → client).
-// Kept API-internal (apps/api/src/types) because it is a transport DTO,
-// not a domain type shared with the client — the client mirrors it locally.
-export interface ChatMessage {
-  id: string;
-  content: string;
-}
+// `ChatMessage` is the shared wire DTO – single source of truth in packages/shared.
+import type { ChatMessage } from 'shared';
+
+export type { ChatMessage };
 
 // Health status returned by a provider's healthCheck.
 export interface HealthStatus {

@@ -1,22 +1,5 @@
 /** Shared types and DTOs for all workspaces. */
 
-export interface Todo {
-  id: number;
-  title: string;
-  done: boolean;
-}
-
-/** Payload for creating a todo. */
-export interface CreateTodo {
-  title: string;
-}
-
-/** Payload for updating a todo (partial). */
-export interface UpdateTodo {
-  title?: string;
-  done?: boolean;
-}
-
 export interface ApiResponse<T> {
   data: T;
 }
@@ -36,3 +19,10 @@ export function isApiError<T>(result: ApiResult<T>): result is ApiError {
 export function isApiSuccess<T>(result: ApiResult<T>): result is ApiResponse<T> {
   return 'data' in result;
 }
+
+export interface ChatMessage {
+  id: string;
+  content: string;
+}
+
+export type ChatResponse = ApiResponse<ChatMessage>;

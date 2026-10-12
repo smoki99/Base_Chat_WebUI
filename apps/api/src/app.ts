@@ -3,7 +3,6 @@ import express, { type NextFunction, type Request, type Response } from 'express
 import cors from 'cors';
 import helmet from 'helmet';
 import { healthRouter } from './routes/health';
-import { todoRouter } from './routes/todos';
 import { chatRouter } from './routes/chat';
 
 const app = express();
@@ -37,7 +36,6 @@ app.use(
 
 app.use(express.json());
 app.use(healthRouter);
-app.use(todoRouter);
 app.use(chatRouter);
 
 // 404 – unknown route returns ApiError shape
