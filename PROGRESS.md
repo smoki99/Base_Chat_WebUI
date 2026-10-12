@@ -44,7 +44,7 @@ hinter dem `ChatProvider`-Interface stehen zwei Implementierungen, wählbar
 
 ## Offene Punkte / Nächste Schritte
 
-- [ ] `openai`-Provider gegen lokale LLM-Endpunkte (LM Studio / Ollama) mit
-      echtem `.env` durchtesten.
+- [x] `openai`-Provider gegen lokale LLM-Endpunkte (LM Studio / Ollama) mit
+      echtem `.env` durchtesten. → `npm run dev:lmstudio` (Story-0028)
 - [ ] Conversations-Verlauf / Session-Persistenz (optional).
 - [ ] `README.md` und `docs/DECISIONS.md` konsistent auf den Chat-Status prüfen.

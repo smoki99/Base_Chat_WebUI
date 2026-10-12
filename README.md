@@ -114,6 +114,7 @@ Danach:
 | -------------------------- | -------------------------------------------------------------------------------- |
 | `npm run check`            | **Alle 4 Gates** (typecheck + lint + test + build) – bricht bei erstem Fehler ab |
 | `npm run dev`              | Web + API parallel starten (concurrently)                                        |
+| `npm run dev:lmstudio`     | Web + API mit Live-LLM starten (LM Studio auf `localhost:1234`)                  |
 | `npm run build`            | Alle Workspaces bauen                                                            |
 | `npm run lint`             | ESLint auf allen Workspaces                                                      |
 | `npm run test`             | Unit-Tests in allen Workspaces (Vitest)                                          |
