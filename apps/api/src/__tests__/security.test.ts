@@ -23,8 +23,8 @@ describe('Security headers (helmet)', () => {
     expect(res.headers['x-powered-by']).toBeUndefined();
   });
 
-  it('responds with security headers on GET /api/todos', async () => {
-    const res = await request(app).get('/api/todos');
+  it('responds with security headers on POST /api/chat', async () => {
+    const res = await request(app).post('/api/chat').send({ message: 'hello' });
     expect(res.headers['x-content-type-options']).toBe('nosniff');
     expect(res.headers['referrer-policy']).toBe('no-referrer');
   });

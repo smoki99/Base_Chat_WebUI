@@ -33,8 +33,7 @@ chatRouter.get('/api/chat/health', async (_req, res) => {
 });
 
 // POST /api/chat – send a user message, get a bot reply.
-// Body parsing is handled globally in app.ts (express.json, 10kb limit),
-// consistent with the todos router.
+// Body parsing is handled globally in app.ts (express.json, 10kb limit).
 chatRouter.post('/api/chat', async (req, res, next) => {
   const message = (req.body as { message?: unknown })?.message;
   if (typeof message !== 'string' || message.trim().length === 0) {
