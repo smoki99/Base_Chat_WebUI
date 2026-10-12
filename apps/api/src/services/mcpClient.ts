@@ -81,6 +81,12 @@ async function connectMcpServer(config: McpServerConfig): Promise<McpConnection>
     if (text) console.warn(`[mcp:${config.name}]`, text);
   });
 
+  // If the child process exits, reject all pending requests immediately.
+  child.on('exit', (code) => {
+    pending.forEach((p) => p.reject(new Error(`MCP server exited (code ${code})`)));
+    pending.clear();
+  });
+
   function sendRequest(method: string, params?: Record<string, unknown>): Promise<unknown> {
     const id = nextId++;
     const payload: JsonRpcRequest = { jsonrpc: '2.0', id, method, ...(params ? { params } : {}) };

@@ -5,11 +5,15 @@ import { initializeMcp, chatService } from './services/chatService';
 const port = Number(process.env.PORT) || 3001;
 
 async function start() {
-  // Initialize MCP connections (no-op if no mcp-config.json found).
-  await initializeMcp();
-
+  // Start the API server immediately – MCP init runs in the background.
   app.listen(port, () => {
     console.log(`API running on http://localhost:${port}`);
+  });
+
+  // Initialize MCP connections in the background (non-blocking).
+  // If MCP fails (e.g. missing directory on CI), the API still works.
+  initializeMcp().catch((err) => {
+    console.warn('[mcp] Initialization failed (non-fatal):', err);
   });
 }
 
