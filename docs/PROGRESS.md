@@ -29,8 +29,35 @@ getestet (Unit + E2E) und CI- grün.
 | 13  | UX: Material-Toast (Erfolg/Fehler)                            | ✅     |
 | 14  | Web-Tests: neue States (Skeleton, Empty, Error, Toast, Retry) | ✅     |
 | 15  | Full-Chain final (typecheck/lint/test/e2e)                    | ✅     |
+| 16  | Chat-Mock-API (`POST /api/chat` + `ChatProvider`)             | ✅     |
+| 17  | Chat: Keyword-Regeln (Gruß/T-Shirt/Verabschiedung) + Tests    | ✅     |
 
 ## Changelog
+
+### 2026-12-10 — Chat-Keyword-Regeln (Mock-Provider)
+
+- **API**: `chatService` antwortet jetzt keyword-basiert statt nur Echo:
+  - **Gruß** (`hallo`, `guten tag`, `guten morgen`, `guten abend`) →
+    „Hallo! Wie kann ich helfen?“
+  - **T-Shirt** (`tshirt`, `shirt`) → „Wir haben T-Shirts in S, M, L und XL.“
+  - **Verabschiedung** (`bye`, `tschüss`, `auf wiedersehen`) → „Auf Wiedersehen!“
+  - Keine Treffer → Echo-Fallback (`Echo: <message>`), Verhalten unverändert.
+- **Matching**: case-insensitive, normalisiert (lowercase + Whitespace-Collapse),
+  erstes treffendes Keyword gewinnt. Regeln in `KEYWORD_RULES` pflegbar.
+- **Tests (TDD)**: 5 neue API-Tests (Gruß, Case-Insensitivity, T-Shirt,
+  Verabschiedung, Fallback); `chatService.ts` bei 100% Coverage.
+- **Status**: `npm run check` grün (41 API + Web-Tests, Build OK).
+
+### 2026-12-10 — Chat-Mock-API (Story-0001)
+
+- **API**: `POST /api/chat` – Mock-Endpoint mit Echo-Reply + 250 ms Latenz
+  (beobachtbarer Loading-State). Validiert `message` (string, non-empty) →
+  201 `{ data: ChatMessage }`; fehlend/leer/nicht-String → 400.
+- **`apps/api`**: `ChatMessage`-Typ (API-intern in `src/types/chat.ts`, bewusst
+  nicht in `packages/shared`, da noch kein Client-Konsum) + `chatService`
+  (Mock-Provider hinter `ChatProvider`-Interface) + `chatRouter` in `app.ts` eingebunden.
+- **Tests**: 5 API-Tests für `POST /api/chat` (201-Reply, Echo, 400-Validierung).
+- **Status**: `npm run check` grün (36 API + 29 Web Tests, Build OK).
 
 ### 2026-10-11 — UX-States (Skeleton, Empty, Error+Retry, Toast)
 
