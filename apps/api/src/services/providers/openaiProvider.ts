@@ -100,12 +100,11 @@ export function createOpenAIProvider(options: OpenAIProviderOptions = {}): ChatP
     let json = await fetchChat(body, signal);
     let choice = json.choices?.[0];
     let content = choice?.message?.content;
-    let lastToolResults: string[] = [];
+    const lastToolResults: string[] = [];
 
     let round = 0;
     while (choice?.message?.tool_calls?.length && round < 3) {
       round++;
-      lastToolResults = [];
       for (const toolCall of choice.message.tool_calls) {
         console.log(`[openai] Tool call (round ${round}): ${toolCall.function.name}`);
         let result: string;
@@ -125,9 +124,8 @@ export function createOpenAIProvider(options: OpenAIProviderOptions = {}): ChatP
       content = choice?.message?.content;
     }
     // Fallback: LLM produced no text (null or empty) but tools returned useful results.
-    const finalContent =
-      (content && content.trim()) ||
-      (lastToolResults.length > 0 ? lastToolResults.join('\n\n') : '');
+    const toolFallback = lastToolResults.filter((r) => r.trim()).join('\n\n');
+    const finalContent = (content && content.trim()) || toolFallback;
     if (!finalContent) {
       throw new Error(`LLM API returned no content after ${round} tool round(s)`);
     }
