@@ -100,11 +100,14 @@ export function createOpenAIProvider(options: OpenAIProviderOptions = {}): ChatP
     let json = await fetchChat(body, signal);
     let choice = json.choices?.[0];
     let content = choice?.message?.content;
+    let lastToolResults: string[] = [];
 
     let round = 0;
     while (choice?.message?.tool_calls?.length && round < 3) {
       round++;
+      lastToolResults = [];
       for (const toolCall of choice.message.tool_calls) {
+        console.log(`[openai] Tool call (round ${round}): ${toolCall.function.name}`);
         let result: string;
         try {
           result = await executeToolCall(toolCall, replyOpts?.toolHandlers);
@@ -113,13 +116,21 @@ export function createOpenAIProvider(options: OpenAIProviderOptions = {}): ChatP
             toolErr instanceof Error ? toolErr.message : String(toolErr)
           }`;
         }
+        console.log(`[openai] Tool result (${toolCall.function.name}): ${result.length} chars`);
+        lastToolResults.push(result);
         messages.push({ role: 'tool', tool_call_id: toolCall.id, content: result });
       }
       json = await fetchChat({ ...body, messages }, signal);
       choice = json.choices?.[0];
       content = choice?.message?.content;
     }
-    return { json, content: content ?? '' };
+    // Fallback: LLM produced no text but tools returned useful results.
+    const finalContent =
+      content ?? (lastToolResults.length > 0 ? lastToolResults.join('\n\n') : '');
+    if (!finalContent) {
+      throw new Error(`LLM API returned no content after ${round} tool round(s)`);
+    }
+    return { json, content: finalContent };
   }
 
   return {
@@ -154,7 +165,6 @@ export function createOpenAIProvider(options: OpenAIProviderOptions = {}): ChatP
         }
 
         const { json, content } = await runToolLoop(body, messages, replyOpts, controller.signal);
-        if (!content) throw new Error('LLM API returned an empty response');
         return { id: json.id ?? `llm-${Date.now()}`, content };
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
