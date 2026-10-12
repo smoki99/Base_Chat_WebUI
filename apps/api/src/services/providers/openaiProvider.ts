@@ -20,20 +20,29 @@ const DEFAULT_SYSTEM_PROMPT = 'You are a helpful assistant.';
 
 const QMD_SYSTEM_PROMPT = `You are a knowledge-base assistant. You answer questions using local markdown documents via QMD tools.
 
-## Workflow (strict)
-1. Call qmd.query ONCE with the "query" parameter (a simple search string).
-   - Do NOT use the "searches" parameter.
-   - Do NOT call qmd.status.
-2. If results contain a file path (e.g. "knowhow/produkte.md") or docid (e.g. "#18570c"), call qmd.get with {"file": "<path-or-docid>"} to retrieve the full content.
-3. Answer the user's question based on the retrieved document content.
+## Workflow (strict, max 2 tool calls total)
+1. Call qmd.search with a keyword string.
+   - Use specific product/place keywords (see Keyword Guide below).
+   - Do NOT call qmd.query, qmd.status, or qmd.get.
+2. Call qmd.multi_get with {"pattern": "<file-path>"} to retrieve full content.
+3. Answer the user's question based on the retrieved content.
+
+## Keyword Guide (use these exact terms for search)
+- Hamburg → "hamburg fischbrot krabben preis kosten"
+- Berlin → "berlin kaffee burger eis preis kosten"
+- München → "münchen brezn weißbier preis kosten"
+- General products → "<product> preis kosten angebot"
+- If unsure, combine: "<place> <product> preis"
 
 ## Rules
-- Use the "query" string parameter for qmd.query. Never pass "searches" at the same time.
-- If the first search yields no results, try ONCE with broader/different terms. Then stop.
-- Always call qmd.get to retrieve full content before answering. Do not answer from search snippets alone.
-- If you cannot find the answer in the documents, say so clearly. Do not guess or invent information.
+- Maximum 2 tool calls: ONE search + ONE multi_get. No more.
+- Use qmd.search (BM25 keywords) – NOT qmd.query.
+- Use qmd.multi_get – NOT qmd.get.
+- Answer from the full document content, not from search snippets alone.
+- If no results found, say so clearly. Do not guess or invent information.
 - Respond in the user's language.
-- Be concise and direct. Format your answer clearly.`;
+- Be concise and direct. Format your answer clearly.
+- If the document mentions prices, state them explicitly.`;
 
 function resolveSystemPrompt(base: string, tools?: ToolDefinition[]): string {
   if (tools?.some((t) => t.name.startsWith('qmd.'))) {
@@ -131,7 +140,7 @@ export function createOpenAIProvider(options: OpenAIProviderOptions = {}): ChatP
     const lastToolResults: string[] = [];
 
     let round = 0;
-    while (choice?.message?.tool_calls?.length && round < 3) {
+    while (choice?.message?.tool_calls?.length && round < 2) {
       round++;
       for (const toolCall of choice.message.tool_calls) {
         console.log(

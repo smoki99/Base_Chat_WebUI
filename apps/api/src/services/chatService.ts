@@ -63,9 +63,16 @@ export const chatService = {
   async respond(message: string): Promise<ChatMessage> {
     const options: ReplyOptions = {};
     if (mcpContext && mcpContext.allTools.length > 0) {
-      // Filter out tools that confuse the LLM (e.g. qmd.status)
-      const filteredTools = mcpContext.allTools.filter((t) => !t.name.includes('.status'));
-      options.tools = filteredTools;
+      // Only expose fast, reliable QMD tools: search (BM25) + multi_get.
+      // Excluded: qmd.get (returns 0 chars), qmd.query (slow LLM expansion), qmd.status.
+      const allowedTools = new Set(['qmd.search', 'qmd.multi_get']);
+      const filteredTools = mcpContext.allTools.filter((t) => allowedTools.has(t.name));
+      if (filteredTools.length === 0) {
+        // No QMD tools matched – fall back to all non-status tools
+        options.tools = mcpContext.allTools.filter((t) => !t.name.includes('.status'));
+      } else {
+        options.tools = filteredTools;
+      }
       options.toolHandlers = mcpContext.toolHandlers;
     }
     return getProvider().reply(message, options);
