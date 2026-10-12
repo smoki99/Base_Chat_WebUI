@@ -68,7 +68,7 @@ describe('createOpenAIProvider', () => {
 
     const provider = createOpenAIProvider({ baseUrl: 'http://localhost:1234/v1' });
 
-    await expect(provider.reply('test')).rejects.toThrow('empty response');
+    await expect(provider.reply('test')).rejects.toThrow(/no content after 0 tool round/);
   });
 
   it('healthCheck returns healthy when the endpoint is reachable', async () => {
@@ -95,6 +95,91 @@ describe('createOpenAIProvider', () => {
     const health = await provider.healthCheck!();
     expect(health.status).toBe('unhealthy');
     expect(health.detail).toContain('ECONNREFUSED');
+  });
+
+  it('falls back to tool results when LLM returns null content after tool call', async () => {
+    // First response: LLM wants to call a tool
+    const toolCallResponse = {
+      id: 'chat-tool-1',
+      choices: [
+        {
+          message: {
+            role: 'assistant',
+            content: null,
+            tool_calls: [
+              {
+                id: 'call_abc',
+                type: 'function',
+                function: { name: 'qmd.query', arguments: '{"query":"Hamburg Produkte"}' },
+              },
+            ],
+          },
+          finish_reason: 'tool_calls',
+        },
+      ],
+    };
+    // Second response: LLM returns null content (can't synthesize)
+    const nullContentResponse = {
+      id: 'chat-tool-2',
+      choices: [{ message: { role: 'assistant', content: null } }],
+    };
+
+    vi.spyOn(global, 'fetch')
+      .mockResolvedValueOnce(mockFetchResponse(200, toolCallResponse) as Response)
+      .mockResolvedValueOnce(mockFetchResponse(200, nullContentResponse) as Response);
+
+    const toolHandler = vi.fn().mockResolvedValue('Found: Hamburg Produkt A, Produkt B');
+    const provider = createOpenAIProvider({ baseUrl: 'http://localhost:1234/v1' });
+
+    const result = await provider.reply('Hamburg was kann ich da kaufen?', {
+      tools: [{ name: 'qmd.query', description: 'Search', parameters: {} }],
+      toolHandlers: new Map([['qmd.query', toolHandler]]),
+    });
+
+    // The tool result is used as fallback content
+    expect(result.content).toBe('Found: Hamburg Produkt A, Produkt B');
+    expect(toolHandler).toHaveBeenCalledWith({ query: 'Hamburg Produkte' });
+  });
+
+  it('returns LLM content normally when tool is called and LLM synthesizes a response', async () => {
+    const toolCallResponse = {
+      id: 'chat-tool-3',
+      choices: [
+        {
+          message: {
+            role: 'assistant',
+            content: null,
+            tool_calls: [
+              {
+                id: 'call_xyz',
+                type: 'function',
+                function: { name: 'qmd.query', arguments: '{"query":"test"}' },
+              },
+            ],
+          },
+          finish_reason: 'tool_calls',
+        },
+      ],
+    };
+    const synthesizedResponse = {
+      id: 'chat-tool-4',
+      choices: [{ message: { role: 'assistant', content: 'Hier sind die Ergebnisse...' } }],
+    };
+
+    vi.spyOn(global, 'fetch')
+      .mockResolvedValueOnce(mockFetchResponse(200, toolCallResponse) as Response)
+      .mockResolvedValueOnce(mockFetchResponse(200, synthesizedResponse) as Response);
+
+    const toolHandler = vi.fn().mockResolvedValue('raw tool data');
+    const provider = createOpenAIProvider({ baseUrl: 'http://localhost:1234/v1' });
+
+    const result = await provider.reply('test query', {
+      tools: [{ name: 'qmd.query', description: 'Search', parameters: {} }],
+      toolHandlers: new Map([['qmd.query', toolHandler]]),
+    });
+
+    // LLM synthesized content is preferred over raw tool result
+    expect(result.content).toBe('Hier sind die Ergebnisse...');
   });
 
   it('uses default baseUrl (LM Studio) when not configured', () => {
