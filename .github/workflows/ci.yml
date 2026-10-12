@@ -41,6 +41,7 @@ jobs:
       - run: npx knip
       - run: npm run depcheck
       - run: npm run pkg:validate
+      - run: npm run qmd:setup -w api
       - run: npm test
       - run: npm run build
       - run: npm run size

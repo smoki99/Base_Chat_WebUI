@@ -27,6 +27,7 @@ export default defineConfig({
       url: 'http://localhost:3001/health',
       reuseExistingServer: !process.env.CI,
       timeout: 30_000,
+      env: { ...process.env, CHAT_PROVIDER: 'mock' },
     },
     {
       command: 'npm run dev -w web',

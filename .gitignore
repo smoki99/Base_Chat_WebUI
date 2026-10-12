@@ -1,6 +1,7 @@
 node_modules/
 dist/
 build/
+.qmd/
 .env
 .env.*
 !.env.example
