@@ -1,5 +1,39 @@
 import type { ChatMessage, ChatProvider } from '../types/chat';
 
+// Canned keyword replies for the mock provider. Matching is a case-insensitive
+// substring check on the normalized message; the first matching rule wins.
+// Keep the most specific keywords first if a message could hit several rules.
+interface KeywordRule {
+  keyword: string;
+  response: string;
+}
+
+const GREETING_REPLY = 'Hallo! Wie kann ich helfen?';
+const TSHIRT_REPLY = 'Wir haben T-Shirts in S, M, L und XL.';
+const FAREWELL_REPLY = 'Auf Wiedersehen!';
+
+const KEYWORD_RULES: readonly KeywordRule[] = [
+  { keyword: 'hallo', response: GREETING_REPLY },
+  { keyword: 'guten tag', response: GREETING_REPLY },
+  { keyword: 'guten morgen', response: GREETING_REPLY },
+  { keyword: 'guten abend', response: GREETING_REPLY },
+  { keyword: 'tshirt', response: TSHIRT_REPLY },
+  { keyword: 'shirt', response: TSHIRT_REPLY },
+  { keyword: 'bye', response: FAREWELL_REPLY },
+  { keyword: 'tschüss', response: FAREWELL_REPLY },
+  { keyword: 'auf wiedersehen', response: FAREWELL_REPLY },
+];
+
+// Normalize for matching: lowercase + collapsed whitespace.
+function normalize(text: string): string {
+  return text.toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+function matchKeyword(message: string): string | undefined {
+  const normalized = normalize(message);
+  return KEYWORD_RULES.find((rule) => normalized.includes(rule.keyword))?.response;
+}
+
 // Mock provider: deterministic, dependency-free reply.
 // Swappable behind the ChatProvider interface (e.g. a real LLM adapter).
 const mockProvider: ChatProvider = {
@@ -10,7 +44,8 @@ const mockProvider: ChatProvider = {
     await new Promise((resolve) => setTimeout(resolve, 250));
     return {
       id: `mock-msg-${Date.now()}`,
-      content: `Echo: ${message}`,
+      // Keyword rules first, echo as the default fallback.
+      content: matchKeyword(message) ?? `Echo: ${message}`,
     };
   },
 };

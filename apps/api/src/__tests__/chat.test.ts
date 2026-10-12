@@ -34,4 +34,32 @@ describe('POST /api/chat', () => {
     expect(res.status).toBe(400);
     expect(res.body).toHaveProperty('error');
   });
+
+  it('answers the greeting keyword with the canned reply', async () => {
+    const res = await request(app).post('/api/chat').send({ message: 'Guten Tag' });
+    expect(res.status).toBe(201);
+    expect(res.body.data.content).toBe('Hallo! Wie kann ich helfen?');
+  });
+
+  it('matches keywords case-insensitively', async () => {
+    const res = await request(app).post('/api/chat').send({ message: 'GUTEN TAG!' });
+    expect(res.body.data.content).toBe('Hallo! Wie kann ich helfen?');
+  });
+
+  it('answers the t-shirt keyword with the size info', async () => {
+    const res = await request(app)
+      .post('/api/chat')
+      .send({ message: 'Welche Größen hast du fürs TShirt?' });
+    expect(res.body.data.content).toBe('Wir haben T-Shirts in S, M, L und XL.');
+  });
+
+  it('answers the farewell keyword with a goodbye', async () => {
+    const res = await request(app).post('/api/chat').send({ message: 'Bye Bye' });
+    expect(res.body.data.content).toBe('Auf Wiedersehen!');
+  });
+
+  it('falls back to the echo when no keyword matches', async () => {
+    const res = await request(app).post('/api/chat').send({ message: 'Was gibt es Neues?' });
+    expect(res.body.data.content).toBe('Echo: Was gibt es Neues?');
+  });
 });
