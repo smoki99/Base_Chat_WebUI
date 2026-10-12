@@ -6,10 +6,18 @@ export interface ChatMessage {
   content: string;
 }
 
+// Health status returned by a provider's healthCheck.
+export interface HealthStatus {
+  status: 'healthy' | 'unhealthy';
+  detail?: string;
+}
+
 // A chat provider produces a reply for a given user message.
 // The Mock provider ships now; a real LLM provider plugs in behind the same
 // interface without touching the route or the client.
 export interface ChatProvider {
   name: string;
   reply(message: string): Promise<ChatMessage>;
+  /** Optional connectivity check – returns a HealthStatus. */
+  healthCheck?(): Promise<HealthStatus>;
 }
