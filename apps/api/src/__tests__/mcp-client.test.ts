@@ -10,6 +10,7 @@ interface FakeChild {
   stderr: EventEmitter;
   stdin: { write: WriteFn };
   kill: ReturnType<typeof vi.fn>;
+  on: (event: string, handler: (...args: unknown[]) => void) => FakeChild;
 }
 
 function createFakeMcpServer(options?: {
@@ -77,7 +78,14 @@ function createFakeMcpServer(options?: {
     }
   };
 
-  return { stdout, stderr, stdin: { write: stdinWrite }, kill: vi.fn() };
+  const self = {
+    stdout,
+    stderr,
+    stdin: { write: stdinWrite },
+    kill: vi.fn(),
+    on: (_event: string, _handler: (...args: unknown[]) => void) => self,
+  } as FakeChild;
+  return self;
 }
 
 vi.mock('node:child_process', () => ({
