@@ -20,6 +20,18 @@ export default tseslint.config(
     },
   },
   {
+    files: ['**/scripts/**/*.mjs'],
+    languageOptions: {
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+      },
+    },
+    rules: {
+      'sonarjs/no-os-command-from-path': 'off',
+    },
+  },
+  {
     rules: {
       // Convention: unused args/vars prefixed with `_` are intentional
       // (e.g. Express error middleware requires 4 params).

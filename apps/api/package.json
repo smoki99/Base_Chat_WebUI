@@ -9,9 +9,11 @@
     "build": "tsc",
     "lint": "eslint .",
     "test": "vitest run --coverage",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "qmd:setup": "node scripts/qmd-setup.mjs"
   },
   "dependencies": {
+    "@tobilu/qmd": "2.8.3",
     "cors": "^2.8.5",
     "express": "5.3.0",
     "helmet": "8.3.0",
