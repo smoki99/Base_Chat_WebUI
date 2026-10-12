@@ -50,7 +50,10 @@ export function createMockProvider(options: MockProviderOptions = {}): ChatProvi
       status: 'healthy' as const,
       detail: 'Mock provider is always available.',
     }),
-    async reply(message: string): Promise<ChatMessage> {
+    async reply(
+      message: string,
+      _options?: import('../../types/chat').ReplyOptions
+    ): Promise<ChatMessage> {
       // Simulate small latency so the client's loading state is observable.
       await new Promise((r) => setTimeout(r, 50));
       const content = matchKeyword(message) ?? randomFallback();

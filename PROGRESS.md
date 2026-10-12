@@ -46,5 +46,9 @@ hinter dem `ChatProvider`-Interface stehen zwei Implementierungen, wählbar
 
 - [x] `openai`-Provider gegen lokale LLM-Endpunkte (LM Studio / Ollama) mit
       echtem `.env` durchtesten. → `npm run dev:lmstudio` (Story-0028)
+- [x] MCP (Model Context Protocol) Integration – Tool-Calling ohne externe SDKs.
+      Filesystem-Tools funktionieren live. (Story-0030)
 - [ ] Conversations-Verlauf / Session-Persistenz (optional).
 - [ ] `README.md` und `docs/DECISIONS.md` konsistent auf den Chat-Status prüfen.
+- [ ] Postgres-MCP-Server für SQL-Tool-Calling.
+- [ ] Markdown-Knowledge-Base mit keyword-basiertem Retrieval.
