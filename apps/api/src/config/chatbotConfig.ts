@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-export interface KeywordRule {
+interface KeywordRule {
   keyword: string;
   responses: string[];
 }
