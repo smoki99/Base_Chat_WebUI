@@ -34,12 +34,10 @@ describe('Chat', () => {
   });
 
   test('does not send a blank message', async () => {
-    const spy = vi
-      .spyOn(globalThis, 'fetch')
-      .mockResolvedValue({
-        ok: true,
-        json: async () => ({ data: { id: 'x', content: 'x' } }),
-      } as unknown as Response);
+    const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { id: 'x', content: 'x' } }),
+    } as unknown as Response);
     const user = userEvent.setup();
     render(<Chat />);
 
