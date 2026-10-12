@@ -1,5 +1,5 @@
 {
-  "name": "myapp",
+  "name": "base-chat-webui",
   "private": true,
   "type": "module",
   "license": "MIT",

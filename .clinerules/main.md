@@ -1,4 +1,4 @@
-# Projekt: myapp
+# Projekt: base-chat-webui
 
 Stack: TypeScript (strict) Monorepo, npm Workspaces.
 apps/web = React 19 + Vite (nur UI) · apps/api = Express (REST) · packages/shared = gemeinsame Typen.
