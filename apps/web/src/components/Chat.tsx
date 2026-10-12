@@ -22,15 +22,39 @@ export function Chat() {
         )}
 
         {messages.map((message) => (
-          <div key={message.id} className={`chat-msg chat-msg--${message.role}`}>
-            <span className="chat-role">{message.role === 'user' ? 'Du' : 'Bot'}</span>
+          <div
+            key={message.id}
+            className={`chat-msg chat-msg--${message.role}${
+              message.status !== 'sent' ? ` chat-msg--${message.status}` : ''
+            }`}
+          >
+            <span className="chat-role">
+              {message.role === 'user' ? 'Du' : 'Bot'}
+              {message.status === 'sending' && (
+                <span className="chat-status" aria-label="Wird gesendet">
+                  {' '}
+                  …
+                </span>
+              )}
+              {message.status === 'error' && (
+                <span className="chat-status chat-status--error" aria-label="Sendefehler">
+                  {' '}
+                  ⚠
+                </span>
+              )}
+            </span>
             <p className="chat-text">{message.content}</p>
           </div>
         ))}
 
         {isLoading && (
-          <div className="skeleton-container" aria-label="Lädt">
-            <div className="skeleton-bar" style={{ width: '60%' }} />
+          <div className="chat-typing" aria-label="Bot schreibt">
+            <span className="chat-typing-dots" aria-hidden="true">
+              <span className="dot" />
+              <span className="dot" />
+              <span className="dot" />
+            </span>
+            <span className="chat-typing-label">Bot schreibt …</span>
           </div>
         )}
       </div>

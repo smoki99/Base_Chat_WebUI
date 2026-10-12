@@ -4,6 +4,7 @@ export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  status: 'sending' | 'sent' | 'error';
 }
 
 interface ChatApiResponse {
@@ -27,18 +28,31 @@ export function useChat() {
     const content = input.trim();
     if (!content || isLoading) return;
 
+    const messageId = crypto.randomUUID();
     setError(null);
-    setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: 'user', content }]);
+    // Optimistic: user message appears immediately with "sending" status
+    setMessages((prev) => [...prev, { id: messageId, role: 'user', content, status: 'sending' }]);
     setInput('');
     setIsLoading(true);
 
     try {
       const reply = await fetchChat(content);
-      setMessages((prev) => [
-        ...prev,
-        { id: crypto.randomUUID(), role: 'assistant', content: reply },
-      ]);
+      // Mark user message as sent, append the assistant reply
+      setMessages((prev) =>
+        prev
+          .map((msg) => (msg.id === messageId ? { ...msg, status: 'sent' as const } : msg))
+          .concat({
+            id: crypto.randomUUID(),
+            role: 'assistant' as const,
+            content: reply,
+            status: 'sent' as const,
+          })
+      );
     } catch (err) {
+      // Mark the user message as failed and surface the error
+      setMessages((prev) =>
+        prev.map((msg) => (msg.id === messageId ? { ...msg, status: 'error' as const } : msg))
+      );
       setError(err instanceof Error ? err.message : FALLBACK_MESSAGE);
     } finally {
       setIsLoading(false);
