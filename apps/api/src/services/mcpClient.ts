@@ -138,7 +138,10 @@ async function connectMcpServer(config: McpServerConfig): Promise<McpConnection>
       const result = (await sendRequest('tools/call', { name, arguments: args })) as {
         content?: Array<{ type: string; text?: string; resource?: { text?: string } }>;
       };
-      const text = result?.content?.map((c) => c.text ?? c.resource?.text ?? '').join('\n');
+      const text = result?.content?.map((c) => c.text ?? c.resource?.text ?? '').join('\n') ?? '';
+      console.log(
+        `[mcp] callTool(${name}) → ${text.length} chars | raw: ${JSON.stringify(result)?.slice(0, 300)}`
+      );
       return text || '(no output)';
     },
     close: () => {
