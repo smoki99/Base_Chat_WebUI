@@ -14,6 +14,7 @@
   "scripts": {
     "check": "npm run typecheck && npm run lint && npm test && npm run build",
     "dev": "concurrently -n web,api -c cyan,yellow \"npm run dev -w web\" \"npm run dev -w api\"",
+    "dev:lmstudio": "CHAT_PROVIDER=openai concurrently -n web,api -c cyan,yellow \"npm run dev -w web\" \"npm run dev -w api\"",
     "build": "npm run build --workspaces",
     "lint": "npm run lint --workspaces",
     "test": "npm run test --workspaces",
