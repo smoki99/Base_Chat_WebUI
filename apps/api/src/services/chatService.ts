@@ -63,7 +63,9 @@ export const chatService = {
   async respond(message: string): Promise<ChatMessage> {
     const options: ReplyOptions = {};
     if (mcpContext && mcpContext.allTools.length > 0) {
-      options.tools = mcpContext.allTools;
+      // Filter out tools that confuse the LLM (e.g. qmd.status)
+      const filteredTools = mcpContext.allTools.filter((t) => !t.name.includes('.status'));
+      options.tools = filteredTools;
       options.toolHandlers = mcpContext.toolHandlers;
     }
     return getProvider().reply(message, options);

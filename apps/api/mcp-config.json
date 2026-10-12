@@ -1,12 +1,6 @@
 {
   "servers": [
     {
-      "name": "filesystem",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/mnt/data1/dev/Base_Chat_WebUI"],
-      "env": {}
-    },
-    {
       "name": "qmd",
       "command": "npx",
       "args": ["qmd", "mcp"],

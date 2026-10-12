@@ -14,6 +14,34 @@ import type {
   ToolHandler,
 } from '../../types/chat';
 
+// ── System prompts ──────────────────────────────────────────────────────────
+
+const DEFAULT_SYSTEM_PROMPT = 'You are a helpful assistant.';
+
+const QMD_SYSTEM_PROMPT = `You are a knowledge-base assistant. You answer questions using local markdown documents via QMD tools.
+
+## Workflow (strict)
+1. Call qmd.query ONCE with the "query" parameter (a simple search string).
+   - Do NOT use the "searches" parameter.
+   - Do NOT call qmd.status.
+2. If results contain a file path (e.g. "knowhow/produkte.md") or docid (e.g. "#18570c"), call qmd.get with {"file": "<path-or-docid>"} to retrieve the full content.
+3. Answer the user's question based on the retrieved document content.
+
+## Rules
+- Use the "query" string parameter for qmd.query. Never pass "searches" at the same time.
+- If the first search yields no results, try ONCE with broader/different terms. Then stop.
+- Always call qmd.get to retrieve full content before answering. Do not answer from search snippets alone.
+- If you cannot find the answer in the documents, say so clearly. Do not guess or invent information.
+- Respond in the user's language.
+- Be concise and direct. Format your answer clearly.`;
+
+function resolveSystemPrompt(base: string, tools?: ToolDefinition[]): string {
+  if (tools?.some((t) => t.name.startsWith('qmd.'))) {
+    return QMD_SYSTEM_PROMPT;
+  }
+  return base;
+}
+
 export interface OpenAIProviderOptions {
   baseUrl?: string;
   apiKey?: string;
@@ -69,7 +97,7 @@ export function createOpenAIProvider(options: OpenAIProviderOptions = {}): ChatP
   const apiKey = options.apiKey ?? process.env.OPENAI_API_KEY ?? 'lm-studio';
   const model = options.model ?? process.env.OPENAI_MODEL ?? 'local-model';
   const timeoutMs = options.timeoutMs ?? 120_000;
-  const systemPrompt = options.systemPrompt ?? 'You are a helpful assistant.';
+  const systemPrompt = options.systemPrompt ?? DEFAULT_SYSTEM_PROMPT;
   const endpoint = `${baseUrl.replace(/\/$/, '')}/chat/completions`;
 
   async function fetchChat(body: Record<string, unknown>, signal: AbortSignal) {
@@ -158,8 +186,9 @@ export function createOpenAIProvider(options: OpenAIProviderOptions = {}): ChatP
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), timeoutMs);
       try {
+        const effectivePrompt = resolveSystemPrompt(systemPrompt, replyOpts?.tools);
         const messages: Array<Record<string, unknown>> = [
-          { role: 'system', content: replyOpts?.systemPrompt ?? systemPrompt },
+          { role: 'system', content: replyOpts?.systemPrompt ?? effectivePrompt },
           { role: 'user', content: message },
         ];
         const body: Record<string, unknown> = { model, messages };
