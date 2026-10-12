@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { chatService } from '../services/chatService';
 import type { HealthStatus } from '../types/chat';
+import type { ChatResponse } from 'shared';
 
 export const chatRouter = Router();
 
@@ -47,7 +48,7 @@ chatRouter.post('/api/chat', async (req, res, next) => {
   }
   try {
     const reply = await chatService.respond(trimmed);
-    res.status(201).json({ data: reply });
+    res.status(201).json({ data: reply } satisfies ChatResponse);
   } catch (error) {
     next(error);
   }

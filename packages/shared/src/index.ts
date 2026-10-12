@@ -19,3 +19,10 @@ export function isApiError<T>(result: ApiResult<T>): result is ApiError {
 export function isApiSuccess<T>(result: ApiResult<T>): result is ApiResponse<T> {
   return 'data' in result;
 }
+
+export interface ChatMessage {
+  id: string;
+  content: string;
+}
+
+export type ChatResponse = ApiResponse<ChatMessage>;
