@@ -1,4 +1,4 @@
-# myapp
+# Base Chat
 
 TypeScript (strict) Monorepo mit npm Workspaces.
 
@@ -13,7 +13,7 @@ TypeScript (strict) Monorepo mit npm Workspaces.
 ## Struktur
 
 ```
-myapp/
+base-chat-webui/
 ├── apps/
 │   ├── api/                  # Express REST API
 │   │   ├── src/
@@ -23,12 +23,15 @@ myapp/
 │   │   │   ├── services/     # Business-Logik
 │   │   │   │   └── providers/ # Chat-Provider (mock, openai)
 │   │   │   ├── config/       # JSON-Konfiguration (chatbot.rules.json)
-│   │   │   └── __tests__/    # Supertest-Tests
+│   │   │   ├── types/        # Chat-Typen (re-export shared)
+│   │   │   └── test/         # Supertest-Tests (chat.test.ts)
 │   │   └── package.json
 │   └── web/                  # React + Vite Frontend
 │       ├── src/
-│       │   ├── components/   # React-Komponenten
-│       │   ├── __tests__/    # RTL-Tests (Vitest)
+│       │   ├── App.tsx       # App-Root (Footer + Chat)
+│       │   ├── components/   # React-Komponenten (Chat + RTL-Test)
+│       │   ├── hooks/        # useChat-Hook
+│       │   ├── index.css     # Material Design 3 CSS
 │       │   └── main.tsx      # React Entry
 │       ├── e2e/              # Playwright-E2E (headless Chromium)
 │       ├── index.html        # Vite Entry
@@ -37,7 +40,7 @@ myapp/
 │       └── package.json
 ├── packages/
 │   └── shared/               # Gemeinsame Typen/DTOs
-│       ├── src/index.ts      # Todo, ApiResponse, ApiResult
+│       ├── src/index.ts      # ChatMessage, ChatResponse, ApiResponse, ApiResult
 │       └── package.json
 ├── docs/
 │   ├── ARCHITECTURE.md
@@ -127,15 +130,11 @@ Danach:
 
 ## API
 
-| Method   | Path               | Beschreibung                      |
-| -------- | ------------------ | --------------------------------- |
-| `GET`    | `/health`          | Liveness-Check                    |
-| `GET`    | `/api/todos`       | Alle Todos abrufen                |
-| `POST`   | `/api/todos`       | Neues Todo anlegen                |
-| `PATCH`  | `/api/todos/:id`   | Todo aktualisieren                |
-| `DELETE` | `/api/todos/:id`   | Todo löschen                      |
-| `POST`   | `/api/chat`        | Chat-Nachricht an Provider senden |
-| `GET`    | `/api/chat/health` | Provider-Healthcheck              |
+| Method | Path               | Beschreibung                      |
+| ------ | ------------------ | --------------------------------- |
+| `GET`  | `/health`          | Liveness-Check                    |
+| `POST` | `/api/chat`        | Chat-Nachricht an Provider senden |
+| `GET`  | `/api/chat/health` | Provider-Healthcheck              |
 
 → Vollständige Doku mit Request/Response-Beispielen: [`docs/API.md`](./docs/API.md)
 
@@ -149,7 +148,7 @@ Danach:
     (`/health` bzw. Port 5173) – kein manuelles `npm run dev`.
   - Vor dem ersten Lauf einmalig: `npx playwright install chromium`.
   - Deckt ab: `GET /` (200, `text/html`), `GET /index.html` (200),
-    React-Mount, seeded-Todos, keine Page-/Console-Errors.
+    React-Mount, Chat-Render (Seed-Message), keine Page-/Console-Errors.
 
 ## CI (GitHub Actions)
 
@@ -265,7 +264,7 @@ nachverfolgen und mit dem GitHub-Issue verknüpfen.
 Beispiele:
 
 ```
-Story-0014: refactor(web): Web in lib/api + useTodos-Hook trennen
+Story-0014: refactor(web): Web in lib/api + useChat-Hook trennen
 Story-0011: feat(api): Vitest-Coverage-Schwellwert einrichten
 Story-0015: docs(root): AGENTS.md + Guardrails anlegen
 ```
