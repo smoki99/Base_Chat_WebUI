@@ -18,6 +18,22 @@ import type {
 
 const DEFAULT_SYSTEM_PROMPT = 'You are a helpful assistant.';
 
+/**
+ * Appended to every system prompt. Instructs the LLM to end its response
+ * with a `<!-- VOICE_SUMMARY: -->` marker followed by a short spoken
+ * summary (max 2 sentences, no Markdown). The web client splits on this
+ * marker: the part before it is shown in the chat UI, the part after is
+ * read aloud via TTS in interactive (hands-free) mode.
+ */
+const SPEECH_INSTRUCTION = `
+## Voice Summary (required)
+At the very end of your response, on a new line, write exactly:
+<!-- VOICE_SUMMARY: -->
+Follow it with a maximum 2-sentence summary in the same language as your response.
+Use conversational tone, NO Markdown, NO tables, NO code.
+If your response contains tables, code blocks, or long lists, write instead:
+"The details are in the text on the screen." (or the equivalent in the response language).`;
+
 const SQL_SYSTEM_PROMPT = `You are a product assistant. You answer questions about available products using the sql.search_products and sql.get_product tools.
 
 ## Workflow (strict, max 2 tool calls)
@@ -254,10 +270,12 @@ export function createOpenAIProvider(options: OpenAIProviderOptions = {}): ChatP
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), timeoutMs);
       try {
-        const effectivePrompt = resolveSystemPrompt(systemPrompt, replyOpts?.tools);
+        const effectivePrompt =
+          (replyOpts?.systemPrompt ?? resolveSystemPrompt(systemPrompt, replyOpts?.tools)) +
+          SPEECH_INSTRUCTION;
         // Build messages: system → history (oldest → newest) → current user message
         const messages: Array<Record<string, unknown>> = [
-          { role: 'system', content: replyOpts?.systemPrompt ?? effectivePrompt },
+          { role: 'system', content: effectivePrompt },
           ...(replyOpts?.history ?? []).map((h) => ({ role: h.role, content: h.content })),
           { role: 'user', content: message },
         ];

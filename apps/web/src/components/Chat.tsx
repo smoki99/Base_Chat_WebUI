@@ -4,6 +4,16 @@ import { useVoice } from '../hooks/useVoice';
 import { Markdown } from './Markdown';
 import acknowledgments from '../data/acknowledgments.json';
 
+/** Delimiter that the LLM appends before the spoken summary. */
+const VOICE_SUMMARY_MARKER = '<!-- VOICE_SUMMARY: -->';
+
+/** Fallback phrases when the LLM omits the voice summary section. */
+const SPEECH_FALLBACK: Record<string, string> = {
+  de: 'Hier die Zusammenfassung!',
+  en: "Here's the summary!",
+  es: '¡Aquí tienes el resumen!',
+};
+
 /** Pick a random acknowledgment phrase for the given language code. */
 function pickAcknowledgment(lang: string): string {
   const map: Record<string, string[]> = acknowledgments;
@@ -11,6 +21,22 @@ function pickAcknowledgment(lang: string): string {
   // eslint-disable-next-line sonarjs/pseudo-random -- UI-only, not security-sensitive
   const idx = Math.floor(Math.random() * phrases.length);
   return phrases[idx] ?? 'Einen Moment…';
+}
+
+/**
+ * Split an LLM response into the on-screen part and the spoken part.
+ * The LLM is instructed to end with `<!-- VOICE_SUMMARY: -->` followed
+ * by a short conversational summary. If the marker is absent the entire
+ * text is the screen part and the speech part is empty (caller uses
+ * a language-specific fallback phrase).
+ */
+function splitForSpeech(text: string): { screen: string; speech: string } {
+  const idx = text.indexOf(VOICE_SUMMARY_MARKER);
+  if (idx === -1) return { screen: text, speech: '' };
+  return {
+    screen: text.slice(0, idx).trimEnd(),
+    speech: text.slice(idx + VOICE_SUMMARY_MARKER.length).trim(),
+  };
 }
 
 /**
@@ -69,6 +95,21 @@ export function Chat() {
     send,
   ]);
 
+  // Auto-TTS: when a new assistant message arrives in interactive mode,
+  // read the voice summary (or a language-specific fallback) aloud.
+  const spokenIdsRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (voice.interactiveState === 'off' || !voice.isTtsAvailable) return;
+    const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant');
+    if (!lastAssistant) return;
+    if (spokenIdsRef.current.has(lastAssistant.id)) return;
+    spokenIdsRef.current.add(lastAssistant.id);
+    const { speech } = splitForSpeech(lastAssistant.content);
+    const fallback = SPEECH_FALLBACK[voice.currentLanguage] ?? 'Hier die Zusammenfassung!';
+    const text = speech || fallback;
+    void voice.speak(text);
+  }, [messages, voice.interactiveState, voice.isTtsAvailable, voice.currentLanguage, voice.speak]);
+
   return (
     <div className="chat">
       <div
@@ -126,7 +167,7 @@ export function Chat() {
               )}
             </span>
             <div className="chat-text chat-md">
-              <Markdown>{message.content}</Markdown>
+              <Markdown>{splitForSpeech(message.content).screen}</Markdown>
             </div>
           </div>
         ))}

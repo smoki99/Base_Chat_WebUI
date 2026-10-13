@@ -266,4 +266,66 @@ describe('Chat', () => {
 
     expect(screen.queryByRole('button', { name: /Hands-free/i })).not.toBeInTheDocument();
   });
+
+  // ── Voice Summary (auto-TTS) ────────────────────────────────────────────────
+
+  test('strips the voice summary from the displayed message', async () => {
+    // API returns a response that includes the VOICE_SUMMARY marker.
+    const fullResponse =
+      'Hier ist die Antwort auf deine Frage.\n\n<!-- VOICE_SUMMARY: -->Kurze Zusammenfassung für die Sprachausgabe.';
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.includes('/api/chat')) {
+        return {
+          ok: true,
+          json: async () => ({ data: { id: 'r1', content: fullResponse } }),
+        } as unknown as Response;
+      }
+      // Voice capabilities – TTS unavailable so no auto-speak side-effect.
+      return {
+        ok: true,
+        json: async () => ({
+          data: { tts: false, stt: false, voices: [], languages: [], defaultVoiceByLanguage: {} },
+        }),
+      } as unknown as Response;
+    });
+    const user = userEvent.setup();
+    render(<Chat />);
+
+    await user.type(screen.getByRole('textbox'), 'Test');
+    await user.click(screen.getByRole('button', { name: 'Senden' }));
+
+    // The main content should be visible…
+    expect(await screen.findByText(/Hier ist die Antwort/i)).toBeInTheDocument();
+    // …but the voice summary should NOT be displayed.
+    expect(
+      screen.queryByText(/Kurze Zusammenfassung für die Sprachausgabe/i)
+    ).not.toBeInTheDocument();
+  });
+
+  test('displays the full message when no voice summary marker is present', async () => {
+    const plainResponse = 'Einfache Antwort ohne Marker.';
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.includes('/api/chat')) {
+        return {
+          ok: true,
+          json: async () => ({ data: { id: 'r1', content: plainResponse } }),
+        } as unknown as Response;
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          data: { tts: false, stt: false, voices: [], languages: [], defaultVoiceByLanguage: {} },
+        }),
+      } as unknown as Response;
+    });
+    const user = userEvent.setup();
+    render(<Chat />);
+
+    await user.type(screen.getByRole('textbox'), 'Test');
+    await user.click(screen.getByRole('button', { name: 'Senden' }));
+
+    expect(await screen.findByText('Einfache Antwort ohne Marker.')).toBeInTheDocument();
+  });
 });
