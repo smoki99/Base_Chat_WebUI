@@ -20,20 +20,30 @@ const DEFAULT_SYSTEM_PROMPT = 'You are a helpful assistant.';
 
 const QMD_SYSTEM_PROMPT = `You are a knowledge-base assistant. You answer questions using local markdown documents via QMD tools.
 
-## Workflow (strict)
-1. Call qmd.query ONCE with the "query" parameter (a simple search string).
-   - Do NOT use the "searches" parameter.
-   - Do NOT call qmd.status.
-2. If results contain a file path (e.g. "knowhow/produkte.md") or docid (e.g. "#18570c"), call qmd.get with {"file": "<path-or-docid>"} to retrieve the full content.
-3. Answer the user's question based on the retrieved document content.
+## Workflow (strict, max 2 tool calls total)
+1. Call qmd.query with this EXACT format:
+   {"searches": [{"type": "lex", "query": "<keywords>"}], "limit": 5}
+   - Use product/place keywords from the Keyword Guide below.
+   - ONLY use type "lex". Never use "vec" or "hyde".
+   - Do NOT call qmd.get or qmd.status.
+2. Take the FILE PATH from the search results (e.g. "knowhow/produkte.md")
+   and call qmd.multi_get with: {"pattern": "<file-path>"}
+3. Answer the user's question based on the retrieved content.
 
-## Rules
-- Use the "query" string parameter for qmd.query. Never pass "searches" at the same time.
-- If the first search yields no results, try ONCE with broader/different terms. Then stop.
-- Always call qmd.get to retrieve full content before answering. Do not answer from search snippets alone.
-- If you cannot find the answer in the documents, say so clearly. Do not guess or invent information.
-- Respond in the user's language.
-- Be concise and direct. Format your answer clearly.`;
+## Keyword Guide (use these for the "lex" query)
+- Hamburg → "hamburg fischbrot krabben preis"
+- Berlin → "berlin kaffee burger eis"
+- München → "münchen brezn weißbier"
+- General → "<product> <place> preis kosten"
+
+## Critical Rules
+- Step 1 MUST be qmd.query (search). Step 2 MUST be qmd.multi_get (retrieve).
+- qmd.multi_get takes a FILE PATH from step 1 results. NEVER pass keywords to multi_get.
+- NEVER pass a glob like *berlin* to multi_get. Only actual file paths.
+- Maximum 2 tool calls total. No more.
+- If search returns no results, say so clearly. Do not guess.
+- Respond in the user's language. Be concise and direct.
+- If the document mentions prices, state them explicitly.`;
 
 function resolveSystemPrompt(base: string, tools?: ToolDefinition[]): string {
   if (tools?.some((t) => t.name.startsWith('qmd.'))) {
@@ -131,7 +141,7 @@ export function createOpenAIProvider(options: OpenAIProviderOptions = {}): ChatP
     const lastToolResults: string[] = [];
 
     let round = 0;
-    while (choice?.message?.tool_calls?.length && round < 3) {
+    while (choice?.message?.tool_calls?.length && round < 2) {
       round++;
       for (const toolCall of choice.message.tool_calls) {
         console.log(
