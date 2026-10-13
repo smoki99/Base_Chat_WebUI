@@ -222,8 +222,164 @@ body {
 
 .chat-text {
   margin: 0;
-  white-space: pre-wrap;
   word-break: break-word;
+  line-height: 1.55;
+}
+
+/* --- Chat Markdown Rendering --- */
+.chat-md > *:first-child {
+  margin-top: 0;
+}
+.chat-md > *:last-child {
+  margin-bottom: 0;
+}
+
+.chat-md p {
+  margin: 0.5rem 0;
+}
+
+.chat-md h1,
+.chat-md h2,
+.chat-md h3,
+.chat-md h4,
+.chat-md h5,
+.chat-md h6 {
+  margin: 0.85rem 0 0.4rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.chat-md h1 {
+  font-size: 1.3rem;
+}
+.chat-md h2 {
+  font-size: 1.18rem;
+}
+.chat-md h3 {
+  font-size: 1.06rem;
+}
+
+.chat-md ul,
+.chat-md ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+.chat-md li {
+  margin: 0.25rem 0;
+}
+.chat-md li::marker {
+  color: var(--md-primary);
+}
+
+/* Inline code */
+.chat-md code {
+  background: rgba(103, 80, 164, 0.14);
+  padding: 0.1rem 0.35rem;
+  border-radius: 6px;
+  font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.86em;
+}
+
+/* Code blocks */
+.chat-md pre {
+  background: #27242e;
+  color: #ece9f5;
+  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  overflow-x: auto;
+  margin: 0.65rem 0;
+}
+.chat-md pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.85rem;
+}
+
+/* Blockquote */
+.chat-md blockquote {
+  border-left: 3px solid var(--md-primary);
+  background: rgba(103, 80, 164, 0.06);
+  margin: 0.65rem 0;
+  padding: 0.35rem 0 0.35rem 0.85rem;
+  border-radius: 0 8px 8px 0;
+}
+
+/* Horizontal rule */
+.chat-md hr {
+  border: none;
+  border-top: 1px solid rgba(103, 80, 164, 0.22);
+  margin: 0.85rem 0;
+}
+
+/* Links */
+.chat-md a {
+  color: var(--md-primary);
+  font-weight: 500;
+  text-decoration: underline;
+}
+
+/* Tables (GFM) — wrapped by .chat-md-table-wrap for responsive scroll */
+.chat-md-table-wrap {
+  overflow-x: auto;
+  margin: 0.75rem 0;
+  border-radius: 12px;
+  box-shadow: var(--md-elev-1);
+  -webkit-overflow-scrolling: touch;
+}
+.chat-md table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.chat-md thead th {
+  background: var(--md-primary);
+  color: #fff;
+  font-weight: 600;
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  white-space: nowrap;
+}
+.chat-md tbody td {
+  padding: 0.55rem 0.75rem;
+  border-top: 1px solid rgba(103, 80, 164, 0.14);
+}
+.chat-md tbody tr:nth-child(even) {
+  background: rgba(103, 80, 164, 0.05);
+}
+.chat-md tbody tr:hover {
+  background: rgba(103, 80, 164, 0.1);
+}
+
+/* User bubble (dark primary background, white text): keep Markdown readable */
+.chat-msg--user .chat-md a {
+  color: #fff;
+}
+.chat-msg--user .chat-md code {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+.chat-msg--user .chat-md blockquote {
+  border-left-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.14);
+}
+.chat-msg--user .chat-md li::marker {
+  color: #fff;
+}
+.chat-msg--user .chat-md hr {
+  border-top-color: rgba(255, 255, 255, 0.32);
+}
+.chat-msg--user .chat-md thead th {
+  background: rgba(255, 255, 255, 0.22);
+}
+.chat-msg--user .chat-md tbody td {
+  border-top-color: rgba(255, 255, 255, 0.28);
+}
+.chat-msg--user .chat-md tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.08);
+}
+.chat-msg--user .chat-md tbody tr:hover {
+  background: rgba(255, 255, 255, 0.16);
 }
 
 .chat-composer {

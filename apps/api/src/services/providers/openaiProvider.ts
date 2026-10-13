@@ -38,7 +38,11 @@ const SQL_SYSTEM_PROMPT = `You are a product assistant. You answer questions abo
 - Use sql.search_products FIRST. Never skip it.
 - State prices in EUR. Mention availability if a product is unavailable.
 - Respond in the user's language. Be concise and direct.
-- If no products found, say so clearly. Do not guess or invent products.`;
+- If no products found, say so clearly. Do not guess or invent products.
+
+## Output Format (Markdown)
+- Format product lists as a Markdown table with columns: | Produkt | Preis | Verfügbarkeit | Ort |.
+- Use **bold** for key values (e.g. prices). Keep surrounding text concise.`;
 
 const QMD_SYSTEM_PROMPT = `You are a knowledge-base assistant. You answer questions using local markdown documents via QMD tools.
 
@@ -53,7 +57,10 @@ const QMD_SYSTEM_PROMPT = `You are a knowledge-base assistant. You answer questi
 - qmd.multi_get takes a FILE PATH from search results. NEVER pass keywords to it.
 - Maximum 2 tool calls total.
 - If no results, say so clearly. Do not guess.
-- Respond in the user's language. Be concise and direct.`;
+- Respond in the user's language. Be concise and direct.
+
+## Output Format (Markdown)
+- Use Markdown for structure: headings, numbered/unordered lists, and tables where they improve clarity.`;
 
 const COMBINED_SYSTEM_PROMPT = `You are a product & knowledge assistant. You have access to:
 - **sql.search_products / sql.get_product** – structured product data (prices, SKUs, availability)
@@ -75,7 +82,11 @@ const COMBINED_SYSTEM_PROMPT = `You are a product & knowledge assistant. You hav
 - Maximum 2 tool calls per topic.
 - State prices in EUR. Mention availability.
 - Respond in the user's language. Be concise and direct.
-- If not found, say so clearly. Do not guess or invent information.`;
+- If not found, say so clearly. Do not guess or invent information.
+
+## Output Format (Markdown)
+- Product lists → Markdown table with columns: | Produkt | Preis | Verfügbarkeit | Ort |.
+- Recipes/knowledge → Markdown headings + numbered steps; use tables for comparisons.`;
 
 function resolveSystemPrompt(base: string, tools?: ToolDefinition[]): string {
   const hasSql = tools?.some((t) => t.name.startsWith('sql.'));
