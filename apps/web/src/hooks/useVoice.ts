@@ -112,6 +112,7 @@ export function useVoice(): UseVoiceReturn {
   const languages = capabilities?.languages ?? [];
 
   const stopSpeaking = useCallback(() => {
+    isSpeakingRef.current = false;
     audioRef.current?.pause();
     audioRef.current = null;
     setIsSpeaking(false);
@@ -136,17 +137,27 @@ export function useVoice(): UseVoiceReturn {
         const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
         audioRef.current = audio;
+
+        // Set the ref SYNCHRONOUSLY before playback starts.
+        // The useEffect sync is async (post-render) and the 10ms setInterval
+        // loop would still be running in that gap, potentially detecting
+        // TTS audio as user speech.
+        isSpeakingRef.current = true;
         setIsSpeaking(true);
+
         audio.onended = () => {
+          isSpeakingRef.current = false;
           setIsSpeaking(false);
           URL.revokeObjectURL(url);
         };
         audio.onerror = () => {
+          isSpeakingRef.current = false;
           setIsSpeaking(false);
           setError('Audio playback error');
         };
         await audio.play();
       } catch (err) {
+        isSpeakingRef.current = false;
         setError(err instanceof Error ? err.message : 'TTS failed');
       }
     },
