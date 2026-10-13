@@ -16,15 +16,37 @@ interface ChatApiResponse {
 const FALLBACK_MESSAGE = 'Der Server ist nicht erreichbar. Bitte versuche es später erneut.';
 const MAX_CONTEXT_MESSAGES = Number(import.meta.env.VITE_CONTEXT_MESSAGES) || 20;
 
+interface UseChatOptions {
+  /** Initial messages (e.g. restored from history). */
+  initialMessages?: ChatMessage[];
+  /** Stable chat ID for history persistence. */
+  chatId?: string | null;
+  /** Callback to notify the history hook when messages change. */
+  onMessagesChange?: (messages: ChatMessage[]) => void;
+}
+
 /**
  * Chat state + logic. Talks to the existing `/api/chat` endpoint and keeps
  * the local message list. Swapping the backend later only touches `fetchChat`.
  */
-export function useChat() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+export function useChat(options: UseChatOptions = {}) {
+  const { initialMessages = [], chatId, onMessagesChange } = options;
+  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Notify parent when messages change (for auto-save to history).
+  const updateMessages = useCallback(
+    (updater: (prev: ChatMessage[]) => ChatMessage[]) => {
+      setMessages((prev) => {
+        const next = updater(prev);
+        onMessagesChange?.(next);
+        return next;
+      });
+    },
+    [onMessagesChange]
+  );
 
   const send = useCallback(
     async (overrideText?: string) => {
@@ -34,12 +56,15 @@ export function useChat() {
       const messageId = crypto.randomUUID();
       setError(null);
       // Optimistic: user message appears immediately with "sending" status
-      setMessages((prev) => [...prev, { id: messageId, role: 'user', content, status: 'sending' }]);
+      updateMessages((prev) => [
+        ...prev,
+        { id: messageId, role: 'user', content, status: 'sending' },
+      ]);
       setInput('');
       setIsLoading(true);
 
       try {
-        // Build history from previous sent messages (exclude the one just added above)
+        // Build history from previous sent messages
         const history: ChatHistoryMessage[] = messages
           .filter((m) => m.status === 'sent')
           .slice(-MAX_CONTEXT_MESSAGES)
@@ -47,7 +72,7 @@ export function useChat() {
 
         const reply = await fetchChat(content, history);
         // Mark user message as sent, append the assistant reply
-        setMessages((prev) =>
+        updateMessages((prev) =>
           prev
             .map((msg) => (msg.id === messageId ? { ...msg, status: 'sent' as const } : msg))
             .concat({
@@ -59,7 +84,7 @@ export function useChat() {
         );
       } catch (err) {
         // Mark the user message as failed and surface the error
-        setMessages((prev) =>
+        updateMessages((prev) =>
           prev.map((msg) => (msg.id === messageId ? { ...msg, status: 'error' as const } : msg))
         );
         setError(err instanceof Error ? err.message : FALLBACK_MESSAGE);
@@ -67,10 +92,16 @@ export function useChat() {
         setIsLoading(false);
       }
     },
-    [input, isLoading, messages]
+    [input, isLoading, messages, updateMessages]
   );
 
-  return { messages, input, setInput, isLoading, error, send };
+  /** Replace all messages (used when restoring a chat from history). */
+  const replaceMessages = useCallback((newMessages: ChatMessage[]) => {
+    setMessages(newMessages);
+    setError(null);
+  }, []);
+
+  return { messages, input, setInput, isLoading, error, send, replaceMessages, chatId };
 }
 
 async function fetchChat(message: string, history: ChatHistoryMessage[]): Promise<string> {

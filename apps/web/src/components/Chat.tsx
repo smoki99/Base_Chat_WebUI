@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useChat } from '../hooks/useChat';
+import { useChat, type ChatMessage } from '../hooks/useChat';
 import { useVoice } from '../hooks/useVoice';
 import { Markdown } from './Markdown';
 import acknowledgments from '../data/acknowledgments.json';
@@ -39,14 +39,23 @@ function splitForSpeech(text: string): { screen: string; speech: string } {
   };
 }
 
+interface ChatProps {
+  initialMessages?: ChatMessage[];
+  chatId?: string | null;
+  onMessagesChange?: (messages: ChatMessage[]) => void;
+}
+
 /**
- * Chat UI: message list + composer. Reuses the existing Material Design
- * classes (card, btn, form-control, skeleton, empty/error states) so the
- * chat stays consistent with the app shell. Assistant & user messages are
- * rendered as Markdown (tables, lists, code) via the `Markdown` component.
+ * Chat UI: message list + composer. Full-height layout for use inside
+ * the two-column app shell. Assistant & user messages are rendered as
+ * Markdown (tables, lists, code) via the `Markdown` component.
  */
-export function Chat() {
-  const { messages, input, setInput, isLoading, error, send } = useChat();
+export function Chat({ initialMessages = [], chatId = null, onMessagesChange }: ChatProps) {
+  const { messages, input, setInput, isLoading, error, send } = useChat({
+    initialMessages,
+    chatId,
+    onMessagesChange,
+  });
   const voice = useVoice();
   const canSend = input.trim().length > 0 && !isLoading;
   const messagesRef = useRef<HTMLDivElement>(null);
@@ -111,7 +120,7 @@ export function Chat() {
   }, [messages, voice.interactiveState, voice.isTtsAvailable, voice.currentLanguage, voice.speak]);
 
   return (
-    <div className="chat">
+    <section className="chat" aria-label="Chat">
       <div
         ref={messagesRef}
         className="chat-messages"
@@ -261,6 +270,6 @@ export function Chat() {
           Senden
         </button>
       </form>
-    </div>
+    </section>
   );
 }
