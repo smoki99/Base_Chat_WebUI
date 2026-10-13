@@ -30,6 +30,13 @@ hinter dem `ChatProvider`-Interface stehen zwei Implementierungen, wählbar
   optimistisches Update (sending / sent / error).
 - `apps/web/src/components/Chat.tsx` – Nachrichten-Log, Empty-/Error-State,
   "Bot schreibt …"-Indikator, Composer.
+- `apps/web/src/hooks/useVoice.ts` – TTS-Playback, STT-Aufnahme, Hands-free-Modus
+  (RMS-Detection, Noise-Floor-Kalibrierung, Anti-Self-Hearing).
+- `apps/web/src/data/acknowledgments.json` – Sprach-Phrasen (de/en/es).
+- `apps/api/src/routes/voice.ts` – `GET /api/voice/capabilities`, `POST /tts`, `POST /stt`.
+- `apps/api/src/services/voiceClient.ts` – HTTP-Client zum voz-Sidecar
+  (Timeout-Handling, Capability-Cache 5 s, TTS-Retry bei 403/500).
+- `apps/voz/` – Python-Sidecar (FastAPI): Edge-TTS + Whisper.
 
 ## Status
 
@@ -41,6 +48,8 @@ hinter dem `ChatProvider`-Interface stehen zwei Implementierungen, wählbar
 - ✅ Story-0026 (Chat-UI + Mock-API + Tests) und Story-0027 (E2E-Timeouts)
   abgeschlossen.
 - ✅ CI grün: typecheck · lint · test · build · e2e.
+- ✅ Voice (TTS + STT): voz-Sidecar, Hands-free-Modus mit RMS-Detection,
+  Anti-Self-Hearing-Guards, Sprach-Phrasen (de/en/es), TTS-Retry.
 
 ## Offene Punkte / Nächste Schritte
 

@@ -8,6 +8,7 @@ TypeScript (strict) Monorepo mit npm Workspaces.
 | ----------------- | ----------------------------------------------- |
 | `apps/web`        | React 19 + Vite (nur UI)                        |
 | `apps/api`        | Express (REST)                                  |
+| `apps/voz`        | Python-Sidecar (TTS + STT, optional)            |
 | `packages/shared` | Gemeinsame Typen & DTOs (reines TS, keine Deps) |
 
 ## Struktur
@@ -26,11 +27,16 @@ base-chat-webui/
 │   │   │   ├── types/        # Chat-Typen (re-export shared)
 │   │   │   └── test/         # Supertest-Tests (chat.test.ts)
 │   │   └── package.json
+│   ├── voz/                  # Python Voice-Sidecar (TTS + STT, optional)
+│   │   ├── voz.py            # FastAPI-Server (edge-tts + whisper)
+│   │   ├── requirements.txt
+│   │   └── Dockerfile
 │   └── web/                  # React + Vite Frontend
 │       ├── src/
 │       │   ├── App.tsx       # App-Root (Footer + Chat)
-│       │   ├── components/   # React-Komponenten (Chat + RTL-Test)
-│       │   ├── hooks/        # useChat-Hook
+│       │   ├── components/   # React-Komponenten (Chat + Markdown)
+│       │   ├── hooks/        # useChat + useVoice (TTS/STT + Hands-free)
+│       │   ├── data/         # acknowledgments.json (Sprach-Phrasen)
 │       │   ├── index.css     # Material Design 3 CSS
 │       │   └── main.tsx      # React Entry
 │       ├── e2e/              # Playwright-E2E (headless Chromium)
@@ -100,6 +106,7 @@ Danach:
 | `OPENAI_API_KEY`     | API-Key (leer = kein Header, z. B. für lokale Modelle)                       | leer                    |
 | `OPENAI_MODEL`       | Modellname (z. B. `gpt-4o`, `llama3.1-8b`)                                   | leer                    |
 | `CHATBOT_RULES_FILE` | Pfad zur `chatbot.rules.json` (leer = eingebauter Default)                   | leer                    |
+| `VOICE_SERVICE_URL`  | Base-URL des Voice-Sidecars (`apps/voz`), leer = Voice deaktiviert           | `http://127.0.0.1:8765` |
 
 > In der Entwicklung übernimmt der **Vite-Proxy** (`/api` → `localhost:3001`),
 > `VITE_API_URL` wird dann nicht benötigt.
@@ -131,13 +138,47 @@ Danach:
 
 ## API
 
-| Method | Path               | Beschreibung                      |
-| ------ | ------------------ | --------------------------------- |
-| `GET`  | `/health`          | Liveness-Check                    |
-| `POST` | `/api/chat`        | Chat-Nachricht an Provider senden |
-| `GET`  | `/api/chat/health` | Provider-Healthcheck              |
+| Method | Path                      | Beschreibung                           |
+| ------ | ------------------------- | -------------------------------------- |
+| `GET`  | `/health`                 | Liveness-Check                         |
+| `POST` | `/api/chat`               | Chat-Nachricht an Provider senden      |
+| `GET`  | `/api/chat/health`        | Provider-Healthcheck                   |
+| `GET`  | `/api/voice/capabilities` | Voice-Verfügbarkeit (TTS/STT, Stimmen) |
+| `POST` | `/api/voice/tts`          | Text → Audio (via voz-Sidecar)         |
+| `POST` | `/api/voice/stt`          | Audio → Text (via voz-Sidecar)         |
 
 → Vollständige Doku mit Request/Response-Beispielen: [`docs/API.md`](./docs/API.md)
+
+## Voice (TTS + STT)
+
+Optionaler Sprachmodus über den Python-Sidecar [`apps/voz`](./apps/voz/README.md):
+
+- **TTS** – Edge-TTS (Microsoft, Online, keine API-Key)
+- **STT** – Whisper (OpenAI, lokal/offline)
+- **Sprachen** – `de`, `en`, `es`
+- **Hands-free-Modus** – RMS-Spracherkennung mit Noise-Floor-Kalibrierung,
+  Auto-Pause während TTS, Self-Hearing-Prävention (500 ms Post-TTS-Cooldown)
+
+```bash
+# Sidecar starten (separater Prozess)
+cd apps/voz && python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+python voz.py   # lauscht auf http://127.0.0.1:8765
+
+# API erkennt den Sidecar automatisch via VOICE_SERVICE_URL (Default: 127.0.0.1:8765)
+# Ohne Sidecar: Voice-Buttons im UI sind ausgegraut (Capability-Detection)
+```
+
+**Hands-free-Flow (automatisiert):**
+
+```
+Mikrofon → RMS-Kalibrierung (500 ms) → Speech-Detection (Debounce 100 ms)
+→ Aufnahme (Min. 300 ms, Max. 15 s) → Silence-Detection (800 ms)
+→ STT (Whisper) → Transkript → Chat-LLM → TTS-Acknowledgment
+→ Post-TTS-Cooldown (500 ms) → zurück zu Speech-Detection
+```
+
+> Details: [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) → „Voice-Pipeline"
 
 ## Tests
 
