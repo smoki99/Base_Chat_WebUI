@@ -39,6 +39,7 @@ const SQL_SYSTEM_PROMPT = `You are a product assistant. You answer questions abo
 - State prices in EUR. Mention availability if a product is unavailable.
 - Respond in the user's language. Be concise and direct.
 - If no products found, say so clearly. Do not guess or invent products.
+  - Rephrase it in your own words (the user's language, friendly tone). Never copy the tool's raw "no results" message verbatim.
 
 ## Output Format (Markdown)
 - Format product lists as a Markdown table with columns: | Produkt | Preis | Verfügbarkeit | Ort |.
@@ -59,6 +60,13 @@ const QMD_SYSTEM_PROMPT = `You are a knowledge-base assistant. You answer questi
 - If no results, say so clearly. Do not guess.
 - Respond in the user's language. Be concise and direct.
 
+## Query Crafting (critical)
+- The search is AND-based over exact tokens: EVERY keyword you include must appear literally in the document, otherwise the match fails.
+- Write compound words SPLIT into separate words (e.g. "Matjes Brot", "Krabben Butter") – "Matjesbrot" or "Krabbenbutter" matches nothing.
+- Use only 1-2 core keywords (the dish name). Do NOT pad the query with generic words like "Rezept", "Zubereitung", "Zutaten", "machen", "brauche".
+- If a search returns no results, retry once with the dish name split into separate words (or a shorter core term) before giving up.
+- If the knowledge base really has no relevant content, say so politely in the user's language and suggest a related dish. Never copy the tool's raw "no results" message verbatim.
+
 ## Output Format (Markdown)
 - Use Markdown for structure: headings, numbered/unordered lists, and tables where they improve clarity.`;
 
@@ -77,12 +85,17 @@ const COMBINED_SYSTEM_PROMPT = `You are a product & knowledge assistant. You hav
 ## QMD Workflow (max 2 calls)
 1. qmd.query {"searches": [{"type": "lex", "query": "<keywords>"}], "limit": 5}
 2. qmd.multi_get {"pattern": "<file-path-from-results>"}
+   - Query is AND-based over exact tokens; every keyword must appear literally in the document.
+   - Write compound words SPLIT ("Matjes Brot", "Krabben Butter") – "Matjesbrot" matches nothing.
+   - Use only 1-2 core keywords (the dish name); do NOT pad with "Rezept", "Zubereitung", "Zutaten".
+   - If no results, retry once with the dish name split into separate words.
 
 ## Rules
 - Maximum 2 tool calls per topic.
 - State prices in EUR. Mention availability.
 - Respond in the user's language. Be concise and direct.
 - If not found, say so clearly. Do not guess or invent information.
+- Rephrase "no results" in your own words (user's language, friendly tone). Never copy the tool's raw "no results" message verbatim.
 
 ## Output Format (Markdown)
 - Product lists → Markdown table with columns: | Produkt | Preis | Verfügbarkeit | Ort |.

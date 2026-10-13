@@ -82,7 +82,7 @@ async function searchProducts(args) {
   const limit = Math.min(Number(args.limit) || 10, 20);
 
   if (!query && !location && !category) {
-    return 'Please provide at least one of: query, location, or category.';
+    return 'Bitte mindestens einen von query, location oder category angeben.';
   }
 
   const client = new Client({ connectionString: DATABASE_URL });
@@ -97,7 +97,7 @@ async function searchProducts(args) {
     }
 
     if (rows.length === 0) {
-      return 'No products found. Try different keywords or remove the query.';
+      return 'Keine Produkte gefunden. Versuche andere Suchbegriffe.';
     }
     return formatResults(rows);
   } finally {
@@ -141,7 +141,7 @@ async function getProduct(args) {
       'SELECT sku, name, category, location, price, currency, description, available FROM products WHERE sku = $1',
       [sku]
     );
-    if (res.rows.length === 0) return `Product "${sku}" not found.`;
+    if (res.rows.length === 0) return `Produkt "${sku}" nicht gefunden.`;
     const r = res.rows[0];
     return `**${r.name}** [${r.sku}]\n- Price: €${r.price}\n- Location: ${r.location}\n- Category: ${r.category}\n- Available: ${r.available ? 'Yes' : 'No'}\n- Description: ${r.description ?? 'N/A'}`;
   } finally {
