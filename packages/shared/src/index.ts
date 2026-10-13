@@ -39,3 +39,48 @@ export interface ChatRequest {
 }
 
 export type ChatResponse = ApiResponse<ChatMessage>;
+
+// ── Voice (TTS + STT) ───────────────────────────────────────────────────────
+
+/** A single TTS voice option. */
+export interface Voice {
+  id: string;
+  name: string;
+  gender: 'f' | 'm';
+  /** Language code, e.g. "de", "es", "en". */
+  language: string;
+}
+
+/** Voice capabilities reported by GET /api/voice/capabilities. */
+export interface VoiceCapabilities {
+  /** Whether TTS (text-to-speech) is available. */
+  tts: boolean;
+  /** Whether STT (speech-to-text) is available. */
+  stt: boolean;
+  /** Available TTS voices. */
+  voices: Voice[];
+  /** Supported STT languages, e.g. ["de", "es", "en"]. */
+  languages: string[];
+  /** Default voice id per language. */
+  defaultVoiceByLanguage: Record<string, string>;
+}
+
+/** Request body for POST /api/voice/tts. */
+export interface TtsRequest {
+  text: string;
+  /** Optional voice id (defaults to the language default). */
+  voice?: string;
+}
+
+/** Request body for POST /api/voice/stt. */
+export interface SttRequest {
+  /** Base64-encoded audio (e.g. WebM/Opus from MediaRecorder). */
+  audio: string;
+  /** STT language, e.g. "de". */
+  language: string;
+}
+
+/** Response body for POST /api/voice/stt (the `data` field). */
+export interface SttResult {
+  text: string;
+}

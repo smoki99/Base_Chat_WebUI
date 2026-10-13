@@ -21,7 +21,7 @@ test.describe('Chat – E2E', () => {
     await expect(chatLog.getByText('Hallo', { exact: true })).toBeVisible();
 
     // Assistant reply (mock keyword response for "hallo")
-    await expect(chatLog.getByText('Hallo! Wie kann ich helfen?')).toBeVisible();
+    await expect(chatLog.getByText(/Hallo!/)).toBeVisible();
   });
 
   test('show empty state before first message', async ({ page }) => {

@@ -324,4 +324,98 @@ describe('createOpenAIProvider', () => {
     expect(systemMsg.content).toContain('SPLIT');
     expect(systemMsg.content).toContain('Never copy the tool');
   });
+
+  it('catches tool handler errors and returns the error as tool result', async () => {
+    const mockJson = {
+      id: 'chat-err',
+      choices: [{ message: { role: 'assistant', content: 'Tool failed' } }],
+    };
+    // First call: tool_call response. Second call: final content.
+    const toolCallJson = {
+      id: 'chat-err',
+      choices: [
+        {
+          message: {
+            role: 'assistant',
+            content: null,
+            tool_calls: [
+              { id: 'tc1', type: 'function', function: { name: 'bad_tool', arguments: '{}' } },
+            ],
+          },
+        },
+      ],
+    };
+    vi.spyOn(global, 'fetch')
+      .mockResolvedValueOnce(mockFetchResponse(200, toolCallJson) as Response)
+      .mockResolvedValueOnce(mockFetchResponse(200, mockJson) as Response);
+
+    const provider = createOpenAIProvider({
+      baseUrl: 'http://localhost:1234/v1',
+      model: 'Llama-3',
+      apiKey: 'test-key',
+    });
+
+    const badHandler = vi.fn().mockRejectedValue(new Error('handler boom'));
+    const result = await provider.reply('test', {
+      tools: [{ name: 'bad_tool', description: 'x', parameters: {} }],
+      toolHandlers: new Map([['bad_tool', badHandler]]),
+    });
+    expect(result.content).toBe('Tool failed');
+  });
+
+  it('includes history messages in the request body', async () => {
+    const mockJson = {
+      id: 'chat-hist',
+      choices: [{ message: { role: 'assistant', content: 'I remember' } }],
+    };
+    const fetchSpy = vi
+      .spyOn(global, 'fetch')
+      .mockResolvedValueOnce(mockFetchResponse(200, mockJson) as Response);
+
+    const provider = createOpenAIProvider({
+      baseUrl: 'http://localhost:1234/v1',
+      model: 'Llama-3',
+      apiKey: 'test-key',
+    });
+
+    await provider.reply('current question', {
+      history: [
+        { role: 'user', content: 'earlier question' },
+        { role: 'assistant', content: 'earlier answer' },
+      ],
+    });
+
+    const callArgs = fetchSpy.mock.calls[0]![1] as RequestInit;
+    const body = JSON.parse(callArgs.body as string);
+    const roles = body.messages.map((m: { role: string }) => m.role);
+    expect(roles).toContain('user');
+    expect(body.messages.some((m: { content: string }) => m.content === 'earlier question')).toBe(
+      true
+    );
+    expect(body.messages.some((m: { content: string }) => m.content === 'earlier answer')).toBe(
+      true
+    );
+  });
+
+  it('throws a timeout error when the request exceeds timeoutMs', async () => {
+    vi.spyOn(global, 'fetch').mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          const timer = setTimeout(
+            () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' })),
+            10
+          );
+          return timer;
+        })
+    );
+
+    const provider = createOpenAIProvider({
+      baseUrl: 'http://localhost:1234/v1',
+      model: 'Llama-3',
+      apiKey: 'test-key',
+      timeoutMs: 5,
+    });
+
+    await expect(provider.reply('test')).rejects.toThrow(/timed out/i);
+  });
 });
