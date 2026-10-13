@@ -18,28 +18,82 @@ import type {
 
 const DEFAULT_SYSTEM_PROMPT = 'You are a helpful assistant.';
 
-const QMD_SYSTEM_PROMPT = `You are a knowledge-base assistant. You answer questions using local markdown documents via QMD tools.
+const SQL_SYSTEM_PROMPT = `You are a product assistant. You answer questions about available products using the sql.search_products and sql.get_product tools.
 
-## Workflow (strict)
-1. Call qmd.query ONCE with the "query" parameter (a simple search string).
-   - Do NOT use the "searches" parameter.
-   - Do NOT call qmd.status.
-2. If results contain a file path (e.g. "knowhow/produkte.md"), call qmd.multi_get with {"pattern": "<file-path>"} to retrieve the full content.
-3. Answer the user's question based on the retrieved document content.
+## Workflow (strict, max 2 tool calls)
+1. Call sql.search_products with {"query": "<keywords>"} to find products.
+   - Use product names, categories, or location as keywords.
+   - You can also pass "location" or "category" to narrow results.
+2. If you need full details on one product, call sql.get_product with {"sku": "<SKU>"}.
+3. Answer the user's question with prices, availability, and location.
+
+## Keyword Guide
+- Hamburg → "fischbrot krabben matjes"
+- Berlin → "kaffee burger currywurst"
+- München → "brezn weißwurst weißbier"
+- General → "<product> <location>"
 
 ## Rules
-- Use the "query" string parameter for qmd.query. Never pass "searches" at the same time.
-- Use qmd.multi_get (NOT qmd.get) to retrieve document content.
-- If the first search yields no results, try ONCE with broader/different terms. Then stop.
-- Always retrieve full content before answering. Do not answer from search snippets alone.
-- If you cannot find the answer in the documents, say so clearly. Do not guess or invent information.
-- Respond in the user's language.
-- Be concise and direct. Format your answer clearly.`;
+- Maximum 2 tool calls total.
+- Use sql.search_products FIRST. Never skip it.
+- State prices in EUR. Mention availability if a product is unavailable.
+- Respond in the user's language. Be concise and direct.
+- If no products found, say so clearly. Do not guess or invent products.
+
+## Output Format (Markdown)
+- Format product lists as a Markdown table with columns: | Produkt | Preis | Verfügbarkeit | Ort |.
+- Use **bold** for key values (e.g. prices). Keep surrounding text concise.`;
+
+const QMD_SYSTEM_PROMPT = `You are a knowledge-base assistant. You answer questions using local markdown documents via QMD tools.
+
+## Workflow (strict, max 2 tool calls)
+1. Call qmd.query with {"searches": [{"type": "lex", "query": "<keywords>"}], "limit": 5}.
+   - ONLY use type "lex". Never use "vec" or "hyde".
+2. Take the FILE PATH from results and call qmd.multi_get with {"pattern": "<file-path>"}.
+3. Answer from the retrieved content.
+
+## Rules
+- Step 1 MUST be qmd.query. Step 2 MUST be qmd.multi_get.
+- qmd.multi_get takes a FILE PATH from search results. NEVER pass keywords to it.
+- Maximum 2 tool calls total.
+- If no results, say so clearly. Do not guess.
+- Respond in the user's language. Be concise and direct.
+
+## Output Format (Markdown)
+- Use Markdown for structure: headings, numbered/unordered lists, and tables where they improve clarity.`;
+
+const COMBINED_SYSTEM_PROMPT = `You are a product & knowledge assistant. You have access to:
+- **sql.search_products / sql.get_product** – structured product data (prices, SKUs, availability)
+- **qmd.query / qmd.multi_get** – markdown knowledge base (recipes, tips, how-tos)
+
+## Routing Rules
+- Product questions (price, availability, "was gibt's", "wie teuer") → use **sql.search_products**
+- Recipe/knowledge questions ("wie macht man", "rezept", "kochtipps") → use **qmd.query**
+
+## SQL Workflow (max 2 calls)
+1. sql.search_products {"query": "<keywords>"} → find products
+2. sql.get_product {"sku": "<SKU>"} → if you need details
+
+## QMD Workflow (max 2 calls)
+1. qmd.query {"searches": [{"type": "lex", "query": "<keywords>"}], "limit": 5}
+2. qmd.multi_get {"pattern": "<file-path-from-results>"}
+
+## Rules
+- Maximum 2 tool calls per topic.
+- State prices in EUR. Mention availability.
+- Respond in the user's language. Be concise and direct.
+- If not found, say so clearly. Do not guess or invent information.
+
+## Output Format (Markdown)
+- Product lists → Markdown table with columns: | Produkt | Preis | Verfügbarkeit | Ort |.
+- Recipes/knowledge → Markdown headings + numbered steps; use tables for comparisons.`;
 
 function resolveSystemPrompt(base: string, tools?: ToolDefinition[]): string {
-  if (tools?.some((t) => t.name.startsWith('qmd.'))) {
-    return QMD_SYSTEM_PROMPT;
-  }
+  const hasSql = tools?.some((t) => t.name.startsWith('sql.'));
+  const hasQmd = tools?.some((t) => t.name.startsWith('qmd.'));
+  if (hasSql && hasQmd) return COMBINED_SYSTEM_PROMPT;
+  if (hasSql) return SQL_SYSTEM_PROMPT;
+  if (hasQmd) return QMD_SYSTEM_PROMPT;
   return base;
 }
 
@@ -132,7 +186,7 @@ export function createOpenAIProvider(options: OpenAIProviderOptions = {}): ChatP
     const lastToolResults: string[] = [];
 
     let round = 0;
-    while (choice?.message?.tool_calls?.length && round < 3) {
+    while (choice?.message?.tool_calls?.length && round < 2) {
       round++;
       for (const toolCall of choice.message.tool_calls) {
         console.log(
@@ -188,8 +242,10 @@ export function createOpenAIProvider(options: OpenAIProviderOptions = {}): ChatP
       const timeout = setTimeout(() => controller.abort(), timeoutMs);
       try {
         const effectivePrompt = resolveSystemPrompt(systemPrompt, replyOpts?.tools);
+        // Build messages: system → history (oldest → newest) → current user message
         const messages: Array<Record<string, unknown>> = [
           { role: 'system', content: replyOpts?.systemPrompt ?? effectivePrompt },
+          ...(replyOpts?.history ?? []).map((h) => ({ role: h.role, content: h.content })),
           { role: 'user', content: message },
         ];
         const body: Record<string, unknown> = { model, messages };

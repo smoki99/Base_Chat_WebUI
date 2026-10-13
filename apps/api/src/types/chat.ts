@@ -1,6 +1,6 @@
 // Chat message returned by the chat provider (API → client).
 // `ChatMessage` is the shared wire DTO – single source of truth in packages/shared.
-import type { ChatMessage } from 'shared';
+import type { ChatMessage, ChatHistoryMessage } from 'shared';
 
 export type { ChatMessage };
 
@@ -25,6 +25,8 @@ export interface ReplyOptions {
   systemPrompt?: string;
   tools?: ToolDefinition[];
   toolHandlers?: Map<string, ToolHandler>;
+  /** Previous conversation messages (oldest → newest), sent from the client. */
+  history?: ChatHistoryMessage[];
 }
 
 // A chat provider produces a reply for a given user message.

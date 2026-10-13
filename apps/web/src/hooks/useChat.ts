@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import type { ChatMessage as WireChatMessage } from 'shared';
+import type { ChatHistoryMessage, ChatMessage as WireChatMessage } from 'shared';
 
 export interface ChatMessage {
   id: string;
@@ -14,6 +14,7 @@ interface ChatApiResponse {
 }
 
 const FALLBACK_MESSAGE = 'Der Server ist nicht erreichbar. Bitte versuche es später erneut.';
+const MAX_CONTEXT_MESSAGES = Number(import.meta.env.VITE_CONTEXT_MESSAGES) || 20;
 
 /**
  * Chat state + logic. Talks to the existing `/api/chat` endpoint and keeps
@@ -37,7 +38,13 @@ export function useChat() {
     setIsLoading(true);
 
     try {
-      const reply = await fetchChat(content);
+      // Build history from previous sent messages (exclude the one just added above)
+      const history: ChatHistoryMessage[] = messages
+        .filter((m) => m.status === 'sent')
+        .slice(-MAX_CONTEXT_MESSAGES)
+        .map((m) => ({ role: m.role, content: m.content }));
+
+      const reply = await fetchChat(content, history);
       // Mark user message as sent, append the assistant reply
       setMessages((prev) =>
         prev
@@ -58,16 +65,16 @@ export function useChat() {
     } finally {
       setIsLoading(false);
     }
-  }, [input, isLoading]);
+  }, [input, isLoading, messages]);
 
   return { messages, input, setInput, isLoading, error, send };
 }
 
-async function fetchChat(message: string): Promise<string> {
+async function fetchChat(message: string, history: ChatHistoryMessage[]): Promise<string> {
   const res = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ message, history }),
   });
 
   const payload = (await res.json()) as ChatApiResponse;
