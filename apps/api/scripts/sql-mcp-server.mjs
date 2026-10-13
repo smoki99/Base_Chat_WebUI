@@ -39,7 +39,7 @@ const TOOLS = [
   },
 ];
 
-async function searchProducts(args: Record<string, unknown>): Promise<string> {
+async function searchProducts(args) {
   const query = String(args.query ?? '').trim();
   if (!query) return 'Error: "query" parameter is required.';
   const location = args.location ? String(args.location) : null;
@@ -48,8 +48,8 @@ async function searchProducts(args: Record<string, unknown>): Promise<string> {
   const client = new Client({ connectionString: DATABASE_URL });
   try {
     await client.connect();
-    const conditions: string[] = [];
-    const params: unknown[] = [];
+    const conditions = [];
+    const params = [];
     let idx = 1;
     params.push(query);
     conditions.push(
@@ -72,7 +72,7 @@ async function searchProducts(args: Record<string, unknown>): Promise<string> {
   } finally { await client.end(); }
 }
 
-async function getProduct(args: Record<string, unknown>): Promise<string> {
+async function getProduct(args) {
   const sku = String(args.sku ?? '').trim().toUpperCase();
   if (!sku) return 'Error: "sku" parameter is required.';
   const client = new Client({ connectionString: DATABASE_URL });
@@ -87,17 +87,19 @@ async function getProduct(args: Record<string, unknown>): Promise<string> {
     return `**${r.name}** [${r.sku}]\n- Price: €${r.price}\n- Location: ${r.location}\n- Category: ${r.category}\n- Available: ${r.available ? 'Yes' : 'No'}\n- Description: ${r.description ?? 'N/A'}`;
   } finally { await client.end(); }
 }
-function respond(id: number, result: unknown): void {
+
+function respond(id, result) {
   process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id, result }) + '\n');
 }
-function respondError(id: number, code: number, message: string): void {
+
+function respondError(id, code, message) {
   process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id, error: { code, message } }) + '\n');
 }
 
-async function handleRequest(msg: Record<string, unknown>): Promise<void> {
-  const id = (msg.id as number) ?? 0;
-  const method = msg.method as string;
-  const params = (msg.params as Record<string, unknown>) ?? {};
+async function handleRequest(msg) {
+  const id = msg.id ?? 0;
+  const method = msg.method;
+  const params = msg.params ?? {};
   try {
     switch (method) {
       case 'initialize':
@@ -113,9 +115,9 @@ async function handleRequest(msg: Record<string, unknown>): Promise<void> {
         respond(id, { tools: TOOLS });
         break;
       case 'tools/call': {
-        const name = params.name as string;
-        const args = (params.arguments as Record<string, unknown>) ?? {};
-        let result: string;
+        const name = params.name;
+        const args = params.arguments ?? {};
+        let result;
         if (name === 'search_products') result = await searchProducts(args);
         else if (name === 'get_product') result = await getProduct(args);
         else { respondError(id, -32601, `Unknown tool: ${name}`); return; }
@@ -137,4 +139,4 @@ rl.on('line', (line) => {
   if (!trimmed) return;
   try { void handleRequest(JSON.parse(trimmed)); } catch { /* ignore */ }
 });
-process.stderr.write(`[sql-mcp] Ready.\n`);
+process.stderr.write('[sql-mcp] Ready.\n');
