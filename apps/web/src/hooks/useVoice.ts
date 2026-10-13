@@ -6,6 +6,7 @@ const SILENCE_TIMEOUT_MS = 5000;
 const NOISE_FLOOR_SAMPLES = 30;
 const RMS_THRESHOLD_FACTOR = 3;
 const MIN_RMS_THRESHOLD = 0.01;
+const MIN_SPEECH_DURATION_MS = 500;
 
 type InteractiveState = 'off' | 'listening' | 'recording' | 'processing';
 
@@ -214,6 +215,7 @@ export function useVoice(): UseVoiceReturn {
 
       // Mutable loop state
       let speechActive = false;
+      let speechStartTime = 0;
       let silenceStart = 0;
       const noiseSamples: number[] = [];
       let threshold = MIN_RMS_THRESHOLD;
@@ -226,6 +228,19 @@ export function useVoice(): UseVoiceReturn {
         if (!recorder || recorder.state === 'inactive') return;
         processing = true;
         setInteractiveState('processing');
+
+        // Discard if the "speech" was too short (likely just a noise blip)
+        const speechDuration = performance.now() - speechStartTime;
+        if (speechDuration < MIN_SPEECH_DURATION_MS) {
+          recorder.onstop = null;
+          recorder.stop();
+          recorder = null;
+          chunks = [];
+          speechActive = false;
+          processing = false;
+          setInteractiveState('listening');
+          return;
+        }
 
         const mime = recorder.mimeType || 'audio/webm';
         const audioChunks = [...chunks];
@@ -287,6 +302,7 @@ export function useVoice(): UseVoiceReturn {
         if (isSpeech && !speechActive && !processing) {
           // Speech started → begin recording
           speechActive = true;
+          speechStartTime = performance.now();
           silenceStart = 0;
           recorder = new MediaRecorder(stream);
           chunks = [];
