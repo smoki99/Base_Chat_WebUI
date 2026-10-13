@@ -179,6 +179,9 @@ export function Chat() {
             {voice.interactiveState === 'listening' && (
               <span className="btn-interactive-dot" aria-hidden="true" />
             )}
+            {voice.interactiveState === 'paused' && (
+              <span className="btn-interactive-dot btn-interactive-dot--blue" aria-hidden="true" />
+            )}
             {voice.interactiveState === 'recording' && (
               <span className="btn-interactive-dot btn-interactive-dot--red" aria-hidden="true" />
             )}

@@ -11,7 +11,7 @@ const MIN_SPEECH_DURATION_MS = 300; // discard recordings shorter than this
 const COOLDOWN_MS = 500; // pause VAD after STT to prevent immediate re-trigger
 const MAX_RECORDING_MS = 15000; // hard cap: STT rejects >30s audio
 
-type InteractiveState = 'off' | 'listening' | 'recording' | 'processing';
+type InteractiveState = 'off' | 'listening' | 'recording' | 'processing' | 'paused';
 
 interface UseVoiceReturn {
   capabilities: VoiceCapabilities | null;
@@ -74,10 +74,15 @@ export function useVoice(): UseVoiceReturn {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const loopRef = useRef<number | null>(null);
 
-  // Sync isSpeakingRef so the interactive loop can read it without re-rendering
+  // Sync isSpeakingRef + auto-pause/resume interactive mode during TTS
   useEffect(() => {
     isSpeakingRef.current = isSpeaking;
-  }, [isSpeaking]);
+    if (isSpeaking && interactiveStateRef.current === 'listening') {
+      setInteractiveState('paused');
+    } else if (!isSpeaking && interactiveStateRef.current === 'paused') {
+      setInteractiveState('listening');
+    }
+  }, [isSpeaking, setInteractiveState]);
 
   // Load capabilities on mount.
   useEffect(() => {
