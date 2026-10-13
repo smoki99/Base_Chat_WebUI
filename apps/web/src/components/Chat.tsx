@@ -2,6 +2,16 @@ import { useEffect, useRef } from 'react';
 import { useChat } from '../hooks/useChat';
 import { useVoice } from '../hooks/useVoice';
 import { Markdown } from './Markdown';
+import acknowledgments from '../data/acknowledgments.json';
+
+/** Pick a random acknowledgment phrase for the given language code. */
+function pickAcknowledgment(lang: string): string {
+  const map: Record<string, string[]> = acknowledgments;
+  const phrases = map[lang] ?? map.de ?? [];
+  // eslint-disable-next-line sonarjs/pseudo-random -- UI-only, not security-sensitive
+  const idx = Math.floor(Math.random() * phrases.length);
+  return phrases[idx] ?? 'Einen Moment…';
+}
 
 /**
  * Chat UI: message list + composer. Reuses the existing Material Design
@@ -35,7 +45,7 @@ export function Chat() {
       if (voice.interactiveState !== 'off') {
         console.log('[chat] sending to LLM:', JSON.stringify(transcript));
         if (voice.isTtsAvailable) {
-          void voice.speak('Ok, ich beginne mit der Suche!');
+          void voice.speak(pickAcknowledgment(voice.currentLanguage));
         }
         void send(transcript);
       } else {
