@@ -48,11 +48,12 @@ export function useChatHistory() {
     persist(chats);
   }, [chats]);
 
-  /** Start a new, empty chat (generates a fresh ID immediately). */
-  const newChat = useCallback(() => {
+  /** Start a new, empty chat (generates a fresh ID immediately). Returns the new ID. */
+  const newChat = useCallback((): string => {
     const id = crypto.randomUUID();
     setActiveChatId(id);
     setActiveMessages([]);
+    return id;
   }, []);
 
   /** Open an existing chat from the history. */

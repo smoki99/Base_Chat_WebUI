@@ -33,4 +33,33 @@ test.describe('Chat – E2E', () => {
     // Empty state prompt is visible
     await expect(chatSection.getByText('Starte die Unterhaltung')).toBeVisible();
   });
+
+  test('first message appears in sidebar without clicking "Neue"', async ({ page }) => {
+    // Ensure a fresh state (no existing chats)
+    await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+
+    // Sidebar starts empty
+    const sidebar = page.locator('aside[aria-label="Chatverlauf"]');
+    await expect(sidebar).toBeVisible();
+    await expect(sidebar.getByText('Noch keine Unterhaltungen')).toBeVisible();
+
+    // Wait for the chat section to be visible
+    const chatSection = page.locator('section[aria-label="Chat"]');
+    await expect(chatSection).toBeVisible();
+
+    // Type a message and send (without clicking "+ Neue")
+    const chatInput = chatSection.getByRole('textbox', { name: 'Nachricht' });
+    await chatInput.fill('Hallo');
+    await chatSection.getByRole('button', { name: 'Senden' }).click();
+
+    // User message + assistant reply appear in the log
+    const chatLog = chatSection.getByRole('log', { name: 'Chatnachrichten' });
+    await expect(chatLog.getByText('Hallo', { exact: true })).toBeVisible();
+    await expect(chatLog.getByText(/Hallo!/)).toBeVisible();
+
+    // The chat now appears in the sidebar (regression: was lost without "Neue")
+    await expect(sidebar.getByText('Hallo', { exact: true })).toBeVisible();
+  });
 });
