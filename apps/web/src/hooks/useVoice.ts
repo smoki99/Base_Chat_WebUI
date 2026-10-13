@@ -266,7 +266,14 @@ export function useVoice(): UseVoiceReturn {
         if (!res.ok || !payload?.data) {
           throw new Error(payload?.error?.message ?? `STT failed: ${res.status}`);
         }
-        setLastTranscript(payload.data.text);
+        const text = payload.data.text ?? '';
+        console.log(
+          '[voice] STT transcript:',
+          JSON.stringify(text),
+          '(len:',
+          text.trim().length + ')'
+        );
+        setLastTranscript(text);
       }
 
       async function handleSilence() {

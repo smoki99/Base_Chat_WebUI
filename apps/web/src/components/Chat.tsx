@@ -33,6 +33,7 @@ export function Chat() {
       if (transcript.trim().length < 3) return;
 
       if (voice.interactiveState !== 'off') {
+        console.log('[chat] sending to LLM:', JSON.stringify(transcript));
         if (voice.isTtsAvailable) {
           void voice.speak('Ok, ich beginne mit der Suche!');
         }
