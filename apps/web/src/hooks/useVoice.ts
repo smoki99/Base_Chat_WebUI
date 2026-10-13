@@ -67,6 +67,10 @@ export function useVoice(): UseVoiceReturn {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const interactiveStateRef = useRef<InteractiveState>('off');
   const isSpeakingRef = useRef(false);
+  // Timestamp when TTS finished – loop stays blocked until this + margin,
+  // giving the speaker time to flush its output buffer before the mic
+  // could pick up residual TTS audio.
+  const ttsEndAtRef = useRef(0);
 
   // Interactive mode refs
   const interactiveStreamRef = useRef<MediaStream | null>(null);
@@ -74,9 +78,10 @@ export function useVoice(): UseVoiceReturn {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const loopRef = useRef<number | null>(null);
 
-  // Sync isSpeakingRef + auto-pause/resume interactive mode during TTS
+  // Sync interactive state: auto-pause during TTS, resume after.
+  // NOTE: isSpeakingRef is managed directly in speak()/stopSpeaking()/onended
+  // to avoid the async gap where React state hasn't propagated yet.
   useEffect(() => {
-    isSpeakingRef.current = isSpeaking;
     if (isSpeaking && interactiveStateRef.current === 'listening') {
       setInteractiveState('paused');
     } else if (!isSpeaking && interactiveStateRef.current === 'paused') {
@@ -112,6 +117,7 @@ export function useVoice(): UseVoiceReturn {
   const languages = capabilities?.languages ?? [];
 
   const stopSpeaking = useCallback(() => {
+    isSpeakingRef.current = false;
     audioRef.current?.pause();
     audioRef.current = null;
     setIsSpeaking(false);
@@ -119,8 +125,19 @@ export function useVoice(): UseVoiceReturn {
 
   const speak = useCallback(
     async (text: string) => {
+      console.log('[voice] speak() called:', JSON.stringify(text));
+      console.trace('[voice] speak() stack:');
+
+      // Block the detection loop IMMEDIATELY – before the TTS fetch starts.
+      // During the fetch window (~500ms) the loop would otherwise still run
+      // and could pick up residual audio or echo as "speech".
+      isSpeakingRef.current = true;
+
+      // Pause any previously playing audio (without resetting the ref –
+      // we just set it to true and must NOT let stopSpeaking() clear it).
+      audioRef.current?.pause();
+      audioRef.current = null;
       setError(null);
-      stopSpeaking();
       try {
         const res = await fetch(`${API}/tts`, {
           method: 'POST',
@@ -136,20 +153,26 @@ export function useVoice(): UseVoiceReturn {
         const audio = new Audio(url);
         audioRef.current = audio;
         setIsSpeaking(true);
+
         audio.onended = () => {
+          isSpeakingRef.current = false;
+          ttsEndAtRef.current = performance.now();
           setIsSpeaking(false);
           URL.revokeObjectURL(url);
         };
         audio.onerror = () => {
+          isSpeakingRef.current = false;
+          ttsEndAtRef.current = performance.now();
           setIsSpeaking(false);
           setError('Audio playback error');
         };
         await audio.play();
       } catch (err) {
+        isSpeakingRef.current = false;
         setError(err instanceof Error ? err.message : 'TTS failed');
       }
     },
-    [currentVoice, stopSpeaking]
+    [currentVoice]
   );
 
   const startRecording = useCallback(async () => {
@@ -378,6 +401,9 @@ export function useVoice(): UseVoiceReturn {
       function loop() {
         if (interactiveStateRef.current === 'off') return;
         if (isSpeakingRef.current) return;
+        // Post-TTS guard: block detection for 500ms after audio ends,
+        // giving the speaker time to flush its output buffer.
+        if (performance.now() - ttsEndAtRef.current < 500) return;
         const a = analyserRef.current;
         if (!a) return;
         if (performance.now() < cooldownUntil) return;

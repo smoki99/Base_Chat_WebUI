@@ -2,6 +2,16 @@ import { useEffect, useRef } from 'react';
 import { useChat } from '../hooks/useChat';
 import { useVoice } from '../hooks/useVoice';
 import { Markdown } from './Markdown';
+import acknowledgments from '../data/acknowledgments.json';
+
+/** Pick a random acknowledgment phrase for the given language code. */
+function pickAcknowledgment(lang: string): string {
+  const map: Record<string, string[]> = acknowledgments;
+  const phrases = map[lang] ?? map.de ?? [];
+  // eslint-disable-next-line sonarjs/pseudo-random -- UI-only, not security-sensitive
+  const idx = Math.floor(Math.random() * phrases.length);
+  return phrases[idx] ?? 'Einen Moment…';
+}
 
 /**
  * Chat UI: message list + composer. Reuses the existing Material Design
@@ -14,6 +24,9 @@ export function Chat() {
   const voice = useVoice();
   const canSend = input.trim().length > 0 && !isLoading;
   const messagesRef = useRef<HTMLDivElement>(null);
+  // Guard: prevents React StrictMode (dev) double-effect from calling
+  // speak() + send() twice for the same transcript.
+  const processedTranscriptRef = useRef<string | null>(null);
 
   // Keep the newest message in view.
   useEffect(() => {
@@ -23,26 +36,38 @@ export function Chat() {
     }
   }, [messages, isLoading]);
 
-  // When a STT transcript arrives from manual recording, append it to the input.
+  // When a STT transcript arrives, handle it exactly once.
   useEffect(() => {
-    if (voice.lastTranscript && voice.interactiveState !== 'processing') {
-      const transcript = voice.lastTranscript;
-      voice.clearTranscript();
+    if (!voice.lastTranscript || voice.interactiveState === 'processing') return;
+    const transcript = voice.lastTranscript;
 
-      // Minimum transcript length: discard noise transcriptions (< 3 chars)
-      if (transcript.trim().length < 3) return;
+    // StrictMode guard: skip if we already processed this exact transcript.
+    if (processedTranscriptRef.current === transcript) return;
+    processedTranscriptRef.current = transcript;
 
-      if (voice.interactiveState !== 'off') {
-        console.log('[chat] sending to LLM:', JSON.stringify(transcript));
-        if (voice.isTtsAvailable) {
-          void voice.speak('Ok, ich beginne mit der Suche!');
-        }
-        void send(transcript);
-      } else {
-        setInput((prev) => (prev ? prev + ' ' : '') + transcript);
+    voice.clearTranscript();
+
+    // Minimum transcript length: discard noise transcriptions (< 3 chars)
+    if (transcript.trim().length < 3) return;
+
+    if (voice.interactiveState !== 'off') {
+      console.log('[chat] sending to LLM:', JSON.stringify(transcript));
+      if (voice.isTtsAvailable) {
+        void voice.speak(pickAcknowledgment(voice.currentLanguage));
       }
+      void send(transcript);
+    } else {
+      setInput((prev) => (prev ? prev + ' ' : '') + transcript);
     }
-  }, [voice.lastTranscript, voice, setInput, send]);
+  }, [
+    voice.lastTranscript,
+    voice.interactiveState,
+    voice.isTtsAvailable,
+    voice.currentLanguage,
+    voice,
+    setInput,
+    send,
+  ]);
 
   return (
     <div className="chat">

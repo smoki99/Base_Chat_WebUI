@@ -1,0 +1,38 @@
+{
+  "de": [
+    "Einen Moment, ich suche die passende Antwort für Sie.",
+    "Ich fasse das kurz für Sie zusammen.",
+    "Einen Augenblick, ich bearbeite Ihre Anfrage.",
+    "Einen Moment bitte, das schaue ich mir an.",
+    "Ich verarbeite die Informationen für Sie.",
+    "Einen kurzen Augenblick, ich bereite die Details vor.",
+    "Ich suche nach den relevanten Informationen.",
+    "Einen Moment, ich stelle das für Sie zusammen.",
+    "Ich nehme mir kurz Zeit zum Nachdenken.",
+    "Einen Augenblick bitte, ich kläre das für Sie ab."
+  ],
+  "en": [
+    "One moment while I find the right answer for you.",
+    "Let me summarize that for you quickly.",
+    "Just a second, I am processing your request.",
+    "One moment please, let me look into that.",
+    "I am gathering the information for you.",
+    "Just a brief moment while I prepare the details.",
+    "I am searching for the relevant details.",
+    "One moment, I am putting that together for you.",
+    "Give me just a second to think about that.",
+    "One moment please, while I check that for you."
+  ],
+  "es": [
+    "Un momento, busco la respuesta adecuada para usted.",
+    "Déjeme resumir esto rápidamente.",
+    "Un segundo, estoy procesando su solicitud.",
+    "Un momento por favor, déjeme revisar eso.",
+    "Estoy procesando la información para usted.",
+    "Un breve instante, estoy preparando los detalles.",
+    "Estoy buscando la información relevante.",
+    "Un momento, estoy organizando eso para usted.",
+    "Dame un segundo para pensarlo.",
+    "Un momento por favor, mientras verifico eso."
+  ]
+}
