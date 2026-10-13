@@ -188,4 +188,60 @@ describe('createOpenAIProvider', () => {
     // The name should be 'openai-compatible' regardless of config.
     expect(provider.name).toBe('openai-compatible');
   });
+
+  it('uses SQL system prompt when sql tools are provided', async () => {
+    const mockJson = {
+      id: 'chat-sql-1',
+      choices: [{ message: { role: 'assistant', content: 'Found: Fischbrötchen' } }],
+    };
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(mockFetchResponse(200, mockJson) as Response);
+
+    const sqlTools = [
+      {
+        name: 'sql.search_products',
+        description: 'Search products',
+        parameters: { type: 'object' },
+      },
+      {
+        name: 'sql.get_product',
+        description: 'Get product by SKU',
+        parameters: { type: 'object' },
+      },
+    ];
+    const provider = createOpenAIProvider({ baseUrl: 'http://localhost:1234/v1' });
+
+    await provider.reply('Was gibt es in Hamburg?', { tools: sqlTools });
+
+    const fetchSpy = vi.mocked(global.fetch);
+    const callArgs = fetchSpy.mock.calls[0]![1] as RequestInit;
+    const body = JSON.parse(callArgs.body as string);
+    const systemMsg = body.messages.find((m: { role: string }) => m.role === 'system')!;
+    expect(systemMsg.content).toContain('sql.search_products');
+    expect(systemMsg.content).toContain('Maximum 2 tool calls');
+  });
+
+  it('uses combined system prompt when both sql and qmd tools are provided', async () => {
+    const mockJson = {
+      id: 'chat-combined-1',
+      choices: [{ message: { role: 'assistant', content: 'OK' } }],
+    };
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(mockFetchResponse(200, mockJson) as Response);
+
+    const combinedTools = [
+      { name: 'sql.search_products', description: 'Search', parameters: { type: 'object' } },
+      { name: 'qmd.query', description: 'Search docs', parameters: { type: 'object' } },
+      { name: 'qmd.multi_get', description: 'Get docs', parameters: { type: 'object' } },
+    ];
+    const provider = createOpenAIProvider({ baseUrl: 'http://localhost:1234/v1' });
+
+    await provider.reply('Was gibt es?', { tools: combinedTools });
+
+    const fetchSpy = vi.mocked(global.fetch);
+    const callArgs = fetchSpy.mock.calls[0]![1] as RequestInit;
+    const body = JSON.parse(callArgs.body as string);
+    const systemMsg = body.messages.find((m: { role: string }) => m.role === 'system')!;
+    expect(systemMsg.content).toContain('Routing Rules');
+    expect(systemMsg.content).toContain('sql.search_products');
+    expect(systemMsg.content).toContain('qmd.query');
+  });
 });

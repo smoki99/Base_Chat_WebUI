@@ -63,13 +63,15 @@ export const chatService = {
   async respond(message: string): Promise<ChatMessage> {
     const options: ReplyOptions = {};
     if (mcpContext && mcpContext.allTools.length > 0) {
-      // Only expose fast QMD tools.
-      // qmd.query with lex-only searches = BM25 (no LLM expansion, fast)
-      // qmd.multi_get = reliable content retrieval (qmd.get returns 0 chars)
-      const allowedTools = new Set(['qmd.query', 'qmd.multi_get']);
+      // SQL tools (primary: structured product search) + QMD (fallback: recipes/knowledge).
+      const allowedTools = new Set([
+        'sql.search_products',
+        'sql.get_product',
+        'qmd.query',
+        'qmd.multi_get',
+      ]);
       const filteredTools = mcpContext.allTools.filter((t) => allowedTools.has(t.name));
       if (filteredTools.length === 0) {
-        // No QMD tools matched – fall back to all non-status tools
         options.tools = mcpContext.allTools.filter((t) => !t.name.includes('.status'));
       } else {
         options.tools = filteredTools;
