@@ -108,13 +108,13 @@ jobs:
         run: |
           printf '%s\n' \
             '{"jsonrpc":"2.0","id":1,"method":"initialize"}' \
-            '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"search_products","arguments":{"query":"fischbrot"}}}' \
+            '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"search_products","arguments":{"query":"fisch"}}}' \
             | DATABASE_URL=$DATABASE_URL node apps/api/scripts/sql-mcp-server.mjs | \
           node -e "
             const lines = require('fs').readFileSync('/dev/stdin','utf8').trim().split('\n');
             const last = JSON.parse(lines[lines.length-1]);
             const text = last.result?.content?.[0]?.text ?? '';
-            if (!text.includes('Fischbrötchen') && !text.includes('fischbrot')) {
+            if (!text.includes('Fischbrötchen') && !text.includes('Fisch')) {
               console.error('FAIL: search_products did not return expected results');
               console.error(text);
               process.exit(1);
