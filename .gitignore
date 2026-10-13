@@ -13,3 +13,12 @@ build/
 coverage/
 test-results/
 playwright-report/
+
+# Python (voice sidecar)
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
