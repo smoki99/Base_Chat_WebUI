@@ -12,6 +12,7 @@
  * The provider is lazily instantiated once and cached for the process lifetime.
  */
 import type { ChatMessage, ChatProvider, ReplyOptions } from '../types/chat';
+import type { ChatHistoryMessage } from 'shared';
 import { createMockProvider } from './providers/mockProvider';
 import { createOpenAIProvider } from './providers/openaiProvider';
 import { loadMcpConfig, connectAllMcpServers, type McpContext } from './mcpClient';
@@ -60,8 +61,11 @@ export const chatService = {
   /** Returns the configured provider name (from env, not the instance). */
   getProviderName,
 
-  async respond(message: string): Promise<ChatMessage> {
+  async respond(message: string, history?: ChatHistoryMessage[]): Promise<ChatMessage> {
     const options: ReplyOptions = {};
+    if (history?.length) {
+      options.history = history;
+    }
     if (mcpContext && mcpContext.allTools.length > 0) {
       // SQL tools (primary: structured product search) + QMD (fallback: recipes/knowledge).
       const allowedTools = new Set([

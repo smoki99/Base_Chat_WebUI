@@ -25,4 +25,17 @@ export interface ChatMessage {
   content: string;
 }
 
+/** A single message in the conversation history (role + content only). */
+export interface ChatHistoryMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+/** Request body for POST /api/chat. */
+export interface ChatRequest {
+  message: string;
+  /** Optional: previous conversation messages (oldest → newest). */
+  history?: ChatHistoryMessage[];
+}
+
 export type ChatResponse = ApiResponse<ChatMessage>;
