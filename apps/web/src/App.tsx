@@ -27,11 +27,12 @@ export default function App() {
 
   const handleMessagesChange = useCallback(
     (messages: ChatMessage[]) => {
-      if (history.activeChatId && messages.length > 0) {
-        const title =
-          messages.find((m) => m.role === 'user')?.content.slice(0, 50) ?? 'Neue Unterhaltung';
-        history.scheduleSave(history.activeChatId, title, messages);
-      }
+      if (messages.length === 0) return;
+      // Ensure an active chat exists – create one on the first message if needed.
+      const id = history.activeChatId ?? history.newChat();
+      const title =
+        messages.find((m) => m.role === 'user')?.content.slice(0, 50) ?? 'Neue Unterhaltung';
+      history.scheduleSave(id, title, messages);
     },
     [history]
   );

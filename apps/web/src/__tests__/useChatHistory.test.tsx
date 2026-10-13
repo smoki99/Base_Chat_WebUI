@@ -24,12 +24,14 @@ describe('useChatHistory', () => {
     expect(result.current.activeMessages).toEqual([]);
   });
 
-  it('newChat generates a fresh ID', () => {
+  it('newChat generates a fresh ID and returns it', () => {
     const { result } = renderHook(() => useChatHistory());
+    let returnedId: string | undefined;
     act(() => {
-      result.current.newChat();
+      returnedId = result.current.newChat();
     });
-    expect(result.current.activeChatId).toBeTruthy();
+    expect(returnedId).toBeTruthy();
+    expect(result.current.activeChatId).toBe(returnedId);
     expect(result.current.activeMessages).toEqual([]);
   });
 
