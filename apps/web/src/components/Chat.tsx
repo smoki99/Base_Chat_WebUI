@@ -30,12 +30,14 @@ export function Chat() {
       voice.clearTranscript();
 
       if (voice.interactiveState !== 'off') {
-        // Interactive mode: speak feedback + auto-send
+        // Interactive mode: only send if STT recognized actual text
+        if (!transcript.trim()) return; // no speech detected → keep listening
         if (voice.isTtsAvailable) {
           void voice.speak('Ok, ich beginne mit der Suche!');
         }
         void send(transcript);
       } else {
+        if (!transcript.trim()) return;
         setInput((prev) => (prev ? prev + ' ' : '') + transcript);
       }
     }
