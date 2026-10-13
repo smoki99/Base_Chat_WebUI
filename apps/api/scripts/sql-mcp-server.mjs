@@ -15,13 +15,14 @@ const TOOLS = [
   {
     name: 'search_products',
     description:
-      'Search products by name, category, location, or description. Returns up to 10 products with name, SKU, price, location, category.',
+      'Search products by name, category, location, or description. Returns up to 10 products with name, SKU, price, location, category. If query is empty or omitted, lists all products matching location/category.',
     inputSchema: {
       type: 'object',
       properties: {
         query: {
           type: 'string',
-          description: 'Search keywords (e.g. "fischbrot", "berlin kaffee")',
+          description:
+            'Search keywords (e.g. "fisch", "kaffee", "burger"). Optional when location or category is set.',
         },
         location: {
           type: 'string',
@@ -30,7 +31,6 @@ const TOOLS = [
         category: { type: 'string', description: 'Optional: filter by category' },
         limit: { type: 'number', description: 'Max results (default 10, max 20)' },
       },
-      required: ['query'],
     },
   },
   {
@@ -46,63 +46,87 @@ const TOOLS = [
   },
 ];
 
-async function searchProducts(args) {
-  const query = String(args.query ?? '').trim();
-  if (!query) return 'Error: "query" parameter is required.';
-  const location = args.location ? String(args.location) : null;
-  const category = args.category ? String(args.category) : null;
-  const limit = Math.min(Number(args.limit) || 10, 20);
-  const client = new Client({ connectionString: DATABASE_URL });
-  try {
-    await client.connect();
-    const conditions = [];
-    const params = [];
-    let idx = 1;
+async function runQuery(client, { query, location, category, limit }) {
+  const conditions = [];
+  const params = [];
+  let idx = 1;
+  if (query) {
     params.push(query);
     conditions.push(
       `(to_tsvector('german', name || ' ' || coalesce(description, '')) @@ plainto_tsquery('german', $${idx}) OR name ILIKE '%' || $${idx} || '%' OR description ILIKE '%' || $${idx} || '%')`
     );
     idx++;
-    if (location) {
-      params.push(location);
-      conditions.push(`location ILIKE $${idx}`);
-      idx++;
+  }
+  if (location) {
+    params.push(location);
+    conditions.push(`location ILIKE $${idx}`);
+    idx++;
+  }
+  if (category) {
+    params.push(category);
+    conditions.push(`category = $${idx}`);
+    idx++;
+  }
+  params.push(limit);
+  const sql = `SELECT sku, name, category, location, price, currency, description, available
+    FROM products WHERE ${conditions.join(' AND ')}
+    ORDER BY name LIMIT $${idx}`;
+  const res = await client.query(sql, params);
+  return res.rows;
+}
+
+async function searchProducts(args) {
+  const query = String(args.query ?? '').trim();
+  const location = args.location ? String(args.location) : null;
+  const category = args.category ? String(args.category) : null;
+  const limit = Math.min(Number(args.limit) || 10, 20);
+
+  if (!query && !location && !category) {
+    return 'Please provide at least one of: query, location, or category.';
+  }
+
+  const client = new Client({ connectionString: DATABASE_URL });
+  try {
+    await client.connect();
+    let rows = await runQuery(client, { query, location, category, limit });
+
+    // Fallback: if query returned nothing but location/category is set,
+    // retry WITHOUT the text search filter (list all in that location/category)
+    if (rows.length === 0 && query && (location || category)) {
+      rows = await runQuery(client, { query: null, location, category, limit });
     }
-    if (category) {
-      params.push(category);
-      conditions.push(`category = $${idx}`);
-      idx++;
+
+    if (rows.length === 0) {
+      return 'No products found. Try different keywords or remove the query.';
     }
-    params.push(limit);
-    const sql = `SELECT sku, name, category, location, price, currency, description, available
-      FROM products WHERE ${conditions.join(' AND ')}
-      ORDER BY name LIMIT $${idx}`;
-    const res = await client.query(sql, params);
-    if (res.rows.length === 0) return 'No products found. Try different keywords.';
-    return res.rows
-      .map((r) => {
-        const avail = r.available ? '' : ' [UNVERFUEGBAR]';
-        const desc = r.description ? ': ' + r.description : '';
-        return (
-          '- ' +
-          r.name +
-          ' [' +
-          r.sku +
-          '] – €' +
-          r.price +
-          ' in ' +
-          r.location +
-          ' (' +
-          r.category +
-          ')' +
-          avail +
-          desc
-        );
-      })
-      .join('\n');
+    return formatResults(rows);
   } finally {
     await client.end();
   }
+}
+
+function formatResults(rows) {
+  return rows
+    .map((r) => {
+      const avail = r.available ? '' : ' [UNVERFUEGBAR]';
+      const desc = r.description ? ': ' + r.description : '';
+      return (
+        '- ' +
+        r.name +
+        ' [' +
+        r.sku +
+        '] – €' +
+        r.price +
+        ' in ' +
+        r.location +
+        ' (' +
+        r.category +
+        ')' +
+        avail +
+        desc
+      );
+    })
+    .join('\n');
 }
 
 async function getProduct(args) {
