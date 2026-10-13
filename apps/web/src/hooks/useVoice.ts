@@ -67,6 +67,10 @@ export function useVoice(): UseVoiceReturn {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const interactiveStateRef = useRef<InteractiveState>('off');
   const isSpeakingRef = useRef(false);
+  // Timestamp when TTS finished – loop stays blocked until this + margin,
+  // giving the speaker time to flush its output buffer before the mic
+  // could pick up residual TTS audio.
+  const ttsEndAtRef = useRef(0);
 
   // Interactive mode refs
   const interactiveStreamRef = useRef<MediaStream | null>(null);
@@ -152,11 +156,13 @@ export function useVoice(): UseVoiceReturn {
 
         audio.onended = () => {
           isSpeakingRef.current = false;
+          ttsEndAtRef.current = performance.now();
           setIsSpeaking(false);
           URL.revokeObjectURL(url);
         };
         audio.onerror = () => {
           isSpeakingRef.current = false;
+          ttsEndAtRef.current = performance.now();
           setIsSpeaking(false);
           setError('Audio playback error');
         };
@@ -395,6 +401,9 @@ export function useVoice(): UseVoiceReturn {
       function loop() {
         if (interactiveStateRef.current === 'off') return;
         if (isSpeakingRef.current) return;
+        // Post-TTS guard: block detection for 500ms after audio ends,
+        // giving the speaker time to flush its output buffer.
+        if (performance.now() - ttsEndAtRef.current < 500) return;
         const a = analyserRef.current;
         if (!a) return;
         if (performance.now() < cooldownUntil) return;
