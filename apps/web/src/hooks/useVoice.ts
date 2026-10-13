@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Voice, VoiceCapabilities } from 'shared';
 
 const API = '/api/voice';
+const STORAGE_VOICE_KEY = 'base-chat.voice';
+const STORAGE_LANGUAGE_KEY = 'base-chat.language';
 const SILENCE_TIMEOUT_MS = 800;
 const NOISE_FLOOR_SAMPLES = 50; // 50 × 10ms = 500ms calibration
 const RMS_THRESHOLD_FACTOR = 3;
@@ -13,7 +15,7 @@ const MAX_RECORDING_MS = 15000; // hard cap: STT rejects >30s audio
 
 type InteractiveState = 'off' | 'listening' | 'recording' | 'processing' | 'paused';
 
-interface UseVoiceReturn {
+export interface UseVoiceReturn {
   capabilities: VoiceCapabilities | null;
   isTtsAvailable: boolean;
   isSttAvailable: boolean;
@@ -52,8 +54,12 @@ interface UseVoiceReturn {
  */
 export function useVoice(): UseVoiceReturn {
   const [capabilities, setCapabilities] = useState<VoiceCapabilities | null>(null);
-  const [currentVoice, setCurrentVoice] = useState('');
-  const [currentLanguage, setCurrentLanguage] = useState('de');
+  const [currentVoice, setCurrentVoice] = useState<string>(
+    () => localStorage.getItem(STORAGE_VOICE_KEY) ?? ''
+  );
+  const [currentLanguage, setCurrentLanguage] = useState<string>(
+    () => localStorage.getItem(STORAGE_LANGUAGE_KEY) ?? 'de'
+  );
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [lastTranscript, setLastTranscript] = useState<string | null>(null);
@@ -113,7 +119,12 @@ export function useVoice(): UseVoiceReturn {
           setCapabilities(payload.data);
           const defaultVoice =
             payload.data.defaultVoiceByLanguage?.['de'] ?? payload.data.voices?.[0]?.id ?? '';
-          setCurrentVoice(defaultVoice);
+          // Keep a persisted user choice (validated against the sidecar catalog);
+          // otherwise fall back to the sidecar's default voice.
+          const available: Voice[] = payload.data.voices ?? [];
+          setCurrentVoice((prev) =>
+            prev && available.some((v) => v.id === prev) ? prev : defaultVoice
+          );
         }
       } catch {
         // Sidecar unavailable → capabilities stays null (buttons hidden).
@@ -123,6 +134,15 @@ export function useVoice(): UseVoiceReturn {
       cancelled = true;
     };
   }, []);
+
+  // Persist the user's voice + language choice (per browser, in localStorage).
+  useEffect(() => {
+    if (currentVoice) localStorage.setItem(STORAGE_VOICE_KEY, currentVoice);
+  }, [currentVoice]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_LANGUAGE_KEY, currentLanguage);
+  }, [currentLanguage]);
 
   const isTtsAvailable = capabilities?.tts ?? false;
   const isSttAvailable = capabilities?.stt ?? false;

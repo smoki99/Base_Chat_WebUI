@@ -8,6 +8,8 @@ interface SidebarProps {
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
   onRename: (id: string, title: string) => void;
+  /** Opens the settings dialog (voice + language). */
+  onOpenSettings: () => void;
   /** Called after any action to close the sidebar (mobile). */
   onClose?: () => void;
 }
@@ -34,6 +36,7 @@ export function Sidebar({
   onSelect,
   onDelete,
   onRename,
+  onOpenSettings,
   onClose,
 }: SidebarProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -71,9 +74,19 @@ export function Sidebar({
     <aside className="sidebar" role="complementary" aria-label="Chatverlauf">
       <div className="sidebar-header">
         <span className="sidebar-title">Chat</span>
-        <button className="sidebar-new-btn" onClick={handleNew} aria-label="Neue Unterhaltung">
-          + Neue
-        </button>
+        <div className="sidebar-header-actions">
+          <button
+            className="sidebar-icon-btn"
+            onClick={onOpenSettings}
+            aria-label="Einstellungen"
+            title="Einstellungen"
+          >
+            ⚙️
+          </button>
+          <button className="sidebar-new-btn" onClick={handleNew} aria-label="Neue Unterhaltung">
+            + Neue
+          </button>
+        </div>
       </div>
 
       <nav className="sidebar-list" role="list">

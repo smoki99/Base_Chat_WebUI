@@ -14,6 +14,7 @@ const baseProps = {
   onSelect: vi.fn(),
   onDelete: vi.fn(),
   onRename: vi.fn(),
+  onOpenSettings: vi.fn(),
 };
 
 describe('Sidebar', () => {
@@ -47,6 +48,13 @@ describe('Sidebar', () => {
     render(<Sidebar {...baseProps} onNew={onNew} />);
     fireEvent.click(screen.getByText('+ Neue'));
     expect(onNew).toHaveBeenCalled();
+  });
+
+  it('calls onOpenSettings when the settings button is clicked', () => {
+    const onOpenSettings = vi.fn();
+    render(<Sidebar {...baseProps} onOpenSettings={onOpenSettings} />);
+    fireEvent.click(screen.getByLabelText('Einstellungen'));
+    expect(onOpenSettings).toHaveBeenCalled();
   });
 
   it('calls onDelete when the delete button is clicked', () => {

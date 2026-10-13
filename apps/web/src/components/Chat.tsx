@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useChat, type ChatMessage } from '../hooks/useChat';
-import { useVoice } from '../hooks/useVoice';
+import { useVoiceContext } from '../voice/VoiceContext';
 import { Markdown } from './Markdown';
 import acknowledgments from '../data/acknowledgments.json';
 
@@ -56,7 +56,7 @@ export function Chat({ initialMessages = [], chatId = null, onMessagesChange }: 
     chatId,
     onMessagesChange,
   });
-  const voice = useVoice();
+  const voice = useVoiceContext();
   const canSend = input.trim().length > 0 && !isLoading;
   const messagesRef = useRef<HTMLDivElement>(null);
   // Guard: prevents React StrictMode (dev) double-effect from calling

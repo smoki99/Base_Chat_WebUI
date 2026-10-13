@@ -718,3 +718,57 @@ body {
     padding: 0.6rem 0.75rem;
   }
 }
+
+/* ── Sidebar header actions (settings + new) ── */
+.sidebar-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sidebar-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  background: var(--md-surface);
+  border-radius: 8px;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.sidebar-icon-btn:hover {
+  background: var(--md-surface-container);
+  border-color: var(--md-outline);
+}
+
+/* ── Settings dialog (Bootstrap modal, CSS-only) ── */
+/* Bootstrap sets .modal { display: none } and ships no .show rule (no JS bundle),
+   so we force visibility ourselves. index.css loads after bootstrap, so this wins. */
+.settings-modal {
+  display: block;
+  z-index: 1055;
+}
+
+.settings-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.settings-notice {
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  margin-top: 0.5rem;
+}

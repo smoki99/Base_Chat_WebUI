@@ -1,12 +1,15 @@
 import { useCallback, useState } from 'react';
 import { Chat } from './components/Chat';
+import { Settings } from './components/Settings';
 import { Sidebar } from './components/Sidebar';
 import { useChatHistory } from './hooks/useChatHistory';
 import type { ChatMessage } from './hooks/useChat';
+import { VoiceProvider } from './voice/VoiceContext';
 
 export default function App() {
   const history = useChatHistory();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // When a chat is selected, replace the active messages in useChat.
   // We use a key to force-remount the Chat component with the restored messages.
@@ -38,43 +41,48 @@ export default function App() {
   );
 
   return (
-    <div className={`app-layout${sidebarOpen ? ' app-layout--sidebar-open' : ''}`}>
-      {/* Mobile: backdrop to close sidebar */}
-      {sidebarOpen && (
-        <div
-          className="sidebar-backdrop"
-          onClick={() => setSidebarOpen(false)}
-          aria-hidden="true"
+    <VoiceProvider>
+      <div className={`app-layout${sidebarOpen ? ' app-layout--sidebar-open' : ''}`}>
+        {/* Mobile: backdrop to close sidebar */}
+        {sidebarOpen && (
+          <div
+            className="sidebar-backdrop"
+            onClick={() => setSidebarOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+
+        <Sidebar
+          chats={history.chats}
+          activeChatId={history.activeChatId}
+          onNew={handleNew}
+          onSelect={handleSelect}
+          onDelete={history.deleteChat}
+          onRename={history.renameChat}
+          onOpenSettings={() => setSettingsOpen(true)}
+          onClose={() => setSidebarOpen(false)}
         />
-      )}
 
-      <Sidebar
-        chats={history.chats}
-        activeChatId={history.activeChatId}
-        onNew={handleNew}
-        onSelect={handleSelect}
-        onDelete={history.deleteChat}
-        onRename={history.renameChat}
-        onClose={() => setSidebarOpen(false)}
-      />
+        <div className="chat-panel">
+          {/* Mobile: hamburger to open sidebar */}
+          <button
+            className="mobile-menu-btn"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Menü öffnen"
+          >
+            ☰
+          </button>
 
-      <div className="chat-panel">
-        {/* Mobile: hamburger to open sidebar */}
-        <button
-          className="mobile-menu-btn"
-          onClick={() => setSidebarOpen(true)}
-          aria-label="Menü öffnen"
-        >
-          ☰
-        </button>
+          <Chat
+            key={chatKey}
+            initialMessages={history.activeMessages}
+            chatId={history.activeChatId}
+            onMessagesChange={handleMessagesChange}
+          />
+        </div>
 
-        <Chat
-          key={chatKey}
-          initialMessages={history.activeMessages}
-          chatId={history.activeChatId}
-          onMessagesChange={handleMessagesChange}
-        />
+        <Settings open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       </div>
-    </div>
+    </VoiceProvider>
   );
 }
