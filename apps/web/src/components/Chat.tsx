@@ -27,20 +27,19 @@ export function Chat() {
   // When a STT transcript arrives from manual recording, append it to the input.
   useEffect(() => {
     if (voice.lastTranscript && voice.interactiveState !== 'processing') {
+      const transcript = voice.lastTranscript;
+      voice.clearTranscript();
+
       if (voice.interactiveState !== 'off') {
-        // Interactive mode: show feedback + auto-send
+        // Interactive mode: show feedback + auto-send with explicit text
         setInteractiveFeedback(true);
         setTimeout(() => {
-          setInput(voice.lastTranscript!);
-          setTimeout(() => {
-            void send();
-            setInteractiveFeedback(false);
-          }, 600);
-        }, 200);
+          void send(transcript);
+          setInteractiveFeedback(false);
+        }, 800);
       } else {
-        setInput((prev) => (prev ? prev + ' ' : '') + voice.lastTranscript);
+        setInput((prev) => (prev ? prev + ' ' : '') + transcript);
       }
-      voice.clearTranscript();
     }
   }, [voice.lastTranscript, voice, setInput, send]);
 
