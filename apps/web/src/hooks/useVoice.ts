@@ -36,6 +36,8 @@ interface UseVoiceReturn {
   interactiveState: InteractiveState;
   toggleInteractiveMode: () => void;
   stopInteractiveMode: () => void;
+  /** Pause/resume the hands-free loop from outside (e.g. while the bot is writing). */
+  setExternalPause: (paused: boolean) => void;
 }
 
 /**
@@ -67,6 +69,14 @@ export function useVoice(): UseVoiceReturn {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const interactiveStateRef = useRef<InteractiveState>('off');
   const isSpeakingRef = useRef(false);
+  // External pause (e.g. while the LLM is writing) – set by the parent so the
+  // hands-free loop stays silent and the UI shows the "paused" (blue) state.
+  const [externalPause, setExternalPauseState] = useState(false);
+  const externalPauseRef = useRef(false);
+  const setExternalPause = useCallback((paused: boolean) => {
+    externalPauseRef.current = paused;
+    setExternalPauseState(paused);
+  }, []);
   // Timestamp when TTS finished – loop stays blocked until this + margin,
   // giving the speaker time to flush its output buffer before the mic
   // could pick up residual TTS audio.
@@ -78,16 +88,19 @@ export function useVoice(): UseVoiceReturn {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const loopRef = useRef<number | null>(null);
 
-  // Sync interactive state: auto-pause during TTS, resume after.
-  // NOTE: isSpeakingRef is managed directly in speak()/stopSpeaking()/onended
-  // to avoid the async gap where React state hasn't propagated yet.
+  // Sync interactive state: auto-pause during TTS or while externally paused
+  // (e.g. bot is writing), resume after.
+  // NOTE: isSpeakingRef / externalPauseRef are managed directly in
+  // speak()/stopSpeaking()/onended()/setExternalPause() to avoid the async gap
+  // where React state hasn't propagated yet.
   useEffect(() => {
-    if (isSpeaking && interactiveStateRef.current === 'listening') {
+    const paused = isSpeaking || externalPause;
+    if (paused && interactiveStateRef.current === 'listening') {
       setInteractiveState('paused');
-    } else if (!isSpeaking && interactiveStateRef.current === 'paused') {
+    } else if (!paused && interactiveStateRef.current === 'paused') {
       setInteractiveState('listening');
     }
-  }, [isSpeaking, setInteractiveState]);
+  }, [isSpeaking, externalPause, setInteractiveState]);
 
   // Load capabilities on mount.
   useEffect(() => {
@@ -401,6 +414,7 @@ export function useVoice(): UseVoiceReturn {
       function loop() {
         if (interactiveStateRef.current === 'off') return;
         if (isSpeakingRef.current) return;
+        if (externalPauseRef.current) return;
         // Post-TTS guard: block detection for 500ms after audio ends,
         // giving the speaker time to flush its output buffer.
         if (performance.now() - ttsEndAtRef.current < 500) return;
@@ -486,6 +500,7 @@ export function useVoice(): UseVoiceReturn {
     interactiveState,
     toggleInteractiveMode,
     stopInteractiveMode,
+    setExternalPause,
   };
 }
 
