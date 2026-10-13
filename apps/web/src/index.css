@@ -557,6 +557,10 @@ body {
   animation: voice-pulse 0.8s infinite;
 }
 
+.btn-interactive-dot--blue {
+  background: #2196f3;
+}
+
 .btn-interactive-dot--pulse {
   background: #ff9800;
   animation: interactive-pulse 1s infinite;

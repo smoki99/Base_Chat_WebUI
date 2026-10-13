@@ -43,6 +43,7 @@ chatRouter.post('/api/chat', async (req, res, next) => {
     return;
   }
   const trimmed = message.trim();
+  console.log('[chat] received message:', JSON.stringify(trimmed));
   if (trimmed.length > 2000) {
     res.status(400).json({ error: { message: 'message must be at most 2000 characters' } });
     return;

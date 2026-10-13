@@ -77,19 +77,29 @@ export async function synthesize(
   text: string,
   voice?: string
 ): Promise<{ audio: Buffer; contentType: string }> {
-  const res = await fetchWithTimeout(
-    `${VOICE_URL}/tts`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, voice }),
-    },
-    30000 // TTS can take longer
-  );
+  const doSynthesize = () =>
+    fetchWithTimeout(
+      `${VOICE_URL}/tts`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, voice }),
+      },
+      30000 // TTS can take longer
+    );
+
+  // Edge-TTS tokens expire; one retry with a short delay usually succeeds.
+  let res = await doSynthesize();
+  if (!res.ok && (res.status === 403 || res.status === 500)) {
+    await new Promise((r) => setTimeout(r, 500));
+    res = await doSynthesize();
+  }
+
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     throw new Error(`tts failed: ${res.status} ${body}`.trim());
   }
+
   const contentType = res.headers.get('content-type') ?? 'audio/mpeg';
   const arrayBuf = await res.arrayBuffer();
   return { audio: Buffer.from(arrayBuf), contentType };

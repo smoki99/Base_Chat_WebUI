@@ -29,15 +29,16 @@ export function Chat() {
       const transcript = voice.lastTranscript;
       voice.clearTranscript();
 
+      // Minimum transcript length: discard noise transcriptions (< 3 chars)
+      if (transcript.trim().length < 3) return;
+
       if (voice.interactiveState !== 'off') {
-        // Interactive mode: only send if STT recognized actual text
-        if (!transcript.trim()) return; // no speech detected → keep listening
+        console.log('[chat] sending to LLM:', JSON.stringify(transcript));
         if (voice.isTtsAvailable) {
           void voice.speak('Ok, ich beginne mit der Suche!');
         }
         void send(transcript);
       } else {
-        if (!transcript.trim()) return;
         setInput((prev) => (prev ? prev + ' ' : '') + transcript);
       }
     }
@@ -178,6 +179,9 @@ export function Chat() {
             🎙️
             {voice.interactiveState === 'listening' && (
               <span className="btn-interactive-dot" aria-hidden="true" />
+            )}
+            {voice.interactiveState === 'paused' && (
+              <span className="btn-interactive-dot btn-interactive-dot--blue" aria-hidden="true" />
             )}
             {voice.interactiveState === 'recording' && (
               <span className="btn-interactive-dot btn-interactive-dot--red" aria-hidden="true" />
