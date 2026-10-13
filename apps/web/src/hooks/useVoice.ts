@@ -74,9 +74,10 @@ export function useVoice(): UseVoiceReturn {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const loopRef = useRef<number | null>(null);
 
-  // Sync isSpeakingRef + auto-pause/resume interactive mode during TTS
+  // Sync interactive state: auto-pause during TTS, resume after.
+  // NOTE: isSpeakingRef is managed directly in speak()/stopSpeaking()/onended
+  // to avoid the async gap where React state hasn't propagated yet.
   useEffect(() => {
-    isSpeakingRef.current = isSpeaking;
     if (isSpeaking && interactiveStateRef.current === 'listening') {
       setInteractiveState('paused');
     } else if (!isSpeaking && interactiveStateRef.current === 'paused') {
@@ -122,8 +123,17 @@ export function useVoice(): UseVoiceReturn {
     async (text: string) => {
       console.log('[voice] speak() called:', JSON.stringify(text));
       console.trace('[voice] speak() stack:');
+
+      // Block the detection loop IMMEDIATELY – before the TTS fetch starts.
+      // During the fetch window (~500ms) the loop would otherwise still run
+      // and could pick up residual audio or echo as "speech".
+      isSpeakingRef.current = true;
+
+      // Pause any previously playing audio (without resetting the ref –
+      // we just set it to true and must NOT let stopSpeaking() clear it).
+      audioRef.current?.pause();
+      audioRef.current = null;
       setError(null);
-      stopSpeaking();
       try {
         const res = await fetch(`${API}/tts`, {
           method: 'POST',
@@ -138,12 +148,6 @@ export function useVoice(): UseVoiceReturn {
         const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
         audioRef.current = audio;
-
-        // Set the ref SYNCHRONOUSLY before playback starts.
-        // The useEffect sync is async (post-render) and the 10ms setInterval
-        // loop would still be running in that gap, potentially detecting
-        // TTS audio as user speech.
-        isSpeakingRef.current = true;
         setIsSpeaking(true);
 
         audio.onended = () => {
@@ -162,7 +166,7 @@ export function useVoice(): UseVoiceReturn {
         setError(err instanceof Error ? err.message : 'TTS failed');
       }
     },
-    [currentVoice, stopSpeaking]
+    [currentVoice]
   );
 
   const startRecording = useCallback(async () => {
