@@ -3,7 +3,7 @@ import type { Voice, VoiceCapabilities } from 'shared';
 
 const API = '/api/voice';
 const SILENCE_TIMEOUT_MS = 800;
-const NOISE_FLOOR_SAMPLES = 30;
+const NOISE_FLOOR_SAMPLES = 50; // 50 × 10ms = 500ms calibration
 const RMS_THRESHOLD_FACTOR = 3;
 const MIN_RMS_THRESHOLD = 0.01;
 const SPEECH_DEBOUNCE_FRAMES = 10; // 10 × 10ms = 100ms continuous speech required
@@ -245,11 +245,14 @@ export function useVoice(): UseVoiceReturn {
         silenceStart = 0;
         speechFrameCount = 0;
         recordingStart = 0;
-        noiseSamples.length = 0;
-        threshold = MIN_RMS_THRESHOLD;
         recorder = null;
         chunks = [];
         processing = false;
+        // NOTE: noiseSamples and threshold are intentionally NOT reset here.
+        // The noise floor is calibrated once at start (500ms) and then
+        // continuously adapted. Recalibrating after every recording caused
+        // a 300-500ms window where the threshold was at its minimum,
+        // allowing noise bursts to trigger false recordings.
       }
 
       async function transcribeAudio() {
@@ -339,10 +342,16 @@ export function useVoice(): UseVoiceReturn {
           const sorted = [...noiseSamples].sort((a, b) => a - b);
           const median = sorted[Math.floor(sorted.length / 2)] ?? 0;
           threshold = Math.max(MIN_RMS_THRESHOLD, median * RMS_THRESHOLD_FACTOR);
+          console.log('[voice] calibrated:', threshold.toFixed(4), '(500ms noise floor)');
         }
       }
 
       function handleSpeechDetection(isSpeech: boolean) {
+        // Skip detection entirely during initial calibration (first 500ms).
+        // During this period the threshold is at its minimum (0.01), so
+        // any ambient noise would register as "speech" and trigger a recording.
+        if (noiseSamples.length < NOISE_FLOOR_SAMPLES) return;
+
         if (!speechActive && !processing) {
           if (isSpeech) {
             speechFrameCount++;
