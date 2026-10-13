@@ -62,12 +62,18 @@ export function useVoice(): UseVoiceReturn {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const interactiveStateRef = useRef<InteractiveState>('off');
+  const isSpeakingRef = useRef(false);
 
   // Interactive mode refs
   const interactiveStreamRef = useRef<MediaStream | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const rafRef = useRef<number>(0);
+
+  // Sync isSpeakingRef so the interactive loop can read it without re-rendering
+  useEffect(() => {
+    isSpeakingRef.current = isSpeaking;
+  }, [isSpeaking]);
 
   // Load capabilities on mount.
   useEffect(() => {
@@ -266,6 +272,11 @@ export function useVoice(): UseVoiceReturn {
 
       function loop() {
         if (interactiveStateRef.current === 'off') return;
+        // Pause detection while TTS is playing (avoid hearing ourselves)
+        if (isSpeakingRef.current) {
+          rafRef.current = requestAnimationFrame(loop);
+          return;
+        }
         const a = analyserRef.current;
         if (!a) return;
 
