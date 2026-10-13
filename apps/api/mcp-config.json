@@ -5,6 +5,14 @@
       "command": "npx",
       "args": ["qmd", "mcp"],
       "env": {}
+    },
+    {
+      "name": "sql",
+      "command": "node",
+      "args": ["scripts/sql-mcp-server.mjs"],
+      "env": {
+        "DATABASE_URL": "postgres://chatbot:chatbot@localhost:5432/chatbot"
+      }
     }
   ]
 }

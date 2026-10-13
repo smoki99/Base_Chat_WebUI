@@ -63,9 +63,19 @@ export const chatService = {
   async respond(message: string): Promise<ChatMessage> {
     const options: ReplyOptions = {};
     if (mcpContext && mcpContext.allTools.length > 0) {
-      // Filter out tools that confuse the LLM (e.g. qmd.status)
-      const filteredTools = mcpContext.allTools.filter((t) => !t.name.includes('.status'));
-      options.tools = filteredTools;
+      // SQL tools (primary: structured product search) + QMD (fallback: recipes/knowledge).
+      const allowedTools = new Set([
+        'sql.search_products',
+        'sql.get_product',
+        'qmd.query',
+        'qmd.multi_get',
+      ]);
+      const filteredTools = mcpContext.allTools.filter((t) => allowedTools.has(t.name));
+      if (filteredTools.length === 0) {
+        options.tools = mcpContext.allTools.filter((t) => !t.name.includes('.status'));
+      } else {
+        options.tools = filteredTools;
+      }
       options.toolHandlers = mcpContext.toolHandlers;
     }
     return getProvider().reply(message, options);
