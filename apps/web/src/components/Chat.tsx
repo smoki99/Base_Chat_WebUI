@@ -71,6 +71,13 @@ export function Chat({ initialMessages = [], chatId = null, onMessagesChange }: 
     }
   }, [messages, isLoading]);
 
+  // Keep the hands-free loop silent while the bot is writing: pause the mic
+  // and show the "paused" (blue) state so new voice instructions cannot be
+  // captured (and submitted) while the previous LLM call is still in flight.
+  useEffect(() => {
+    voice.setExternalPause(isLoading);
+  }, [isLoading, voice]);
+
   // When a STT transcript arrives, handle it exactly once.
   useEffect(() => {
     if (!voice.lastTranscript || voice.interactiveState === 'processing') return;

@@ -290,5 +290,28 @@ describe('useVoice', () => {
       expect(result.current.interactiveState).toBe('off');
       expect(result.current.error).toBe('denied');
     });
+
+    it('setExternalPause pauses the interactive state while the bot is writing', async () => {
+      const { result } = renderHook(() => useVoice());
+
+      await act(async () => {
+        result.current.toggleInteractiveMode();
+        await new Promise((r) => setTimeout(r, 20));
+      });
+      expect(result.current.interactiveState).toBe('listening');
+
+      // While the LLM is writing (external pause), the state should be "paused"
+      // (blue dot) and the loop should be blocked.
+      act(() => {
+        result.current.setExternalPause(true);
+      });
+      expect(result.current.interactiveState).toBe('paused');
+
+      // After the LLM finishes, the state resumes to "listening".
+      act(() => {
+        result.current.setExternalPause(false);
+      });
+      expect(result.current.interactiveState).toBe('listening');
+    });
   });
 });

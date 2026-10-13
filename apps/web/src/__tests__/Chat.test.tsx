@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { Chat } from '../components/Chat';
@@ -253,6 +253,84 @@ describe('Chat', () => {
     expect(btn).toBeInTheDocument();
     // Click to toggle on (exercises onClick handler)
     await user.click(btn);
+  });
+
+  test('pauses the interactive (hands-free) mode while the bot is writing', async () => {
+    // Keep the LLM call in flight so isLoading stays true.
+    let resolveChat: (payload: unknown) => void;
+    const chatPromise = new Promise((resolve) => {
+      resolveChat = resolve;
+    });
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.includes('/api/chat')) {
+        await chatPromise;
+        return {
+          ok: true,
+          json: async () => ({ data: { id: 'r1', content: 'Antwort' } }),
+        } as unknown as Response;
+      }
+      // capabilities – STT available so the hands-free button is shown.
+      return {
+        ok: true,
+        json: async () => ({
+          data: {
+            tts: false,
+            stt: true,
+            voices: [],
+            languages: ['de'],
+            defaultVoiceByLanguage: {},
+          },
+        }),
+      } as unknown as Response;
+    });
+    const mockStream = { getTracks: () => [{ stop: () => {} }] } as unknown as MediaStream;
+    Object.defineProperty(navigator, 'mediaDevices', {
+      value: { getUserMedia: () => Promise.resolve(mockStream) },
+      writable: true,
+      configurable: true,
+    });
+    (globalThis as Record<string, unknown>).AudioContext = class {
+      createMediaStreamSource() {
+        return { connect: () => {} };
+      }
+      createAnalyser() {
+        return { getByteTimeDomainData: () => {}, fftSize: 512 };
+      }
+      close() {
+        return Promise.resolve();
+      }
+    };
+    (globalThis as Record<string, unknown>).requestAnimationFrame = () => 1;
+    (globalThis as Record<string, unknown>).cancelAnimationFrame = () => {};
+
+    const user = userEvent.setup();
+    render(<Chat />);
+
+    // Enable interactive mode → dot is green (listening).
+    const btn = await screen.findByRole('button', { name: /Hands-free/i });
+    await user.click(btn);
+    await waitFor(() => {
+      expect(document.querySelector('.btn-interactive-dot')).not.toBeNull();
+      expect(document.querySelector('.btn-interactive-dot--blue')).toBeNull();
+    });
+
+    // Send a message → isLoading becomes true (LLM call in flight).
+    const input = screen.getByRole('textbox', { name: 'Nachricht' });
+    await user.type(input, 'Hallo');
+    await user.click(screen.getByRole('button', { name: /Senden/i }));
+
+    // While the bot is writing, the hands-free mode must be paused (blue dot).
+    await waitFor(() => {
+      expect(document.querySelector('.btn-interactive-dot--blue')).not.toBeNull();
+    });
+
+    // Resolve the LLM call → isLoading false → mode resumes to listening (green).
+    resolveChat!({ data: { id: 'r1', content: 'Antwort' } });
+    await waitFor(() => {
+      expect(document.querySelector('.btn-interactive-dot--blue')).toBeNull();
+      expect(document.querySelector('.btn-interactive-dot')).not.toBeNull();
+    });
   });
 
   test('hides interactive mode button when STT is unavailable', async () => {
