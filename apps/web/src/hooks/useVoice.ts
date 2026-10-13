@@ -121,6 +121,7 @@ export function useVoice(): UseVoiceReturn {
   const speak = useCallback(
     async (text: string) => {
       console.log('[voice] speak() called:', JSON.stringify(text));
+      console.trace('[voice] speak() stack:');
       setError(null);
       stopSpeaking();
       try {
