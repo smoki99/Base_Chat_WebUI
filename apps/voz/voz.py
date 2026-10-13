@@ -21,6 +21,7 @@ import edge_tts
 import torch
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, Response
+from starlette.concurrency import run_in_threadpool
 import uvicorn
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -47,6 +48,8 @@ LANGUAGES = ["de", "es", "en"]
 # STT (Whisper) needs a model download and loads in the background.
 state = {"tts": True, "stt": False, "error": None}
 whisper_pipe = None
+# Serializes Whisper inference (the transformers pipeline is not thread-safe).
+stt_lock = threading.Lock()
 
 
 def _load_stt():
@@ -112,6 +115,21 @@ async def tts(req: Request):
     return Response(content=audio, media_type="audio/mpeg")
 
 
+def _transcribe(audio_bytes: bytes, language: str) -> str:
+    """Blocking Whisper inference – always run in the thread pool, never on
+    the event loop (otherwise concurrent TTS requests would stall).
+
+    Serialized via stt_lock: the transformers pipeline is not thread-safe.
+    """
+    with stt_lock:
+        result = whisper_pipe(
+            audio_bytes,
+            generate_kwargs={"language": language, "task": "transcribe"},
+            return_timestamps=False,
+        )
+    return (result.get("text") or "").strip()
+
+
 @app.post("/stt")
 async def stt(req: Request):
     if not state["stt"]:
@@ -126,12 +144,9 @@ async def stt(req: Request):
         language = "de"
 
     try:
-        result = whisper_pipe(
-            audio_bytes,
-            generate_kwargs={"language": language, "task": "transcribe"},
-            return_timestamps=False,
-        )
-        text = (result.get("text") or "").strip()
+        # run_in_threadpool: Whisper inference (CPU/GPU-bound) must not block
+        # the asyncio event loop – TTS requests keep being served meanwhile.
+        text = await run_in_threadpool(_transcribe, audio_bytes, language)
     except Exception as exc:
         return JSONResponse({"error": f"stt: {exc}"}, status_code=500)
 

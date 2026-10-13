@@ -66,3 +66,24 @@ def test_stt_returns_503_when_not_ready():
     res = client.post("/stt", content=b"fake-audio", headers={"Content-Type": "audio/webm"})
     assert res.status_code == 503
     assert "STT" in res.json()["error"]
+
+
+def test_stt_blocking_inference_is_offloaded_to_threadpool():
+    """Regression: Whisper must never run on the asyncio event loop.
+
+    If inference blocks the loop, all concurrent TTS requests stall while
+    STT is running. The endpoint stays async (to read the request body),
+    the blocking part is dispatched via run_in_threadpool.
+    """
+    import inspect
+
+    assert inspect.iscoroutinefunction(voz.stt)
+    assert not inspect.iscoroutinefunction(voz._transcribe)
+    assert "run_in_threadpool" in inspect.getsource(voz.stt)
+
+
+def test_stt_serializes_inference_with_a_lock():
+    """Concurrent STT calls must not run Whisper in parallel (not thread-safe)."""
+    import threading
+
+    assert isinstance(voz.stt_lock, type(threading.Lock()))
