@@ -99,7 +99,9 @@ Danach:
 | Variable             | Beschreibung                                                                 | Default                 |
 | -------------------- | ---------------------------------------------------------------------------- | ----------------------- |
 | `PORT`               | API-Port                                                                     | `3001`                  |
-| `CORS_ORIGIN`        | Erlaubte CORS-Origin(s) für die API (prod), kommagetrennt                    | leer (alle)             |
+| `CORS_ORIGIN`        | Erlaubte CORS-Origin(s), kommagetrennt. **Fail-closed:** in Produktion (`NODE_ENV=production`) werden Cross-Origin-Requests bei leerer Liste abgelehnt | leer (dev: alle)        |
+| `RATE_LIMIT_GENERAL` | Rate-Limit (Requests/Fenster) für API-Routen (außer `/api/voice/*`)          | `100` (60 s)            |
+| `RATE_LIMIT_VOICE`   | Rate-Limit (Requests/Fenster) für `/api/voice/*`                             | `20` (60 s)             |
 | `VITE_API_URL`       | API-Basis-URL für das Web (prod)                                             | `http://localhost:3001` |
 | `CHAT_PROVIDER`      | Aktiver Chat-Provider: `mock` oder `openai`                                  | `mock`                  |
 | `OPENAI_BASE_URL`    | Basis-URL für OpenAI-kompatible Endpunkte (z. B. `http://localhost:1234/v1`) | leer                    |
@@ -148,6 +150,11 @@ Danach:
 | `POST` | `/api/voice/stt`          | Audio → Text (via voz-Sidecar)         |
 
 → Vollständige Doku mit Request/Response-Beispielen: [`docs/API.md`](./docs/API.md)
+
+> **Rate-Limiting:** Die API begrenzt Anfragen (in-memory, pro Prozess) –
+> Standard ≤ 100 Requests/60 s, `/api/voice/*` ≤ 20 Requests/60 s, `/health` unbegrenzt.
+> Bei Überschreitung: `429 { "error": { "message": "Rate limit exceeded, please slow down" } }`.
+> Grenzwerte via `RATE_LIMIT_GENERAL` / `RATE_LIMIT_VOICE` (Default-Werte s. Tabelle oben).
 
 ## Voice (TTS + STT)
 
