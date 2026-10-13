@@ -129,4 +129,39 @@ describe('Chat', () => {
     // Alert banner with the error message
     expect(screen.getByRole('alert')).toHaveTextContent('Netzwerkfehler');
   });
+
+  test('renders assistant replies as Markdown (table with headers)', async () => {
+    mockApi({
+      data: {
+        id: 'r1',
+        content: '| Stadt | Angebot |\n| --- | --- |\n| Hamburg | Fischbrot |',
+      },
+    });
+    const user = userEvent.setup();
+    render(<Chat />);
+
+    await user.type(screen.getByRole('textbox'), 'Was gibt es in Hamburg?');
+    await user.click(screen.getByRole('button', { name: 'Senden' }));
+
+    // GFM table renders a real <table> with <th> / <td>
+    expect(await screen.findByRole('cell', { name: 'Fischbrot' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Stadt' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Angebot' })).toBeInTheDocument();
+  });
+
+  test('opens Markdown links in a new, safe tab', async () => {
+    mockApi({
+      data: { id: 'r1', content: 'Mehr Infos in der [Dokumentation](https://example.com).' },
+    });
+    const user = userEvent.setup();
+    render(<Chat />);
+
+    await user.type(screen.getByRole('textbox'), 'Doku?');
+    await user.click(screen.getByRole('button', { name: 'Senden' }));
+
+    const link = await screen.findByRole('link', { name: 'Dokumentation' });
+    expect(link).toHaveAttribute('href', 'https://example.com');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  });
 });

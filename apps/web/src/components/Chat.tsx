@@ -1,17 +1,36 @@
+import { useEffect, useRef } from 'react';
 import { useChat } from '../hooks/useChat';
+import { Markdown } from './Markdown';
 
 /**
  * Chat UI: message list + composer. Reuses the existing Material Design
  * classes (card, btn, form-control, skeleton, empty/error states) so the
- * chat stays consistent with the app shell.
+ * chat stays consistent with the app shell. Assistant & user messages are
+ * rendered as Markdown (tables, lists, code) via the `Markdown` component.
  */
 export function Chat() {
   const { messages, input, setInput, isLoading, error, send } = useChat();
   const canSend = input.trim().length > 0 && !isLoading;
+  const messagesRef = useRef<HTMLDivElement>(null);
+
+  // Keep the newest message in view. Guarded because jsdom does not implement
+  // Element.scrollTo (tests would throw); real browsers always have it.
+  useEffect(() => {
+    const el = messagesRef.current;
+    if (el && typeof el.scrollTo === 'function') {
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    }
+  }, [messages, isLoading]);
 
   return (
     <div className="chat">
-      <div className="chat-messages" role="log" aria-live="polite" aria-label="Chatnachrichten">
+      <div
+        ref={messagesRef}
+        className="chat-messages"
+        role="log"
+        aria-live="polite"
+        aria-label="Chatnachrichten"
+      >
         {messages.length === 0 && !isLoading && (
           <div className="empty-state">
             <div className="empty-icon" aria-hidden="true">
@@ -43,7 +62,9 @@ export function Chat() {
                 </span>
               )}
             </span>
-            <p className="chat-text">{message.content}</p>
+            <div className="chat-text chat-md">
+              <Markdown>{message.content}</Markdown>
+            </div>
           </div>
         ))}
 

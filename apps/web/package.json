@@ -16,6 +16,8 @@
     "bootstrap": "^5.3.8",
     "react": "^19",
     "react-dom": "^19",
+    "react-markdown": "9.1.0",
+    "remark-gfm": "4.0.1",
     "shared": "1.0.0"
   },
   "devDependencies": {
