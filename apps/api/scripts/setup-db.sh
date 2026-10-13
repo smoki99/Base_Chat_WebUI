@@ -6,7 +6,7 @@
 set -euo pipefail
 
 DB_URL="${DATABASE_URL:-postgres://chatbot:chatbot@localhost:5432/chatbot}"
-SCRIPT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 echo "[db] Using DATABASE_URL: ${DB_URL}"
 

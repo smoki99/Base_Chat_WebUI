@@ -105,6 +105,6 @@ INSERT INTO products (sku, name, category, location, price, currency, descriptio
 ('MUE-030', 'Käse-Burger', 'snacks', 'München', 9.90, 'EUR', 'Burger mit Bergkäse und Röstzwiebeln', true),
 ('MUE-031', 'Münchner Brezn-Set', 'backwaren', 'München', 7.90, 'EUR', 'Drei Brezn mit Butter und Marmelade', true),
 ('MUE-032', 'Eiskaffee', 'getraenke', 'München', 5.50, 'EUR', 'Kalter Kaffee mit Vanillesirup', true),
-('MUE-033', 'Bayerische Käse-Platte', 'delikatesse', 'München', 13.90, 'EUR', 'Auswahl an 4 Bayerischen Käsesorten');
+('MUE-033', 'Bayerische Käse-Platte', 'delikatesse', 'München', 13.90, 'EUR', 'Auswahl an 4 Bayerischen Käsesorten', true);
 
 
