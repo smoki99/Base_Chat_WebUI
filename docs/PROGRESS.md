@@ -23,6 +23,7 @@ Swap-Punkt für echten Backend/LLM-Anschluss) ist das nächste Ziel.
 | 5     | Web: `Chat`-Komponente (Nachrichtenfluss)                | ✅     |
 | 6     | E2E-Suite (Playwright)                                   | ✅     |
 | 7     | Docs (API, Architektur, Rules)                           | ✅     |
+| 8     | Voice: TTS + STT + Hands-free (voz-Sidecar)              | ✅     |
 
 ## Log
 
@@ -37,6 +38,20 @@ Swap-Punkt für echten Backend/LLM-Anschluss) ist das nächste Ziel.
 - ✅ `apps/web`: `Chat`-Komponente (Nachrichten senden/empfangen, Empty-State).
 - ✅ Playwright-E2E: API-Health + Web-Interaktion.
 - ✅ Docs: `README.md`, `API.md`, `ARCHITECTURE.md`, `RULES.md`, `DECISIONS.md`.
+
+### Story 8: Voice (TTS + STT + Hands-free)
+
+- ✅ Python-Sidecar `apps/voz` (FastAPI): Edge-TTS (Online) + Whisper (lokal).
+- ✅ API: `GET /api/voice/capabilities`, `POST /api/voice/tts`, `POST /api/voice/stt`.
+- ✅ Web: `useVoice.ts` – TTS-Playback, STT-Aufnahme, Hands-free-Modus.
+- ✅ Hands-free: RMS-Noise-Floor-Kalibrierung (500 ms), EMA-Adaption,
+  10-ms-Detection-Loop, Auto-Pause während TTS.
+- ✅ Anti-Self-Hearing: 500 ms Post-TTS-Cooldown, synchrones `isSpeakingRef`,
+  100 ms Speech-Debounce, 300 ms Min-Aufnahmedauer, 15 s Max.
+- ✅ Sprachabhängige Acknowledgment-Phrasen (`acknowledgments.json`, de/en/es).
+- ✅ TTS-Retry bei HTTP 403/500 (Edge-TTS-Token-Ablauf).
+- ✅ StrictMode-Double-Effect-Guard (`processedTranscriptRef`).
+- ✅ Tests: `voice-client.test.ts`, `voice-routes.test.ts`.
 
 ## Offene Punkte / Nächstes Ziel
 
