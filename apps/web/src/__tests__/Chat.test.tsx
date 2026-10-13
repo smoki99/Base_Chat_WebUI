@@ -1,7 +1,18 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import type { ReactElement } from 'react';
+import { render as rtlRender, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { Chat } from '../components/Chat';
+import { VoiceProvider } from '../voice/VoiceContext';
+
+/**
+ * Renders inside the shared voice provider (single useVoice instance), mirroring
+ * how the app wires it. This keeps the capability / interactive-mode tests
+ * exercising the real hook without per-test provider boilerplate.
+ */
+function render(ui: ReactElement) {
+  return rtlRender(<VoiceProvider>{ui}</VoiceProvider>);
+}
 
 function mockApi(payload: unknown) {
   return vi
@@ -29,6 +40,10 @@ function mockApiDeferred() {
     resolve: (payload: unknown) => resolveFn!(payload),
   };
 }
+
+beforeEach(() => {
+  localStorage.clear();
+});
 
 afterEach(() => {
   vi.restoreAllMocks();

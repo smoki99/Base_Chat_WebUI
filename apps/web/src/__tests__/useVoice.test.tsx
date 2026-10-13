@@ -72,6 +72,7 @@ function mockRecorder() {
 describe('useVoice', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    localStorage.clear();
   });
 
   it('loads capabilities and exposes voices + languages', async () => {
@@ -85,6 +86,32 @@ describe('useVoice', () => {
     expect(result.current.voices[0]!.id).toBe('de-DE-KatjaNeural');
     expect(result.current.languages).toEqual(['de', 'es', 'en']);
     expect(result.current.currentVoice).toBe('de-DE-KatjaNeural');
+  });
+
+  it('restores a previously persisted voice + language', async () => {
+    mockCapabilities();
+    // Simulate a user choice stored in a previous session.
+    localStorage.setItem('base-chat.voice', 'de-DE-KatjaNeural');
+    localStorage.setItem('base-chat.language', 'es');
+
+    const { result } = renderHook(() => useVoice());
+    await waitFor(() => {
+      expect(result.current.isTtsAvailable).toBe(true);
+    });
+    // Persisted (valid) voice is kept; persisted language is restored.
+    expect(result.current.currentVoice).toBe('de-DE-KatjaNeural');
+    expect(result.current.currentLanguage).toBe('es');
+  });
+
+  it('falls back to the sidecar default when no voice is persisted', async () => {
+    mockCapabilities();
+    const { result } = renderHook(() => useVoice());
+    await waitFor(() => {
+      expect(result.current.isTtsAvailable).toBe(true);
+    });
+    expect(result.current.currentVoice).toBe('de-DE-KatjaNeural');
+    // The default is now persisted for the next session.
+    expect(localStorage.getItem('base-chat.voice')).toBe('de-DE-KatjaNeural');
   });
 
   it('hides voice buttons when sidecar is unreachable', async () => {
