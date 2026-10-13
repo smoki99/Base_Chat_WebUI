@@ -26,46 +26,49 @@ export function useChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const send = useCallback(async () => {
-    const content = input.trim();
-    if (!content || isLoading) return;
+  const send = useCallback(
+    async (overrideText?: string) => {
+      const content = (overrideText ?? input).trim();
+      if (!content || isLoading) return;
 
-    const messageId = crypto.randomUUID();
-    setError(null);
-    // Optimistic: user message appears immediately with "sending" status
-    setMessages((prev) => [...prev, { id: messageId, role: 'user', content, status: 'sending' }]);
-    setInput('');
-    setIsLoading(true);
+      const messageId = crypto.randomUUID();
+      setError(null);
+      // Optimistic: user message appears immediately with "sending" status
+      setMessages((prev) => [...prev, { id: messageId, role: 'user', content, status: 'sending' }]);
+      setInput('');
+      setIsLoading(true);
 
-    try {
-      // Build history from previous sent messages (exclude the one just added above)
-      const history: ChatHistoryMessage[] = messages
-        .filter((m) => m.status === 'sent')
-        .slice(-MAX_CONTEXT_MESSAGES)
-        .map((m) => ({ role: m.role, content: m.content }));
+      try {
+        // Build history from previous sent messages (exclude the one just added above)
+        const history: ChatHistoryMessage[] = messages
+          .filter((m) => m.status === 'sent')
+          .slice(-MAX_CONTEXT_MESSAGES)
+          .map((m) => ({ role: m.role, content: m.content }));
 
-      const reply = await fetchChat(content, history);
-      // Mark user message as sent, append the assistant reply
-      setMessages((prev) =>
-        prev
-          .map((msg) => (msg.id === messageId ? { ...msg, status: 'sent' as const } : msg))
-          .concat({
-            id: crypto.randomUUID(),
-            role: 'assistant' as const,
-            content: reply,
-            status: 'sent' as const,
-          })
-      );
-    } catch (err) {
-      // Mark the user message as failed and surface the error
-      setMessages((prev) =>
-        prev.map((msg) => (msg.id === messageId ? { ...msg, status: 'error' as const } : msg))
-      );
-      setError(err instanceof Error ? err.message : FALLBACK_MESSAGE);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [input, isLoading, messages]);
+        const reply = await fetchChat(content, history);
+        // Mark user message as sent, append the assistant reply
+        setMessages((prev) =>
+          prev
+            .map((msg) => (msg.id === messageId ? { ...msg, status: 'sent' as const } : msg))
+            .concat({
+              id: crypto.randomUUID(),
+              role: 'assistant' as const,
+              content: reply,
+              status: 'sent' as const,
+            })
+        );
+      } catch (err) {
+        // Mark the user message as failed and surface the error
+        setMessages((prev) =>
+          prev.map((msg) => (msg.id === messageId ? { ...msg, status: 'error' as const } : msg))
+        );
+        setError(err instanceof Error ? err.message : FALLBACK_MESSAGE);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [input, isLoading, messages]
+  );
 
   return { messages, input, setInput, isLoading, error, send };
 }

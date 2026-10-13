@@ -506,3 +506,70 @@ body {
     box-shadow: 0 0 0 8px rgba(211, 47, 47, 0);
   }
 }
+
+/* --- Interactive (hands-free) mode button --- */
+.btn-interactive {
+  position: relative;
+  border: 2px solid transparent;
+  background: transparent;
+  border-radius: 999px;
+  padding: 0.45rem 0.7rem;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-interactive:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.btn-interactive--listening {
+  border-color: #4caf50;
+  background: rgba(76, 175, 80, 0.08);
+}
+
+.btn-interactive--recording {
+  border-color: #f44336;
+  background: rgba(244, 67, 54, 0.08);
+}
+
+.btn-interactive--processing {
+  border-color: #ff9800;
+  background: rgba(255, 152, 0, 0.08);
+}
+
+.btn-interactive-dot {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4caf50;
+}
+
+.btn-interactive-dot--red {
+  background: #f44336;
+  animation: voice-pulse 0.8s infinite;
+}
+
+.btn-interactive-dot--pulse {
+  background: #ff9800;
+  animation: interactive-pulse 1s infinite;
+}
+
+@keyframes interactive-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.5;
+  }
+}

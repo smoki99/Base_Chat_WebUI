@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { useVoice } from '../hooks/useVoice';
 
@@ -192,5 +192,103 @@ describe('useVoice', () => {
       result.current.clearTranscript();
     });
     expect(result.current.lastTranscript).toBeNull();
+  });
+
+  // ─── Interactive mode ──────────────────────────────────────────────────────
+
+  describe('interactive mode', () => {
+    const originalAudioContext = globalThis.AudioContext;
+
+    beforeEach(() => {
+      // Mock AudioContext constructor
+      const mockAnalyser = {
+        getByteTimeDomainData: (buf: Uint8Array) => buf.fill(128),
+        fftSize: 512,
+      };
+      class MockAudioContext {
+        createMediaStreamSource() {
+          return { connect: () => {} };
+        }
+        createAnalyser() {
+          return mockAnalyser;
+        }
+        close() {
+          return Promise.resolve();
+        }
+      }
+      (globalThis as Record<string, unknown>).AudioContext = MockAudioContext;
+
+      // Mock media stream
+      const mockStream = { getTracks: () => [{ stop: () => {} }] } as unknown as MediaStream;
+      Object.defineProperty(navigator, 'mediaDevices', {
+        value: { getUserMedia: () => Promise.resolve(mockStream) },
+        writable: true,
+        configurable: true,
+      });
+
+      // Mock rAF
+      (globalThis as Record<string, unknown>).requestAnimationFrame = () => 1;
+      (globalThis as Record<string, unknown>).cancelAnimationFrame = () => {};
+    });
+
+    afterEach(() => {
+      (globalThis as Record<string, unknown>).AudioContext = originalAudioContext;
+      vi.unstubAllGlobals();
+    });
+
+    it('initial state is off', () => {
+      const { result } = renderHook(() => useVoice());
+      expect(result.current.interactiveState).toBe('off');
+    });
+
+    it('toggle starts listening state', async () => {
+      const { result } = renderHook(() => useVoice());
+      await act(async () => {
+        result.current.toggleInteractiveMode();
+        await new Promise((r) => setTimeout(r, 20));
+      });
+      expect(result.current.interactiveState).toBe('listening');
+    });
+
+    it('toggle again stops (listening → off)', async () => {
+      const { result } = renderHook(() => useVoice());
+      await act(async () => {
+        result.current.toggleInteractiveMode();
+        await new Promise((r) => setTimeout(r, 20));
+      });
+      expect(result.current.interactiveState).toBe('listening');
+      act(() => {
+        result.current.toggleInteractiveMode();
+      });
+      expect(result.current.interactiveState).toBe('off');
+    });
+
+    it('stopInteractiveMode sets state to off', async () => {
+      const { result } = renderHook(() => useVoice());
+      await act(async () => {
+        result.current.toggleInteractiveMode();
+        await new Promise((r) => setTimeout(r, 20));
+      });
+      expect(result.current.interactiveState).toBe('listening');
+      act(() => {
+        result.current.stopInteractiveMode();
+      });
+      expect(result.current.interactiveState).toBe('off');
+    });
+
+    it('handles getUserMedia rejection gracefully', async () => {
+      Object.defineProperty(navigator, 'mediaDevices', {
+        value: { getUserMedia: () => Promise.reject(new Error('denied')) },
+        writable: true,
+        configurable: true,
+      });
+      const { result } = renderHook(() => useVoice());
+      await act(async () => {
+        result.current.toggleInteractiveMode();
+        await new Promise((r) => setTimeout(r, 20));
+      });
+      expect(result.current.interactiveState).toBe('off');
+      expect(result.current.error).toBe('denied');
+    });
   });
 });

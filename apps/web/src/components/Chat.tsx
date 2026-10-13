@@ -15,8 +15,7 @@ export function Chat() {
   const canSend = input.trim().length > 0 && !isLoading;
   const messagesRef = useRef<HTMLDivElement>(null);
 
-  // Keep the newest message in view. Guarded because jsdom does not implement
-  // Element.scrollTo (tests would throw); real browsers always have it.
+  // Keep the newest message in view.
   useEffect(() => {
     const el = messagesRef.current;
     if (el && typeof el.scrollTo === 'function') {
@@ -24,13 +23,25 @@ export function Chat() {
     }
   }, [messages, isLoading]);
 
-  // When a STT transcript arrives, append it to the input.
+  // When a STT transcript arrives from manual recording, append it to the input.
   useEffect(() => {
-    if (voice.lastTranscript) {
-      setInput((prev) => (prev ? prev + ' ' : '') + voice.lastTranscript);
+    if (voice.lastTranscript && voice.interactiveState !== 'processing') {
+      const transcript = voice.lastTranscript;
       voice.clearTranscript();
+
+      if (voice.interactiveState !== 'off') {
+        // Interactive mode: only send if STT recognized actual text
+        if (!transcript.trim()) return; // no speech detected → keep listening
+        if (voice.isTtsAvailable) {
+          void voice.speak('Ok, ich beginne mit der Suche!');
+        }
+        void send(transcript);
+      } else {
+        if (!transcript.trim()) return;
+        setInput((prev) => (prev ? prev + ' ' : '') + transcript);
+      }
     }
-  }, [voice.lastTranscript, voice, setInput]);
+  }, [voice.lastTranscript, voice, setInput, send]);
 
   return (
     <div className="chat">
@@ -127,11 +138,15 @@ export function Chat() {
           type="text"
           value={input}
           onChange={(event) => setInput(event.target.value)}
-          placeholder="Nachricht eingeben …"
+          placeholder={
+            voice.interactiveState !== 'off'
+              ? 'Hands-free aktiv – einfach sprechen …'
+              : 'Nachricht eingeben …'
+          }
           aria-label="Nachricht"
           disabled={isLoading}
         />
-        {voice.isSttAvailable && (
+        {voice.isSttAvailable && voice.interactiveState === 'off' && (
           <button
             className={`btn btn-voice${voice.isRecording ? ' btn-voice--recording' : ''}`}
             type="button"
@@ -145,6 +160,31 @@ export function Chat() {
             }}
           >
             {voice.isRecording ? '⏹' : '🎤'}
+          </button>
+        )}
+        {voice.isSttAvailable && (
+          <button
+            className={`btn btn-interactive${
+              voice.interactiveState !== 'off' ? ` btn-interactive--${voice.interactiveState}` : ''
+            }`}
+            type="button"
+            aria-label={
+              voice.interactiveState === 'off'
+                ? 'Hands-free Modus aktivieren'
+                : 'Hands-free Modus deaktivieren'
+            }
+            onClick={() => voice.toggleInteractiveMode()}
+          >
+            🎙️
+            {voice.interactiveState === 'listening' && (
+              <span className="btn-interactive-dot" aria-hidden="true" />
+            )}
+            {voice.interactiveState === 'recording' && (
+              <span className="btn-interactive-dot btn-interactive-dot--red" aria-hidden="true" />
+            )}
+            {voice.interactiveState === 'processing' && (
+              <span className="btn-interactive-dot btn-interactive-dot--pulse" aria-hidden="true" />
+            )}
           </button>
         )}
         <button className="btn btn-primary" type="submit" disabled={!canSend}>

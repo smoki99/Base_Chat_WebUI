@@ -211,4 +211,59 @@ describe('Chat', () => {
     // Mic button must be present (STT available).
     expect(await screen.findByRole('button', { name: /Spracheingabe/i })).toBeInTheDocument();
   });
+
+  test('shows the interactive mode button when STT is available', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: {
+          tts: true,
+          stt: true,
+          voices: [{ id: 'de-DE-KatjaNeural', name: 'Katja', gender: 'f', language: 'de' }],
+          languages: ['de', 'es', 'en'],
+          defaultVoiceByLanguage: { de: 'de-DE-KatjaNeural' },
+        },
+      }),
+    } as unknown as Response);
+    // Mock mediaDevices so toggle doesn't crash
+    const mockStream = { getTracks: () => [{ stop: () => {} }] } as unknown as MediaStream;
+    Object.defineProperty(navigator, 'mediaDevices', {
+      value: { getUserMedia: () => Promise.resolve(mockStream) },
+      writable: true,
+      configurable: true,
+    });
+    (globalThis as Record<string, unknown>).AudioContext = class {
+      createMediaStreamSource() {
+        return { connect: () => {} };
+      }
+      createAnalyser() {
+        return { getByteTimeDomainData: () => {}, fftSize: 512 };
+      }
+      close() {
+        return Promise.resolve();
+      }
+    };
+    (globalThis as Record<string, unknown>).requestAnimationFrame = () => 1;
+    (globalThis as Record<string, unknown>).cancelAnimationFrame = () => {};
+
+    const user = userEvent.setup();
+    render(<Chat />);
+
+    const btn = await screen.findByRole('button', { name: /Hands-free/i });
+    expect(btn).toBeInTheDocument();
+    // Click to toggle on (exercises onClick handler)
+    await user.click(btn);
+  });
+
+  test('hides interactive mode button when STT is unavailable', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: { tts: false, stt: false, voices: [], languages: [], defaultVoiceByLanguage: {} },
+      }),
+    } as unknown as Response);
+    render(<Chat />);
+
+    expect(screen.queryByRole('button', { name: /Hands-free/i })).not.toBeInTheDocument();
+  });
 });
