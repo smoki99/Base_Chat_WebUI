@@ -231,8 +231,10 @@ export function createOpenAIProvider(options: OpenAIProviderOptions = {}): ChatP
       const timeout = setTimeout(() => controller.abort(), timeoutMs);
       try {
         const effectivePrompt = resolveSystemPrompt(systemPrompt, replyOpts?.tools);
+        // Build messages: system → history (oldest → newest) → current user message
         const messages: Array<Record<string, unknown>> = [
           { role: 'system', content: replyOpts?.systemPrompt ?? effectivePrompt },
+          ...(replyOpts?.history ?? []).map((h) => ({ role: h.role, content: h.content })),
           { role: 'user', content: message },
         ];
         const body: Record<string, unknown> = { model, messages };
