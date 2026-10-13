@@ -1,340 +1,77 @@
-# Base Chat
+# voz
 
-TypeScript (strict) Monorepo mit npm Workspaces.
+Voice-Sidecar für base-chat-webui: **TTS + STT** in einem separaten Prozess.
 
-## Stack
+| Funktion | Technologie | Offline? |
+| -------- | ----------- | -------- |
+| TTS      | edge-tts (Microsoft) | Nein (Online) |
+| STT      | Whisper (OpenAI / faster-whisper) | Ja (lokal) |
 
-| Layer             | Tech                                            |
-| ----------------- | ----------------------------------------------- |
-| `apps/web`        | React 19 + Vite (nur UI)                        |
-| `apps/api`        | Express (REST)                                  |
-| `apps/voz`        | Python-Sidecar (TTS + STT, optional)            |
-| `packages/shared` | Gemeinsame Typen & DTOs (reines TS, keine Deps) |
+**Sprachen:** `de`, `en`, `es` (STT: Whisper multi-sprachig; TTS: pro Sprache eine Default-Stimme)
 
-## Struktur
-
-```
-base-chat-webui/
-├── apps/
-│   ├── api/                  # Express REST API
-│   │   ├── src/
-│   │   │   ├── app.ts        # Express App (export für Tests)
-│   │   │   ├── index.ts      # Server-Start
-│   │   │   ├── routes/       # HTTP-Endpunkte
-│   │   │   ├── services/     # Business-Logik
-│   │   │   │   └── providers/ # Chat-Provider (mock, openai)
-│   │   │   ├── config/       # JSON-Konfiguration (chatbot.rules.json)
-│   │   │   ├── types/        # Chat-Typen (re-export shared)
-│   │   │   └── test/         # Supertest-Tests (chat.test.ts)
-│   │   └── package.json
-│   ├── voz/                  # Python Voice-Sidecar (TTS + STT, optional)
-│   │   ├── voz.py            # FastAPI-Server (edge-tts + whisper)
-│   │   ├── requirements.txt
-│   │   └── Dockerfile
-│   └── web/                  # React + Vite Frontend
-│       ├── src/
-│       │   ├── App.tsx       # App-Root (Footer + Chat)
-│       │   ├── components/   # React-Komponenten (Chat + Markdown)
-│       │   ├── hooks/        # useChat + useVoice (TTS/STT + Hands-free)
-│       │   ├── data/         # acknowledgments.json (Sprach-Phrasen)
-│       │   ├── index.css     # Material Design 3 CSS
-│       │   └── main.tsx      # React Entry
-│       ├── e2e/              # Playwright-E2E (headless Chromium)
-│       ├── index.html        # Vite Entry
-│       ├── playwright.config.ts  # E2E: webServer (API + Web)
-│       ├── vite.config.ts    # Proxy + Vitest-Config (e2e/ excluded)
-│       └── package.json
-├── packages/
-│   └── shared/               # Gemeinsame Typen/DTOs
-│       ├── src/index.ts      # ChatMessage, ChatResponse, ApiResponse, ApiResult
-│       └── package.json
-├── docs/
-│   ├── ARCHITECTURE.md
-│   ├── DECISIONS.md
-│   └── PROGRESS.md
-├── .github/
-│   └── workflows/ci.yml      # GitHub Actions (Node 24)
-├── .clinerules/
-├── .env.example
-├── .nvmrc                    # Node 24
-├── .editorconfig
-├── .prettierrc
-├── eslint.config.js
-├── package.json
-├── tsconfig.base.json
-└── LICENSE
-```
-
-## Setup
-
-### Voraussetzungen
-
-- **Node.js ≥ 24** (LTS) – siehe `.nvmrc` + `engines` in `package.json`
-- **npm ≥ 10** (Node 24 liefert npm 11.x)
-
-### Installation & Start
+## Quick start
 
 ```bash
-# 1. Dependencies installieren
-npm install
-
-# 2. Environment-Variabeln kopieren
-cp .env.example .env
-
-# 3. (nur für E2E) Playwright-Browser installieren
-npx playwright install chromium
-
-# 4. Dev-Server starten (web + api parallel)
-npm run dev
-```
-
-Danach:
-
-- **Web:** http://localhost:5173
-- **API:** http://localhost:3001
-- **Health-Check:** http://localhost:3001/health
-
-### Environment-Variablen
-
-| Variable             | Beschreibung                                                                 | Default                 |
-| -------------------- | ---------------------------------------------------------------------------- | ----------------------- |
-| `PORT`               | API-Port                                                                     | `3001`                  |
-| `CORS_ORIGIN`        | Erlaubte CORS-Origin(s) für die API (prod), kommagetrennt                    | leer (alle)             |
-| `VITE_API_URL`       | API-Basis-URL für das Web (prod)                                             | `http://localhost:3001` |
-| `CHAT_PROVIDER`      | Aktiver Chat-Provider: `mock` oder `openai`                                  | `mock`                  |
-| `OPENAI_BASE_URL`    | Basis-URL für OpenAI-kompatible Endpunkte (z. B. `http://localhost:1234/v1`) | leer                    |
-| `OPENAI_API_KEY`     | API-Key (leer = kein Header, z. B. für lokale Modelle)                       | leer                    |
-| `OPENAI_MODEL`       | Modellname (z. B. `gpt-4o`, `llama3.1-8b`)                                   | leer                    |
-| `CHATBOT_RULES_FILE` | Pfad zur `chatbot.rules.json` (leer = eingebauter Default)                   | leer                    |
-| `VOICE_SERVICE_URL`  | Base-URL des Voice-Sidecars (`apps/voz`), leer = Voice deaktiviert           | `http://127.0.0.1:8765` |
-
-> In der Entwicklung übernimmt der **Vite-Proxy** (`/api` → `localhost:3001`),
-> `VITE_API_URL` wird dann nicht benötigt.
->
-> Für separate Origins in Produktion: `CORS_ORIGIN` auf der API setzen – oder
-> (empfohlen) Web + API hinter einem Reverse Proxy (same-origin) ausliefern.
-> Details: `docs/ARCHITECTURE.md` → „CORS & Prod-Deployment".
-
-## Befehle
-
-| Command                    | Beschreibung                                                                     |
-| -------------------------- | -------------------------------------------------------------------------------- |
-| `npm run check`            | **Alle 4 Gates** (typecheck + lint + test + build) – bricht bei erstem Fehler ab |
-| `npm run dev`              | Web + API parallel starten (concurrently)                                        |
-| `npm run dev:lmstudio`     | Web + API mit Live-LLM starten (LM Studio auf `localhost:1234`)                  |
-| `npm run build`            | Alle Workspaces bauen                                                            |
-| `npm run lint`             | ESLint auf allen Workspaces                                                      |
-| `npm run test`             | Unit-Tests in allen Workspaces (Vitest)                                          |
-| `npm run test:e2e`         | Playwright-E2E (headless Chromium); startet API + Web automatisch                |
-| `npm run typecheck`        | TypeScript Typecheck (strict)                                                    |
-| `npm run knip`             | Dead Code & unused Dependencies detectieren                                      |
-| `npm run audit`            | Security-Scan (npm audit, Production-Deps, Level high+)                          |
-| `npm run audit:signatures` | Sigstore-Signaturverifikation aller Pakete                                       |
-| `npm run size`             | Bundle-Size-Budget prüfen (web ≤ 100 kB gzip)                                    |
-| `npm run depcheck`         | Circular-Dependency-Check (Monorepo)                                             |
-| `npm run pkg:validate`     | package.json-Struktur in allen Workspaces validieren                             |
-| `npm run verify:lockfile`  | Alle installierten Pakete gegen lockfile verifizieren                            |
-| `npm run format`           | Prettier formatiert den Code                                                     |
-
-## API
-
-| Method | Path                      | Beschreibung                           |
-| ------ | ------------------------- | -------------------------------------- |
-| `GET`  | `/health`                 | Liveness-Check                         |
-| `POST` | `/api/chat`               | Chat-Nachricht an Provider senden      |
-| `GET`  | `/api/chat/health`        | Provider-Healthcheck                   |
-| `GET`  | `/api/voice/capabilities` | Voice-Verfügbarkeit (TTS/STT, Stimmen) |
-| `POST` | `/api/voice/tts`          | Text → Audio (via voz-Sidecar)         |
-| `POST` | `/api/voice/stt`          | Audio → Text (via voz-Sidecar)         |
-
-→ Vollständige Doku mit Request/Response-Beispielen: [`docs/API.md`](./docs/API.md)
-
-## Voice (TTS + STT)
-
-Optionaler Sprachmodus über den Python-Sidecar [`apps/voz`](./apps/voz/README.md):
-
-- **TTS** – Edge-TTS (Microsoft, Online, keine API-Key)
-- **STT** – Whisper (OpenAI, lokal/offline)
-- **Sprachen** – `de`, `en`, `es`
-- **Hands-free-Modus** – RMS-Spracherkennung mit Noise-Floor-Kalibrierung,
-  Auto-Pause während TTS, Self-Hearing-Prävention (500 ms Post-TTS-Cooldown)
-
-```bash
-# Sidecar starten (separater Prozess)
-cd apps/voz && python3 -m venv .venv && source .venv/bin/activate
+cd voz
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
-python voz.py   # lauscht auf http://127.0.0.1:8765
-
-# API erkennt den Sidecar automatisch via VOICE_SERVICE_URL (Default: 127.0.0.1:8765)
-# Ohne Sidecar: Voice-Buttons im UI sind ausgegraut (Capability-Detection)
+python voz.py            # lauscht auf http://127.0.0.1:8765
 ```
 
-**Hands-free-Flow (automatisiert):**
+## Endpoints
 
-```
-Mikrofon → RMS-Kalibrierung (500 ms) → Speech-Detection (Debounce 100 ms)
-→ Aufnahme (Min. 300 ms, Max. 15 s) → Silence-Detection (800 ms)
-→ STT (Whisper) → Transkript → Chat-LLM → TTS-Acknowledgment
-→ Post-TTS-Cooldown (500 ms) → zurück zu Speech-Detection
-```
+| Method | Path      | Body / Query                        | Response              |
+| ------ | --------- | ----------------------------------- | --------------------- |
+| GET    | `/health` | –                                   | Verfügbarkeit + Stimmen |
+| POST   | `/tts`    | `{ text, voice?, language? }`       | `audio/mpeg`          |
+| POST   | `/stt`    | raw audio + `?language=de\|en\|es`  | `{ text }`            |
 
-> Details: [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) → „Voice-Pipeline"
+## Concurrency
+
+Die STT-Inferrerence (Whisper) ist CPU/GPU-lastig und läuft daher im
+**Starlette-Thread-Pool** (`run_in_threadpool`), serialisiert über eine Lock.
+Der asyncio-Event-Loop bleibt frei – **TTS-Requests werden weiterhin
+bedient, während STT läuft**.
+
+## Integration
+
+Die Express-API (`apps/api`) erkennt den Sidecar automatisch über
+`VOICE_SERVICE_URL` (Default `http://127.0.0.1:8765`).
+Ohne Sidecar sind die Voice-Buttons im Web-UI ausgegraut
+(Capability-Detection).
 
 ## Tests
 
-- **Unit (Vitest):** `npm test`
-  - `apps/api` via Supertest · `apps/web` via React Testing Library + jsdom.
-  - `e2e/**` wird aus dem Vitest-Run explizit ausgeschlossen.
-- **E2E (Playwright, headless Chromium):** `npm run test:e2e`
-  - Startet **API + Web automatisch** über `webServer` mit Readiness
-    (`/health` bzw. Port 5173) – kein manuelles `npm run dev`.
-  - Vor dem ersten Lauf einmalig: `npx playwright install chromium`.
-  - Deckt ab: `GET /` (200, `text/html`), `GET /index.html` (200),
-    React-Mount, Chat-Render (Seed-Message), keine Page-/Console-Errors.
+```bash
+pip install pytest
+pytest test_voz.py -v
+```
 
-## CI (GitHub Actions)
-
-`.github/workflows/ci.yml` — Trigger: `push` (`master`, `feature/*`),
-`pull_request` (`master`), `workflow_dispatch`.
-
-1. `npm ci`
-2. `npm audit --omit=dev --audit-level=high`
-3. Unexpected-Package-Check (installierte Pakete vs. lockfile)
-4. `npm run typecheck`
-5. `npm run lint`
-6. `npx knip`
-7. `npm audit --audit-level=high`
-8. `npm run depcheck`
-9. `npm run pkg:validate`
-10. `npm test` (Unit)
-11. `npm run build`
-12. `npm run size`
-13. `npx playwright install --with-deps chromium`
-14. `npm run test:e2e -w web`
-
-Die Actions laufen nativ auf **Node 24** (`actions/checkout@v7`,
-`actions/setup-node@v7`).
-
-## Supply Chain Security
-
-| Maßnahme                                  | Wo                                                            |
-| ----------------------------------------- | ------------------------------------------------------------- |
-| Integrity-Hash (SHA-512)                  | `package-lock.json` – npm verifiziert bei jedem Install       |
-| `npm ci` (frozen lockfile)                | CI – schlägt fehl bei inkonsistentem lockfile                 |
-| `npm audit --omit=dev --audit-level=high` | Skript + CI – Production-Deps                                 |
-| **`npm audit signatures`**                | Skript + CI – Sigstore-Verifikation aller Paket-Signaturen    |
-| **Exakte Version-Pinning**                | `.npmrc` → `save-exact=true` – neue Deps werden exakt gepinnt |
-| **Corepack `packageManager`**             | `package.json` → `npm@11.8.0` – deterministische npm-Version  |
-| **Unexpected-Package-Check**              | CI – vergleicht installierte Pakete mit lockfile              |
-| Knip (unused deps)                        | Skript + CI – reduziert Angriffsfläche                        |
-
-### Neues Paket hinzufügen – Checkliste
+## Docker
 
 ```bash
-# 1. Metadaten & Reputation prüfen
-npm view <pkg> maintainers repository time.modified
-
-# 2. Dry-Run: Was würde installiert werden?
-npm install --dry-run <pkg>
-
-# 3. Installieren (exakte Version via save-exact)
-npm install -D <pkg>
-
-# 4. Lockfile-Diff reviewen
-git diff package-lock.json
+docker build -t voz .
+docker run -p 8765:8765 voz
 ```
 
-## Git & PR Workflow
+## Sicherheitshinweise
 
-### Rollen
+- **TTS (edge-tts)**: Sendet Text + Sprachwahl an Microsoft-Server.
+  **Keine lokalen Daten** – aber **Online-Abhängigkeit**.
+- **STT (Whisper)**: Läuft **vollständig lokal** – keine Daten verlassen die Maschine.
+- **API ohne Auth**: Bindet standardmäßig auf `127.0.0.1` (localhost-only).
+  Bei Netzwerk-Exposition **vor** dem Reverse-Proxy einen Token hinzufügen.
+- **Kein API-Key**: edge-tts nutzt eine anonyme Microsoft-Instanz –
+  bei hohem Volumen kann rate-limiten. Für Produktion: eigene TTS-Instanz oder
+  API-Key (z. B. Azure Speech) konfigurieren.
+- **Whisper-Modell**: `base` (Default, ~140 MB). Für bessere Qualität:
+  `WHISPER_MODEL=small` oder `WHISPER_MODEL=medium` setzen.
+  Modelle werden **einmalig** heruntergeladen und lokal gecachtet.
 
-| Schritt                  | Wer            | Tool                                          |
-| ------------------------ | -------------- | --------------------------------------------- |
-| Feature-Branch erstellen | KI             | `git checkout -b feature/...`                 |
-| Commits schreiben        | KI             | Conventional Commits                          |
-| Branch pushen            | KI             | `git push -u origin feature/...`              |
-| PR erstellen             | **Mensch**     | GitHub Web / `gh pr create`                   |
-| **Externes LLM-Review**  | **Mensch**     | **Außerhalb VS Code** (z. B. ChatGPT, Claude) |
-| CI grün                  | GitHub Actions | automatisch                                   |
-| Feedback einarbeiten     | KI             | auf Feature-Branch                            |
-| Merge                    | **Mensch**     | GitHub Web / `gh pr merge`                    |
-| Issue schließen          | KI             | `gh issue close <#>`                          |
-| Feature-Branch löschen   | KI             | `git branch -d` + `git push origin --delete`  |
+## Performance (Typisch, M1/M2 Mac)
 
-### Merge-Kriterien (alle Pflicht)
-
-- [ ] CI grün (typecheck + lint + test + build + e2e)
-- [ ] **Externes LLM-Review** durchgeführt (außerhalb VS Code / Cline-Kontext)
-- [ ] LLM-Feedback eingearbeitet
-- [ ] Menschliche Freigabe
-
-### Externes LLM-Review
-
-> Jeder PR wird **vor dem Merge** von einem **externen LLM** (außerhalb von
-> VS Code und dem aktuellen Cline-Kontext) reviewed.
->
-> **Warum?** Zweite unabhängige Perspektive – kein Bias durch den gleichen
-> Kontext, in dem der Code generiert wurde. Fängt typische LLM-Blindstellen
-> (Security, Edge Cases, Architektur-Drift).
->
-> **So geht's:**
->
-> 1. PR-Diff kopieren (`gh pr diff <#>`)
-> 2. In ein anderes LLM-Interface einfügen (z. B. Claude, ChatGPT)
-> 3. Prompt: _„Review diesen Diff: Edge Cases, Security, Typsicherheit, Architektur."_
-> 4. Feedback in den PR als Kommentar einfügen
-> 5. KI arbeitet Feedback ein → neuer Commit → CI erneut grün
-
-### Branch-Naming
-
-```
-feature/<kurze-beschreibung>
-feature/story-XXXX          # für Story-angelegte Aufgaben
-feature/process-update      # für Prozess-/Doku-Änderungen
-```
-
-### Commit-Naming
-
-```
-Story-XXXX: <type>(<scope>): <deutscher Subject>
-```
-
-**Story-Referenz IMMER am Anfang** – so lässt sich mit
-`git log --grep="Story-0014"` die komplette Commit-Historie einer Story
-nachverfolgen und mit dem GitHub-Issue verknüpfen.
-
-Beispiele:
-
-```
-Story-0014: refactor(web): Web in lib/api + useChat-Hook trennen
-Story-0011: feat(api): Vitest-Coverage-Schwellwert einrichten
-Story-0015: docs(root): AGENTS.md + Guardrails anlegen
-```
-
-Ohne Story-Referenz (Prozess-Änderungen, Fix ohne Story):
-
-```
-fix(api): CORS-Origin-Liste für Produktion ergänzen
-chore: ESLint-Config auf flat config migrieren
-```
-
-### PR-Titel
-
-```
-Story-XXXX: <kurze Beschreibung>
-```
-
-→ Template: [`.github/PULL_REQUEST_TEMPLATE.md`](./.github/PULL_REQUEST_TEMPLATE.md)
-
-### Issue-Template
-
-Neue Issues verwenden das Template mit `Story-XXXX: <Thema>` als Titel-Format.
-
-→ Template: [`.github/ISSUE_TEMPLATE/story.md`](./.github/ISSUE_TEMPLATE/story.md)
-
-## Konventionen
-
-- **API-Antworten:** `{ "data": ... }` oder `{ "error": { "message": ... } }`
-- **Gemeinsame Typen** immer in `packages/shared` definieren – nie duplizieren
-- **Config** ausschließlich aus `.env` (Vorlage: `.env.example`)
-- **Git:** Conventional Commits mit deutschen Subjects
+| Aufgabe | Modell | Zeit |
+| ------- | ------ | ---- |
+| TTS (50 Wörter) | edge-tts | ~2–4 s |
+| STT (5 s Audio) | whisper base | ~1–3 s (CPU) / ~0.5 s (GPU) |
