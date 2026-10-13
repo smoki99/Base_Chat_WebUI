@@ -175,7 +175,7 @@ export function createOpenAIProvider(options: OpenAIProviderOptions = {}): ChatP
     const lastToolResults: string[] = [];
 
     let round = 0;
-    while (choice?.message?.tool_calls?.length && round < 3) {
+    while (choice?.message?.tool_calls?.length && round < 2) {
       round++;
       for (const toolCall of choice.message.tool_calls) {
         console.log(
