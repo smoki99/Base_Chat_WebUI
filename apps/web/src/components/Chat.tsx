@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useChat } from '../hooks/useChat';
 import { useVoice } from '../hooks/useVoice';
 import { Markdown } from './Markdown';
@@ -14,9 +14,9 @@ export function Chat() {
   const voice = useVoice();
   const canSend = input.trim().length > 0 && !isLoading;
   const messagesRef = useRef<HTMLDivElement>(null);
+  const [interactiveFeedback, setInteractiveFeedback] = useState(false);
 
-  // Keep the newest message in view. Guarded because jsdom does not implement
-  // Element.scrollTo (tests would throw); real browsers always have it.
+  // Keep the newest message in view.
   useEffect(() => {
     const el = messagesRef.current;
     if (el && typeof el.scrollTo === 'function') {
@@ -24,13 +24,25 @@ export function Chat() {
     }
   }, [messages, isLoading]);
 
-  // When a STT transcript arrives, append it to the input.
+  // When a STT transcript arrives from manual recording, append it to the input.
   useEffect(() => {
-    if (voice.lastTranscript) {
-      setInput((prev) => (prev ? prev + ' ' : '') + voice.lastTranscript);
+    if (voice.lastTranscript && voice.interactiveState !== 'processing') {
+      if (voice.interactiveState !== 'off') {
+        // Interactive mode: show feedback + auto-send
+        setInteractiveFeedback(true);
+        setTimeout(() => {
+          setInput(voice.lastTranscript!);
+          setTimeout(() => {
+            void send();
+            setInteractiveFeedback(false);
+          }, 600);
+        }, 200);
+      } else {
+        setInput((prev) => (prev ? prev + ' ' : '') + voice.lastTranscript);
+      }
       voice.clearTranscript();
     }
-  }, [voice.lastTranscript, voice, setInput]);
+  }, [voice.lastTranscript, voice, setInput, send]);
 
   return (
     <div className="chat">
@@ -94,6 +106,12 @@ export function Chat() {
           </div>
         ))}
 
+        {interactiveFeedback && (
+          <div className="chat-interactive-feedback" aria-live="assertive">
+            <span className="chat-interactive-feedback-text">Ok, ich beginne mit der Suche!</span>
+          </div>
+        )}
+
         {isLoading && (
           <div className="chat-typing" aria-label="Bot schreibt">
             <span className="chat-typing-dots" aria-hidden="true">
@@ -127,11 +145,15 @@ export function Chat() {
           type="text"
           value={input}
           onChange={(event) => setInput(event.target.value)}
-          placeholder="Nachricht eingeben …"
+          placeholder={
+            voice.interactiveState !== 'off'
+              ? 'Hands-free aktiv – einfach sprechen …'
+              : 'Nachricht eingeben …'
+          }
           aria-label="Nachricht"
           disabled={isLoading}
         />
-        {voice.isSttAvailable && (
+        {voice.isSttAvailable && voice.interactiveState === 'off' && (
           <button
             className={`btn btn-voice${voice.isRecording ? ' btn-voice--recording' : ''}`}
             type="button"
@@ -145,6 +167,31 @@ export function Chat() {
             }}
           >
             {voice.isRecording ? '⏹' : '🎤'}
+          </button>
+        )}
+        {voice.isSttAvailable && (
+          <button
+            className={`btn btn-interactive${
+              voice.interactiveState !== 'off' ? ` btn-interactive--${voice.interactiveState}` : ''
+            }`}
+            type="button"
+            aria-label={
+              voice.interactiveState === 'off'
+                ? 'Hands-free Modus aktivieren'
+                : 'Hands-free Modus deaktivieren'
+            }
+            onClick={() => voice.toggleInteractiveMode()}
+          >
+            🎙️
+            {voice.interactiveState === 'listening' && (
+              <span className="btn-interactive-dot" aria-hidden="true" />
+            )}
+            {voice.interactiveState === 'recording' && (
+              <span className="btn-interactive-dot btn-interactive-dot--red" aria-hidden="true" />
+            )}
+            {voice.interactiveState === 'processing' && (
+              <span className="btn-interactive-dot btn-interactive-dot--pulse" aria-hidden="true" />
+            )}
           </button>
         )}
         <button className="btn btn-primary" type="submit" disabled={!canSend}>
