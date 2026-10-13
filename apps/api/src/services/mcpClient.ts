@@ -177,6 +177,40 @@ export function loadMcpConfig(configPath?: string): McpServerConfig[] {
   }
 }
 
+/**
+ * Sanitize tool arguments before forwarding to the MCP server.
+ * LLMs sometimes include score percentages or file IDs in qmd.multi_get patterns.
+ */
+export function sanitizeToolArgs(
+  qualifiedName: string,
+  args: Record<string, unknown>
+): Record<string, unknown> {
+  if (qualifiedName === 'qmd.multi_get' && typeof args.pattern === 'string') {
+    let p = args.pattern as string;
+    // Iteratively strip leading score/ID tokens (handles both "#id 74% path" and "74% #id path").
+    let changed = true;
+    while (changed) {
+      changed = false;
+      const noScore = p.replace(/^\d+%\s*/, '');
+      if (noScore !== p) {
+        p = noScore;
+        changed = true;
+      }
+      const noId = p.replace(/^#[\da-f]+\s*/i, '');
+      if (noId !== p) {
+        p = noId;
+        changed = true;
+      }
+    }
+    // Strip qmd:// prefix
+    p = p.replace(/^qmd:\/\//, '');
+    // Strip trailing :lineNumber (e.g. "knowhow/file.md:42")
+    p = p.replace(/:\d+$/, '');
+    return { ...args, pattern: p };
+  }
+  return args;
+}
+
 export async function connectAllMcpServers(configs: McpServerConfig[]): Promise<McpContext> {
   const connections: McpConnection[] = [];
   const allTools: ToolDefinition[] = [];
@@ -193,7 +227,9 @@ export async function connectAllMcpServers(configs: McpServerConfig[]): Promise<
           description: `[${config.name}] ${tool.description}`,
           parameters: tool.parameters,
         });
-        toolHandlers.set(qualifiedName, async (args) => conn.callTool(tool.name, args));
+        toolHandlers.set(qualifiedName, async (args) =>
+          conn.callTool(tool.name, sanitizeToolArgs(qualifiedName, args))
+        );
       }
       console.log(`[mcp] Connected to "${config.name}" (${conn.tools.length} tools)`);
     } catch (err) {

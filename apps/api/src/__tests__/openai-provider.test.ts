@@ -244,4 +244,84 @@ describe('createOpenAIProvider', () => {
     expect(systemMsg.content).toContain('sql.search_products');
     expect(systemMsg.content).toContain('qmd.query');
   });
+
+  it('QMD prompt instructs to split compound words and avoid padding', async () => {
+    const mockJson = {
+      id: 'chat-qmd-1',
+      choices: [{ message: { role: 'assistant', content: 'OK' } }],
+    };
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(mockFetchResponse(200, mockJson) as Response);
+
+    const qmdTools = [
+      { name: 'qmd.query', description: 'Search docs', parameters: { type: 'object' } },
+      { name: 'qmd.multi_get', description: 'Get docs', parameters: { type: 'object' } },
+    ];
+    const provider = createOpenAIProvider({ baseUrl: 'http://localhost:1234/v1' });
+
+    await provider.reply('Wie macht man Matjesbrot?', { tools: qmdTools });
+
+    const fetchSpy = vi.mocked(global.fetch);
+    const callArgs = fetchSpy.mock.calls[0]![1] as RequestInit;
+    const body = JSON.parse(callArgs.body as string);
+    const systemMsg = body.messages.find((m: { role: string }) => m.role === 'system')!;
+    expect(systemMsg.content).toContain('AND-based');
+    expect(systemMsg.content).toContain('SPLIT');
+    expect(systemMsg.content).toContain('Never copy the tool');
+  });
+
+  it('SQL prompt instructs to rephrase no-results in own words', async () => {
+    const mockJson = {
+      id: 'chat-sql-2',
+      choices: [{ message: { role: 'assistant', content: 'OK' } }],
+    };
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(mockFetchResponse(200, mockJson) as Response);
+
+    const sqlTools = [
+      {
+        name: 'sql.search_products',
+        description: 'Search products',
+        parameters: { type: 'object' },
+      },
+      {
+        name: 'sql.get_product',
+        description: 'Get product by SKU',
+        parameters: { type: 'object' },
+      },
+    ];
+    const provider = createOpenAIProvider({ baseUrl: 'http://localhost:1234/v1' });
+
+    await provider.reply('Gibt es Pizza?', { tools: sqlTools });
+
+    const fetchSpy = vi.mocked(global.fetch);
+    const callArgs = fetchSpy.mock.calls[0]![1] as RequestInit;
+    const body = JSON.parse(callArgs.body as string);
+    const systemMsg = body.messages.find((m: { role: string }) => m.role === 'system')!;
+    expect(systemMsg.content).toContain('Never copy the tool');
+    expect(systemMsg.content).toContain('own words');
+  });
+
+  it('combined prompt includes query-crafting and no-results rules', async () => {
+    const mockJson = {
+      id: 'chat-combined-2',
+      choices: [{ message: { role: 'assistant', content: 'OK' } }],
+    };
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(mockFetchResponse(200, mockJson) as Response);
+
+    const combinedTools = [
+      { name: 'sql.search_products', description: 'Search', parameters: { type: 'object' } },
+      { name: 'qmd.query', description: 'Search docs', parameters: { type: 'object' } },
+      { name: 'qmd.multi_get', description: 'Get docs', parameters: { type: 'object' } },
+    ];
+    const provider = createOpenAIProvider({ baseUrl: 'http://localhost:1234/v1' });
+
+    await provider.reply('Was gibt es?', { tools: combinedTools });
+
+    const fetchSpy = vi.mocked(global.fetch);
+    const callArgs = fetchSpy.mock.calls[0]![1] as RequestInit;
+    const body = JSON.parse(callArgs.body as string);
+    const systemMsg = body.messages.find((m: { role: string }) => m.role === 'system')!;
+    expect(systemMsg.content).toContain('AND-based');
+    expect(systemMsg.content).toContain('SPLIT');
+    expect(systemMsg.content).toContain('Never copy the tool');
+  });
 });

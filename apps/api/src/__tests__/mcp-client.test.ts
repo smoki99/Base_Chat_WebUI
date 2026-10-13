@@ -93,7 +93,7 @@ vi.mock('node:child_process', () => ({
 }));
 
 import { spawn } from 'node:child_process';
-import { loadMcpConfig, connectAllMcpServers } from '../services/mcpClient';
+import { loadMcpConfig, connectAllMcpServers, sanitizeToolArgs } from '../services/mcpClient';
 import { chatService, initializeMcp } from '../services/chatService';
 
 const mockSpawn = vi.mocked(spawn);
@@ -277,5 +277,38 @@ describe('chatService MCP integration', () => {
     chatService.closeMcp();
     const result = await chatService.respond('hello');
     expect(result.content).toBeTruthy();
+  });
+});
+
+describe('sanitizeToolArgs', () => {
+  it('strips score percentage from qmd.multi_get pattern', () => {
+    const result = sanitizeToolArgs('qmd.multi_get', {
+      pattern: '100% knowhow/rezepte/04-krabben-butter.md',
+    });
+    expect(result.pattern).toBe('knowhow/rezepte/04-krabben-butter.md');
+  });
+
+  it('strips file ID and score from qmd.multi_get pattern', () => {
+    const result = sanitizeToolArgs('qmd.multi_get', {
+      pattern: '#a83894 74% knowhow/rezepte/01-matjes-brot.md',
+    });
+    expect(result.pattern).toBe('knowhow/rezepte/01-matjes-brot.md');
+  });
+
+  it('strips qmd:// prefix and trailing line number', () => {
+    const result = sanitizeToolArgs('qmd.multi_get', { pattern: 'qmd://knowhow/produkte.md:5' });
+    expect(result.pattern).toBe('knowhow/produkte.md');
+  });
+
+  it('leaves already-clean patterns unchanged', () => {
+    const result = sanitizeToolArgs('qmd.multi_get', {
+      pattern: 'knowhow/rezepte/02-currywurst.md',
+    });
+    expect(result.pattern).toBe('knowhow/rezepte/02-currywurst.md');
+  });
+
+  it('does not modify non-qmd.multi_get tools', () => {
+    const result = sanitizeToolArgs('sql.search_products', { query: 'fischbrot' });
+    expect(result.query).toBe('fischbrot');
   });
 });
