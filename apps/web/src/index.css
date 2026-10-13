@@ -573,26 +573,3 @@ body {
     opacity: 0.5;
   }
 }
-
-/* --- Interactive feedback message --- */
-.chat-interactive-feedback {
-  padding: 8px 16px;
-  margin: 4px 0;
-  font-size: 0.9rem;
-  color: #2e7d32;
-  background: rgba(76, 175, 80, 0.08);
-  border-radius: 8px;
-  align-self: flex-start;
-  animation: fade-in-msg 0.2s ease-out;
-}
-
-@keyframes fade-in-msg {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}

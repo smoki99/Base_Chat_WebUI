@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useChat } from '../hooks/useChat';
 import { useVoice } from '../hooks/useVoice';
 import { Markdown } from './Markdown';
@@ -14,7 +14,6 @@ export function Chat() {
   const voice = useVoice();
   const canSend = input.trim().length > 0 && !isLoading;
   const messagesRef = useRef<HTMLDivElement>(null);
-  const [interactiveFeedback, setInteractiveFeedback] = useState(false);
 
   // Keep the newest message in view.
   useEffect(() => {
@@ -31,12 +30,11 @@ export function Chat() {
       voice.clearTranscript();
 
       if (voice.interactiveState !== 'off') {
-        // Interactive mode: show feedback + auto-send with explicit text
-        setInteractiveFeedback(true);
-        setTimeout(() => {
-          void send(transcript);
-          setInteractiveFeedback(false);
-        }, 800);
+        // Interactive mode: speak feedback + auto-send
+        if (voice.isTtsAvailable) {
+          void voice.speak('Ok, ich beginne mit der Suche!');
+        }
+        void send(transcript);
       } else {
         setInput((prev) => (prev ? prev + ' ' : '') + transcript);
       }
@@ -104,12 +102,6 @@ export function Chat() {
             </div>
           </div>
         ))}
-
-        {interactiveFeedback && (
-          <div className="chat-interactive-feedback" aria-live="assertive">
-            <span className="chat-interactive-feedback-text">Ok, ich beginne mit der Suche!</span>
-          </div>
-        )}
 
         {isLoading && (
           <div className="chat-typing" aria-label="Bot schreibt">
