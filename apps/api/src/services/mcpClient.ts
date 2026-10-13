@@ -9,6 +9,7 @@
  * Reference: https://modelcontextprotocol.io/specification
  */
 import { spawn } from 'node:child_process';
+import { env } from '../env';
 import type { ToolDefinition, ToolHandler } from '../types/chat';
 
 export interface McpServerConfig {
@@ -39,15 +40,20 @@ interface JsonRpcResponse {
   error?: { code: number; message: string };
 }
 
-let nextId = 1;
-
 /**
  * Connect to an MCP server via stdio and return an active connection.
  * Resolves once the `initialize` handshake is complete.
  */
 async function connectMcpServer(config: McpServerConfig): Promise<McpConnection> {
+  // Per-connection request-id counter. (Regression: a module-level counter
+  // was shared between connections – one server's timed-out request could
+  // reject another server's pending response with the same id.)
+  let nextId = 1;
+
   const child = spawn(config.command, config.args ?? [], {
     stdio: ['pipe', 'pipe', 'pipe'],
+    // config.env = per-server additions (e.g. DATABASE_URL) on top of the
+    // API's own environment.
     env: { ...process.env, ...config.env },
   });
 
@@ -98,7 +104,7 @@ async function connectMcpServer(config: McpServerConfig): Promise<McpConnection>
           pending.delete(id);
           reject(new Error(`MCP request timed out: ${method} (server: ${config.name})`));
         }
-      }, 30_000);
+      }, env.MCP_REQUEST_TIMEOUT_MS);
     }).then((res) => {
       if (res.error) throw new Error(`MCP error ${res.error.code}: ${res.error.message}`);
       return res.result;
@@ -165,12 +171,26 @@ export interface McpContext {
 }
 
 export function loadMcpConfig(configPath?: string): McpServerConfig[] {
-  const path =
-    configPath ?? process.env.MCP_CONFIG_FILE ?? resolve(process.cwd(), 'mcp-config.json');
+  const path = configPath ?? env.MCP_CONFIG_FILE ?? resolve(process.cwd(), 'mcp-config.json');
   if (!existsSync(path)) return [];
   try {
     const raw = JSON.parse(readFileSync(path, 'utf-8')) as { servers?: McpServerConfig[] };
-    return raw.servers ?? [];
+    let servers = raw.servers ?? [];
+    // Whitelist (MCP_ENABLED_SERVERS): only explicitly enabled servers are
+    // spawned – unknown entries in the config file stay inert.
+    const whitelist = env.MCP_ENABLED_SERVERS;
+    if (whitelist.length > 0) {
+      const skipped = servers
+        .filter((s) => !whitelist.includes(s.name))
+        .map((s) => s.name);
+      servers = servers.filter((s) => whitelist.includes(s.name));
+      if (skipped.length > 0) {
+        console.warn(
+          `[mcp] Skipping disabled server(s): ${skipped.join(', ')} (MCP_ENABLED_SERVERS whitelist)`
+        );
+      }
+    }
+    return servers;
   } catch (err) {
     console.error(`[mcp] Failed to parse ${path}:`, err);
     return [];

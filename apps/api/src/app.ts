@@ -2,6 +2,7 @@
 import express, { type NextFunction, type Request, type Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import { env } from './env';
 import { healthRouter } from './routes/health';
 import { chatRouter } from './routes/chat';
 import { voiceRouter } from './routes/voice';
@@ -12,15 +13,12 @@ app.disable('x-powered-by');
 // Security headers (X-Content-Type-Options, Referrer-Policy, X-Frame-Options, …)
 app.use(helmet({ referrerPolicy: { policy: 'no-referrer' } }));
 
-// CORS – allowed origins from CORS_ORIGIN (comma-separated).
+// CORS – allowed origins from CORS_ORIGIN (comma-separated, see env.ts).
 // Empty/unset = allow all (dev convenience). Evaluated per request.
 app.use(
   cors({
     origin(origin, callback) {
-      const allowed = (process.env.CORS_ORIGIN ?? '')
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean);
+      const allowed = env.CORS_ORIGIN;
       if (
         origin === undefined ||
         origin === '' ||
