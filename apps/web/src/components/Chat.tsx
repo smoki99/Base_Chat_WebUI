@@ -120,7 +120,7 @@ export function Chat({ initialMessages = [], chatId = null, onMessagesChange }: 
   }, [messages, voice.interactiveState, voice.isTtsAvailable, voice.currentLanguage, voice.speak]);
 
   return (
-    <div className="chat">
+    <section className="chat" aria-label="Chat">
       <div
         ref={messagesRef}
         className="chat-messages"
@@ -270,6 +270,6 @@ export function Chat({ initialMessages = [], chatId = null, onMessagesChange }: 
           Senden
         </button>
       </form>
-    </div>
+    </section>
   );
 }
