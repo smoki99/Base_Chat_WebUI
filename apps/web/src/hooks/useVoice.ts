@@ -261,7 +261,8 @@ export function useVoice(): UseVoiceReturn {
       source.connect(analyser);
       analyserRef.current = analyser;
 
-      setInteractiveState('listening');
+      // Start paused if the bot is already writing (externalPause active).
+      setInteractiveState(externalPauseRef.current ? 'paused' : 'listening');
 
       // Mutable loop state
       let speechActive = false;
