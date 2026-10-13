@@ -1,0 +1,10 @@
+# Voice sidecar dependencies (base-chat-webui)
+fastapi>=0.110
+uvicorn[standard]>=0.29
+edge-tts>=6.1
+numpy>=1.26
+soundfile>=0.12
+torch>=2.0
+transformers>=4.40
+# httpx is required by fastapi.testclient (tests)
+httpx>=0.27

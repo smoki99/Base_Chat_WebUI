@@ -460,3 +460,49 @@ body {
   outline: 2px solid #d32f2f;
   outline-offset: 1px;
 }
+
+/* --- Voice Buttons (TTS + STT) --- */
+.btn-voice {
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  padding: 0.45rem 0.7rem;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  flex-shrink: 0;
+}
+
+.btn-voice:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* In the chat-role row: compact, inline */
+.chat-role .btn-voice {
+  padding: 0.1rem 0.45rem;
+  font-size: 0.9rem;
+  margin-left: 0.35rem;
+  vertical-align: middle;
+}
+
+/* Recording state: red + pulse */
+.btn-voice--recording {
+  background: #d32f2f;
+  animation: voice-pulse 1.2s ease-in-out infinite;
+}
+
+.btn-voice--recording:hover:not(:disabled) {
+  background: #b71c1c;
+  animation: none;
+}
+
+@keyframes voice-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(211, 47, 47, 0);
+  }
+}

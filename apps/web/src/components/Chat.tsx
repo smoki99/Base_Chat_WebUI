@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useChat } from '../hooks/useChat';
+import { useVoice } from '../hooks/useVoice';
 import { Markdown } from './Markdown';
 
 /**
@@ -10,6 +11,7 @@ import { Markdown } from './Markdown';
  */
 export function Chat() {
   const { messages, input, setInput, isLoading, error, send } = useChat();
+  const voice = useVoice();
   const canSend = input.trim().length > 0 && !isLoading;
   const messagesRef = useRef<HTMLDivElement>(null);
 
@@ -21,6 +23,14 @@ export function Chat() {
       el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
     }
   }, [messages, isLoading]);
+
+  // When a STT transcript arrives, append it to the input.
+  useEffect(() => {
+    if (voice.lastTranscript) {
+      setInput((prev) => (prev ? prev + ' ' : '') + voice.lastTranscript);
+      voice.clearTranscript();
+    }
+  }, [voice.lastTranscript, voice, setInput]);
 
   return (
     <div className="chat">
@@ -60,6 +70,22 @@ export function Chat() {
                   {' '}
                   ⚠
                 </span>
+              )}
+              {message.role === 'assistant' && voice.isTtsAvailable && (
+                <button
+                  className="btn btn-voice"
+                  type="button"
+                  aria-label={voice.isSpeaking ? 'Abbrechen' : 'Vorlesen'}
+                  onClick={() => {
+                    if (voice.isSpeaking) {
+                      voice.stopSpeaking();
+                    } else {
+                      void voice.speak(message.content);
+                    }
+                  }}
+                >
+                  {voice.isSpeaking ? '⏹' : '🔊'}
+                </button>
               )}
             </span>
             <div className="chat-text chat-md">
@@ -105,6 +131,22 @@ export function Chat() {
           aria-label="Nachricht"
           disabled={isLoading}
         />
+        {voice.isSttAvailable && (
+          <button
+            className={`btn btn-voice${voice.isRecording ? ' btn-voice--recording' : ''}`}
+            type="button"
+            aria-label={voice.isRecording ? 'Aufnahme stoppen' : 'Spracheingabe'}
+            onClick={() => {
+              if (voice.isRecording) {
+                voice.stopRecording();
+              } else {
+                void voice.startRecording();
+              }
+            }}
+          >
+            {voice.isRecording ? '⏹' : '🎤'}
+          </button>
+        )}
         <button className="btn btn-primary" type="submit" disabled={!canSend}>
           Senden
         </button>

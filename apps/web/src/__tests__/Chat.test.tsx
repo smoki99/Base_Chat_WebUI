@@ -55,17 +55,28 @@ describe('Chat', () => {
   });
 
   test('does not send a blank message', async () => {
-    const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: { id: 'x', content: 'x' } }),
-    } as unknown as Response);
+    const spy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async (input: RequestInfo | URL) => {
+        const url = typeof input === 'string' ? input : input.toString();
+        if (url.includes('/api/chat')) {
+          return { ok: false, json: async () => ({}) } as Response;
+        }
+        return {
+          ok: true,
+          json: async () => ({
+            data: { tts: false, stt: false, voices: [], languages: [], defaultVoiceByLanguage: {} },
+          }),
+        } as unknown as Response;
+      });
     const user = userEvent.setup();
     render(<Chat />);
 
     await user.type(screen.getByRole('textbox'), '   ');
     await user.click(screen.getByRole('button', { name: 'Senden' }));
 
-    expect(spy).not.toHaveBeenCalled();
+    const chatCalls = spy.mock.calls.filter((args) => String(args[0]).includes('/api/chat'));
+    expect(chatCalls).toHaveLength(0);
   });
 
   test('shows the API error message on failure', async () => {
@@ -163,5 +174,41 @@ describe('Chat', () => {
     expect(link).toHaveAttribute('href', 'https://example.com');
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  // ── Voice buttons ─────────────────────────────────────────────────────────
+
+  test('hides voice buttons when the sidecar is unavailable', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: { tts: false, stt: false, voices: [], languages: [], defaultVoiceByLanguage: {} },
+      }),
+    } as unknown as Response);
+    render(<Chat />);
+
+    // Mic button must NOT be present (STT unavailable).
+    expect(screen.queryByRole('button', { name: /Spracheingabe/i })).not.toBeInTheDocument();
+    // TTS button must NOT be present (no assistant message + TTS unavailable).
+    expect(screen.queryByRole('button', { name: /Vorlesen/i })).not.toBeInTheDocument();
+  });
+
+  test('shows the mic button when STT is available', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: {
+          tts: true,
+          stt: true,
+          voices: [{ id: 'de-DE-KatjaNeural', name: 'Katja', gender: 'f', language: 'de' }],
+          languages: ['de', 'es', 'en'],
+          defaultVoiceByLanguage: { de: 'de-DE-KatjaNeural' },
+        },
+      }),
+    } as unknown as Response);
+    render(<Chat />);
+
+    // Mic button must be present (STT available).
+    expect(await screen.findByRole('button', { name: /Spracheingabe/i })).toBeInTheDocument();
   });
 });
