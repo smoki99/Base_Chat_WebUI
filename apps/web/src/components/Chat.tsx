@@ -29,15 +29,15 @@ export function Chat() {
       const transcript = voice.lastTranscript;
       voice.clearTranscript();
 
+      // Minimum transcript length: discard noise transcriptions (< 3 chars)
+      if (transcript.trim().length < 3) return;
+
       if (voice.interactiveState !== 'off') {
-        // Interactive mode: only send if STT recognized actual text
-        if (!transcript.trim()) return; // no speech detected → keep listening
         if (voice.isTtsAvailable) {
           void voice.speak('Ok, ich beginne mit der Suche!');
         }
         void send(transcript);
       } else {
-        if (!transcript.trim()) return;
         setInput((prev) => (prev ? prev + ' ' : '') + transcript);
       }
     }
