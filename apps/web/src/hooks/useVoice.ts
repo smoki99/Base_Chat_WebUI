@@ -119,6 +119,7 @@ export function useVoice(): UseVoiceReturn {
 
   const speak = useCallback(
     async (text: string) => {
+      console.log('[voice] speak() called:', JSON.stringify(text));
       setError(null);
       stopSpeaking();
       try {
