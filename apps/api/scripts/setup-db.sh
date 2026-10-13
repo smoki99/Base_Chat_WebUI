@@ -23,6 +23,9 @@ for i in $(seq 1 30); do
   sleep 1
 done
 
+echo "[db] Resetting database (DROP + CREATE)..."
+psql "$DB_URL" -v ON_ERROR_STOP=1 -c "DROP TABLE IF EXISTS products CASCADE;"
+
 echo "[db] Running schema..."
 psql "$DB_URL" -v ON_ERROR_STOP=1 -f "$SCRIPT_DIR/db/schema.sql"
 
