@@ -96,17 +96,19 @@ Danach:
 
 ### Environment-Variablen
 
-| Variable             | Beschreibung                                                                 | Default                 |
-| -------------------- | ---------------------------------------------------------------------------- | ----------------------- |
-| `PORT`               | API-Port                                                                     | `3001`                  |
-| `CORS_ORIGIN`        | Erlaubte CORS-Origin(s) für die API (prod), kommagetrennt                    | leer (alle)             |
-| `VITE_API_URL`       | API-Basis-URL für das Web (prod)                                             | `http://localhost:3001` |
-| `CHAT_PROVIDER`      | Aktiver Chat-Provider: `mock` oder `openai`                                  | `mock`                  |
-| `OPENAI_BASE_URL`    | Basis-URL für OpenAI-kompatible Endpunkte (z. B. `http://localhost:1234/v1`) | leer                    |
-| `OPENAI_API_KEY`     | API-Key (leer = kein Header, z. B. für lokale Modelle)                       | leer                    |
-| `OPENAI_MODEL`       | Modellname (z. B. `gpt-4o`, `llama3.1-8b`)                                   | leer                    |
-| `CHATBOT_RULES_FILE` | Pfad zur `chatbot.rules.json` (leer = eingebauter Default)                   | leer                    |
-| `VOICE_SERVICE_URL`  | Base-URL des Voice-Sidecars (`apps/voz`), leer = Voice deaktiviert           | `http://127.0.0.1:8765` |
+| Variable             | Beschreibung                                                                                                                                           | Default                 |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------- |
+| `PORT`               | API-Port                                                                                                                                               | `3001`                  |
+| `CORS_ORIGIN`        | Erlaubte CORS-Origin(s), kommagetrennt. **Fail-closed:** in Produktion (`NODE_ENV=production`) werden Cross-Origin-Requests bei leerer Liste abgelehnt | leer (dev: alle)        |
+| `RATE_LIMIT_GENERAL` | Rate-Limit (Requests/Fenster) für API-Routen (außer `/api/voice/*`)                                                                                    | `100` (60 s)            |
+| `RATE_LIMIT_VOICE`   | Rate-Limit (Requests/Fenster) für `/api/voice/*`                                                                                                       | `20` (60 s)             |
+| `VITE_API_URL`       | API-Basis-URL für das Web (prod)                                                                                                                       | `http://localhost:3001` |
+| `CHAT_PROVIDER`      | Aktiver Chat-Provider: `mock` oder `openai`                                                                                                            | `mock`                  |
+| `OPENAI_BASE_URL`    | Basis-URL für OpenAI-kompatible Endpunkte (z. B. `http://localhost:1234/v1`)                                                                           | leer                    |
+| `OPENAI_API_KEY`     | API-Key (leer = kein Header, z. B. für lokale Modelle)                                                                                                 | leer                    |
+| `OPENAI_MODEL`       | Modellname (z. B. `gpt-4o`, `llama3.1-8b`)                                                                                                             | leer                    |
+| `CHATBOT_RULES_FILE` | Pfad zur `chatbot.rules.json` (leer = eingebauter Default)                                                                                             | leer                    |
+| `VOICE_SERVICE_URL`  | Base-URL des Voice-Sidecars (`apps/voz`), leer = Voice deaktiviert                                                                                     | `http://127.0.0.1:8765` |
 
 > In der Entwicklung übernimmt der **Vite-Proxy** (`/api` → `localhost:3001`),
 > `VITE_API_URL` wird dann nicht benötigt.
@@ -148,6 +150,11 @@ Danach:
 | `POST` | `/api/voice/stt`          | Audio → Text (via voz-Sidecar)         |
 
 → Vollständige Doku mit Request/Response-Beispielen: [`docs/API.md`](./docs/API.md)
+
+> **Rate-Limiting:** Die API begrenzt Anfragen (in-memory, pro Prozess) –
+> Standard ≤ 100 Requests/60 s, `/api/voice/*` ≤ 20 Requests/60 s, `/health` unbegrenzt.
+> Bei Überschreitung: `429 { "error": { "message": "Rate limit exceeded, please slow down" } }`.
+> Grenzwerte via `RATE_LIMIT_GENERAL` / `RATE_LIMIT_VOICE` (Default-Werte s. Tabelle oben).
 
 ## Voice (TTS + STT)
 

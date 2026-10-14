@@ -2,6 +2,7 @@
 import express, { type NextFunction, type Request, type Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import rateLimit, { MemoryStore } from 'express-rate-limit';
 import { healthRouter } from './routes/health';
 import { chatRouter } from './routes/chat';
 import { voiceRouter } from './routes/voice';
@@ -12,8 +13,10 @@ app.disable('x-powered-by');
 // Security headers (X-Content-Type-Options, Referrer-Policy, X-Frame-Options, …)
 app.use(helmet({ referrerPolicy: { policy: 'no-referrer' } }));
 
-// CORS – allowed origins from CORS_ORIGIN (comma-separated).
-// Empty/unset = allow all (dev convenience). Evaluated per request.
+// CORS – allowed origins from CORS_ORIGIN (comma-separated), evaluated per request.
+// Dev convenience: empty/unset = allow all origins.
+// Fail-closed: in production (NODE_ENV=production) an empty allowlist denies
+// cross-origin requests instead of silently allowing them.
 app.use(
   cors({
     origin(origin, callback) {
@@ -21,12 +24,8 @@ app.use(
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean);
-      if (
-        origin === undefined ||
-        origin === '' ||
-        allowed.length === 0 ||
-        allowed.includes(origin)
-      ) {
+      const allowAllInDev = allowed.length === 0 && process.env.NODE_ENV !== 'production';
+      if (origin === undefined || origin === '' || allowed.includes(origin) || allowAllInDev) {
         callback(null, true);
       } else {
         callback(Object.assign(new Error('Not allowed by CORS'), { status: 403 }));
@@ -36,7 +35,47 @@ app.use(
 );
 
 app.use(express.json({ limit: '5mb' }));
+
+// ── Rate limiting (express-rate-limit, in-memory – fine for a single-process local API) ──
+// Limits are configurable via env (tests lower them for fast, deterministic checks).
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MESSAGE = { error: { message: 'Rate limit exceeded, please slow down' } };
+
+// Explicit stores so the buckets can be reset (the express-rate-limit v8 handler
+// only exposes resetKey(), not resetAll() – that lives on the store).
+const generalStore = new MemoryStore();
+const voiceStore = new MemoryStore();
+
+/** General limit for all API routes (voice routes have their own stricter limit). */
+const generalLimiter = rateLimit({
+  store: generalStore,
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  limit: Number(process.env.RATE_LIMIT_GENERAL ?? 100),
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  skip: (req) => req.path === '/health' || req.path.startsWith('/api/voice'),
+  message: RATE_LIMIT_MESSAGE,
+});
+
+/** Stricter limit for the voice routes – TTS/STT are expensive (model inference). */
+const voiceLimiter = rateLimit({
+  store: voiceStore,
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  limit: Number(process.env.RATE_LIMIT_VOICE ?? 20),
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  skip: (req) => req.path === '/health',
+  message: RATE_LIMIT_MESSAGE,
+});
+
+/** Reset all rate-limit buckets (used by tests to restore per-test isolation). */
+export async function resetRateLimits(): Promise<void> {
+  await Promise.all([generalStore.resetAll(), voiceStore.resetAll()]);
+}
+
 app.use(healthRouter);
+app.use('/api/voice', voiceLimiter);
+app.use(generalLimiter);
 app.use(chatRouter);
 app.use(voiceRouter);
 
