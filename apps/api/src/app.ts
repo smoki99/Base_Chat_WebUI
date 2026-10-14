@@ -47,7 +47,7 @@ const generalStore = new MemoryStore();
 const voiceStore = new MemoryStore();
 
 /** General limit for all API routes (voice routes have their own stricter limit). */
-export const generalLimiter = rateLimit({
+const generalLimiter = rateLimit({
   store: generalStore,
   windowMs: RATE_LIMIT_WINDOW_MS,
   limit: Number(process.env.RATE_LIMIT_GENERAL ?? 100),
@@ -58,7 +58,7 @@ export const generalLimiter = rateLimit({
 });
 
 /** Stricter limit for the voice routes – TTS/STT are expensive (model inference). */
-export const voiceLimiter = rateLimit({
+const voiceLimiter = rateLimit({
   store: voiceStore,
   windowMs: RATE_LIMIT_WINDOW_MS,
   limit: Number(process.env.RATE_LIMIT_VOICE ?? 20),
