@@ -5,12 +5,11 @@ import request from 'supertest';
 process.env.RATE_LIMIT_GENERAL = '3';
 process.env.RATE_LIMIT_VOICE = '2';
 
-const { default: app, generalLimiter, voiceLimiter } = await import('../app');
+const { default: app, resetRateLimits } = await import('../app');
 
 describe('rate limiting (express-rate-limit)', () => {
-  beforeEach(() => {
-    generalLimiter.resetAll();
-    voiceLimiter.resetAll();
+  beforeEach(async () => {
+    await resetRateLimits();
   });
 
   it('allows requests up to the general limit, then answers 429', async () => {
