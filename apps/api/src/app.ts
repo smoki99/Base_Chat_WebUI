@@ -2,6 +2,7 @@
 import express, { type NextFunction, type Request, type Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import { env } from './env';
 import rateLimit, { MemoryStore } from 'express-rate-limit';
 import { healthRouter } from './routes/health';
 import { chatRouter } from './routes/chat';
@@ -13,18 +14,15 @@ app.disable('x-powered-by');
 // Security headers (X-Content-Type-Options, Referrer-Policy, X-Frame-Options, …)
 app.use(helmet({ referrerPolicy: { policy: 'no-referrer' } }));
 
-// CORS – allowed origins from CORS_ORIGIN (comma-separated), evaluated per request.
+// CORS – allowed origins from CORS_ORIGIN (comma-separated, see env.ts).
 // Dev convenience: empty/unset = allow all origins.
 // Fail-closed: in production (NODE_ENV=production) an empty allowlist denies
 // cross-origin requests instead of silently allowing them.
 app.use(
   cors({
     origin(origin, callback) {
-      const allowed = (process.env.CORS_ORIGIN ?? '')
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean);
-      const allowAllInDev = allowed.length === 0 && process.env.NODE_ENV !== 'production';
+      const allowed = env.CORS_ORIGIN;
+      const allowAllInDev = allowed.length === 0 && env.NODE_ENV !== 'production';
       if (origin === undefined || origin === '' || allowed.includes(origin) || allowAllInDev) {
         callback(null, true);
       } else {

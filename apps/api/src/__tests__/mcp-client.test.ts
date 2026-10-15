@@ -11,12 +11,16 @@ interface FakeChild {
   stdin: { write: WriteFn };
   kill: ReturnType<typeof vi.fn>;
   on: (event: string, handler: (...args: unknown[]) => void) => FakeChild;
+  /** JSON-RPC request ids received via stdin (per-connection counter tests). */
+  requestIds: number[];
 }
 
 function createFakeMcpServer(options?: {
   tools?: Array<{ name: string; description: string; inputSchema?: Record<string, unknown> }>;
   toolResult?: string;
   fail?: boolean;
+  /** Never respond to any request (for timeout tests). */
+  noResponse?: boolean;
 }): FakeChild {
   const stdout = new EventEmitter();
   const stderr = new EventEmitter();
@@ -39,6 +43,9 @@ function createFakeMcpServer(options?: {
     } catch {
       return;
     }
+
+    if (typeof msg.id === 'number') self.requestIds.push(msg.id);
+    if (options?.noResponse) return;
 
     if (options?.fail) {
       if (msg.id !== undefined) {
@@ -84,6 +91,7 @@ function createFakeMcpServer(options?: {
     stdin: { write: stdinWrite },
     kill: vi.fn(),
     on: (_event: string, _handler: (...args: unknown[]) => void) => self,
+    requestIds: [] as number[],
   } as FakeChild;
   return self;
 }
@@ -148,8 +156,39 @@ describe('loadMcpConfig', () => {
 
     const result = loadMcpConfig();
     expect(result).toHaveLength(1);
-    expect(result[0]!.name).toBe('env-server');
+    expect(result[0]!.name).toBe('eng-server'.replace('eng-', 'env-'));
     delete process.env.MCP_CONFIG_FILE;
+  });
+
+  it('applies the MCP_ENABLED_SERVERS whitelist (security)', () => {
+    const config = {
+      servers: [
+        { name: 'sql', command: 'node', args: [] },
+        { name: 'qmd', command: 'npx', args: ['qmd', 'mcp'] },
+        { name: 'rogue', command: 'node', args: [] },
+      ],
+    };
+    writeFileSync(tmpConfig, JSON.stringify(config));
+    process.env.MCP_ENABLED_SERVERS = 'sql';
+
+    const result = loadMcpConfig(tmpConfig);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]!.name).toBe('sql');
+    delete process.env.MCP_ENABLED_SERVERS;
+  });
+
+  it('keeps all servers when the whitelist is unset (legacy behavior)', () => {
+    const config = {
+      servers: [
+        { name: 'sql', command: 'node', args: [] },
+        { name: 'qmd', command: 'npx', args: [] },
+      ],
+    };
+    writeFileSync(tmpConfig, JSON.stringify(config));
+
+    const result = loadMcpConfig(tmpConfig);
+    expect(result).toHaveLength(2);
   });
 });
 
@@ -216,6 +255,53 @@ describe('connectAllMcpServers', () => {
 
     ctx.closeAll();
     expect(fake.kill).toHaveBeenCalled();
+  });
+
+  it('uses a per-connection request id counter (regression: no shared ids)', async () => {
+    const fakeA = createFakeMcpServer();
+    const fakeB = createFakeMcpServer();
+    const fakes = [fakeA, fakeB];
+    mockSpawn.mockImplementation(() => fakes.shift() as unknown as ReturnType<typeof spawn>);
+
+    const configs = [
+      { name: 'a', command: 'node', args: [] },
+      { name: 'b', command: 'node', args: [] },
+    ];
+    const ctx = await connectAllMcpServers(configs);
+
+    expect(ctx.connections).toHaveLength(2);
+    // Each connection starts its own id sequence at 1 (initialize, tools/list).
+    // With the old module-level counter, fakeB would have started at id 3.
+    expect(fakeA.requestIds.slice(0, 2)).toEqual([1, 2]);
+    expect(fakeB.requestIds.slice(0, 2)).toEqual([1, 2]);
+  });
+
+  it('honors MCP_REQUEST_TIMEOUT_MS (regression: no hardcoded 30 s)', async () => {
+    process.env.MCP_REQUEST_TIMEOUT_MS = '150';
+    const fake = createFakeMcpServer({ noResponse: true });
+    mockSpawn.mockReturnValue(fake as unknown as ReturnType<typeof spawn>);
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const started = Date.now();
+    const ctx = await connectAllMcpServers([{ name: 'slow', command: 'node', args: [] }]);
+    const elapsed = Date.now() - started;
+
+    expect(ctx.connections).toHaveLength(0);
+    expect(warnSpy).toHaveBeenCalled();
+    expect(elapsed).toBeLessThan(5000); // old code: waited the full 30 s
+    delete process.env.MCP_REQUEST_TIMEOUT_MS;
+  });
+
+  it('passes per-server env additions to the spawned process', async () => {
+    const fake = createFakeMcpServer();
+    mockSpawn.mockReturnValue(fake as unknown as ReturnType<typeof spawn>);
+
+    await connectAllMcpServers([
+      { name: 'db', command: 'node', args: [], env: { DATABASE_URL: 'postgres://x' } },
+    ]);
+
+    const spawnOptions = mockSpawn.mock.calls[0]?.[2] as { env?: Record<string, string> };
+    expect(spawnOptions?.env?.DATABASE_URL).toBe('postgres://x');
   });
 });
 

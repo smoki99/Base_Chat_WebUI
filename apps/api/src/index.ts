@@ -1,13 +1,12 @@
 /** API entry point – starts the HTTP server. */
 import app from './app';
+import { env } from './env';
 import { initializeMcp, chatService } from './services/chatService';
-
-const port = Number(process.env.PORT) || 3001;
 
 async function start() {
   // Start the API server immediately – MCP init runs in the background.
-  app.listen(port, () => {
-    console.log(`API running on http://localhost:${port}`);
+  app.listen(env.PORT, env.HOST, () => {
+    console.log(`API running on http://${env.HOST}:${env.PORT}`);
   });
 
   // Initialize MCP connections in the background (non-blocking).
