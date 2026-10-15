@@ -29,13 +29,13 @@ Chat-Verhalten über JSON-Regeln steuerbar, Provider-agnostisch (Mock, OpenAI-ko
 
 **Pakete**
 
-| Pfad              | Zweck                                          |
-| ----------------- | ---------------------------------------------- |
-| `apps/web`        | React-UI (Vite, Bootstrap, react-markdown)     |
-| `apps/api`        | Express-API, Provider-Logik, MCP-Client        |
-| `apps/voz`        | Voice-Sidecar (FastAPI, TTS/STT)               |
-| `packages/config` | Geteilte Prettier-/ESLint-Konfiguration        |
-| `markdown-knowhow`| Wissensbasis (Markdown), von MCP/`qmd` genutzt |
+| Pfad               | Zweck                                          |
+| ------------------ | ---------------------------------------------- |
+| `apps/web`         | React-UI (Vite, Bootstrap, react-markdown)     |
+| `apps/api`         | Express-API, Provider-Logik, MCP-Client        |
+| `apps/voz`         | Voice-Sidecar (FastAPI, TTS/STT)               |
+| `packages/config`  | Geteilte Prettier-/ESLint-Konfiguration        |
+| `markdown-knowhow` | Wissensbasis (Markdown), von MCP/`qmd` genutzt |
 
 ## Voraussetzungen
 
@@ -111,11 +111,11 @@ Details: [`apps/voz/README.md`](apps/voz/README.md).
 Die API kann optional MCP-Server als Chat-Tools anbinden (z. B. `sql`, `qmd`).
 MCP-Server laufen als **Subprozesse** der API – daher die Sicherheitseinstellungen:
 
-| Variable                 | Default | Beschreibung                                                                 |
-| ------------------------ | ------- | ---------------------------------------------------------------------------- |
-| `MCP_CONFIG_FILE`        | –       | Pfad zur MCP-Server-Konfiguration (Default: `apps/api/mcp-config.json`, falls vorhanden) |
+| Variable                 | Default | Beschreibung                                                                                                            |
+| ------------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `MCP_CONFIG_FILE`        | –       | Pfad zur MCP-Server-Konfiguration (Default: `apps/api/mcp-config.json`, falls vorhanden)                                |
 | `MCP_ENABLED_SERVERS`    | leer    | **Whitelist** – nur aufgeführte Server-Namen werden gestartet (z. B. `sql`). Leer = alle konfigurierten Server (Legacy) |
-| `MCP_REQUEST_TIMEOUT_MS` | `30000` | Timeout pro MCP-JSON-RPC-Request                                             |
+| `MCP_REQUEST_TIMEOUT_MS` | `30000` | Timeout pro MCP-JSON-RPC-Request                                                                                        |
 
 ```bash
 # Beispiel: nur den SQL-Server aktivieren
@@ -144,13 +144,13 @@ npm start -w apps/api         # API (tsx src/index.ts)
 
 ## Umgebungsvariablen (Auszug)
 
-| Variable              | Default                  | Beschreibung                          |
-| --------------------- | ------------------------ | ------------------------------------- |
-| `PORT`                | `3001`                   | API-Port                              |
-| `HOST`                | `127.0.0.1`              | Bind-Adresse (Default: Loopback)      |
-| `CHAT_PROVIDER`       | `mock`                   | `mock` \| `openai`                    |
-| `OPENAI_BASE_URL`     | `http://localhost:1234/v1` | OpenAI-kompatibler Endpunkt         |
-| `VOICE_SERVICE_URL`   | `http://127.0.0.1:8765`  | voz-Sidecar-URL                       |
+| Variable            | Default                    | Beschreibung                     |
+| ------------------- | -------------------------- | -------------------------------- |
+| `PORT`              | `3001`                     | API-Port                         |
+| `HOST`              | `127.0.0.1`                | Bind-Adresse (Default: Loopback) |
+| `CHAT_PROVIDER`     | `mock`                     | `mock` \| `openai`               |
+| `OPENAI_BASE_URL`   | `http://localhost:1234/v1` | OpenAI-kompatibler Endpunkt      |
+| `VOICE_SERVICE_URL` | `http://127.0.0.1:8765`    | voz-Sidecar-URL                  |
 
 Vollständige Liste: [`.env.example`](.env.example).
 

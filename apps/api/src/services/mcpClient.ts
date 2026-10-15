@@ -180,9 +180,7 @@ export function loadMcpConfig(configPath?: string): McpServerConfig[] {
     // spawned – unknown entries in the config file stay inert.
     const whitelist = env.MCP_ENABLED_SERVERS;
     if (whitelist.length > 0) {
-      const skipped = servers
-        .filter((s) => !whitelist.includes(s.name))
-        .map((s) => s.name);
+      const skipped = servers.filter((s) => !whitelist.includes(s.name)).map((s) => s.name);
       servers = servers.filter((s) => whitelist.includes(s.name));
       if (skipped.length > 0) {
         console.warn(
