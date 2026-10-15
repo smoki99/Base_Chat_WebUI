@@ -22,8 +22,24 @@
 > NIE „fertig" melden oder committen, ohne vorher **ALLE** Checks erfolgreich ausgeführt zu haben:
 
 ```bash
-npm run check   # typecheck + lint + test + build – alle Workspaces, bricht bei erstem Fehler ab
+npm run check   # vollständige Pipeline – alle Workspaces, bricht bei erstem Fehler ab
 ```
+
+`npm run check` führt in dieser Reihenfolge aus (alle Workspaces, außer wo anders angegeben):
+
+1. `audit` – `npm audit --omit=dev --audit-level=critical`
+2. `audit:signatures` – Sigstore-Signaturverifikation
+3. `verify:lockfile` – Lockfile-Konsistenz
+4. `format:check` – Prettier
+5. `typecheck`
+6. `lint`
+7. `knip` – Dead Code / unused exports
+8. `depcheck` – dependency-cruiser (circular imports)
+9. `pkg:validate` – alle `package.json` parsen
+10. `qmd:setup` (api)
+11. `test`
+12. `build`
+13. `size` – `size-limit` (Web ≤ 110 kB)
 
 **Warum `build`?**
 Die CI (`npm run build --workspaces`) erwartet ein `build`-Script in JEDEM Workspace.
@@ -41,7 +57,7 @@ npm run test:e2e -w web
 > **Bevor** der erste Commit in einem neuen Feature-Branch erfolgt:
 
 1. `.github/workflows/ci.yml` **lesen**
-2. Alle CI-Schritte lokal abbilden (mind. die vier Pflicht-Checks oben)
+2. Alle CI-Schritte lokal abbilden (mind. die vollständige `npm run check`-Pipeline aus §3)
 3. Falls neue CI-Schritte hinzugekommen sind: lokal testen
 
 **Grundregel:** Was in der CI läuft, muss lokal grün sein – und umgekehrt.
@@ -120,7 +136,8 @@ gh pr diff <PR-Nummer> > /tmp/pr-diff.txt
 
 - **Keine Secrets im Code.**
 - Config kommt aus `.env` (Vorlage: `.env.example`).
-- `npm audit --omit=dev --audit-level=high` vor jedem Merge.
+- `npm audit --omit=dev --audit-level=critical` (läuft via `npm run check` + CI).
+- Sigstore-Signaturen: `npm run audit:signatures` (läuft via `npm run check` + CI).
 
 ## 8. Dokumentation
 
@@ -140,4 +157,4 @@ gh pr diff <PR-Nummer> > /tmp/pr-diff.txt
 
 ---
 
-_Letzte Aktualisierung: 2026-10-11_
+_Letzte Aktualisierung: 2026-10-15_
