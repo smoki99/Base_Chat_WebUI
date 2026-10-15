@@ -25,7 +25,21 @@ from starlette.concurrency import run_in_threadpool
 import uvicorn
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-PORT = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.environ.get("VOICE_PORT", "8765"))
+
+
+def _resolve_port() -> int:
+    """Port resolution order: CLI arg (`python voz.py 8080`), VOICE_PORT env, 8765.
+
+    The first CLI arg is only treated as a port when it is a plain number, so
+    that importing voz (e.g. under pytest) does not misread the test file name
+    as a port and crash on import.
+    """
+    if len(sys.argv) > 1 and sys.argv[1].isdigit():
+        return int(sys.argv[1])
+    return int(os.environ.get("VOICE_PORT", "8765"))
+
+
+PORT = _resolve_port()
 WHISPER_MODEL = os.environ.get("WHISPER_MODEL") or (
     "openai/whisper-large-v3-turbo" if DEVICE == "cuda" else "openai/whisper-small"
 )
