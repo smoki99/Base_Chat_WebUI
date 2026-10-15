@@ -33,6 +33,13 @@ python voz.py            # starts on 127.0.0.1:8765
 | POST   | `/tts`    | `{ text, voice? }`         | `audio/mpeg`                                     |
 | POST   | `/stt`    | raw audio + `?language=de` | `{ text }`                                       |
 
+## Concurrency
+
+Die STT-Inferrerence (Whisper/transformers) ist CPU/GPU-lastig und läuft daher
+im **Starlette-Thread-Pool** (`run_in_threadpool`), serialisiert über eine
+Lock – der asyncio-Event-Loop bleibt frei, **TTS-Requests werden weiterhin
+bedient, während STT läuft**.
+
 ## Tests
 
 ```bash
