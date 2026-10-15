@@ -16,6 +16,7 @@
     "@tobilu/qmd": "2.8.3",
     "cors": "^2.8.5",
     "express": "5.3.0",
+    "express-rate-limit": "8.7.1",
     "helmet": "8.3.0",
     "pg": "8.23.1",
     "shared": "1.0.0"

@@ -1,7 +1,10 @@
 # Voice sidecar dependencies (base-chat-webui)
 fastapi>=0.110
 uvicorn[standard]>=0.29
-edge-tts>=6.1
+# edge-tts >=7.3.0 adds Sec-MS-GEC v2 token support (required after Microsoft
+# moved to v2 DRM tokens); 7.3.1 also fixes locale-dependent date parsing.
+# Older versions fail with HTTP 403 "Invalid response status" from Bing.
+edge-tts>=7.3.1
 numpy>=1.26
 soundfile>=0.12
 torch>=2.0
