@@ -1,12 +1,18 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 
+// Proxy target follows E2E_API_PORT (see playwright.config.ts) so the dev
+// server and the API can run on a non-default port locally; default stays 3001.
+const apiTarget = process.env.E2E_API_PORT
+  ? `http://localhost:${process.env.E2E_API_PORT}`
+  : 'http://localhost:3001';
+
 export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: apiTarget,
         changeOrigin: true,
       },
     },

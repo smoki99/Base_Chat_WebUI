@@ -5,6 +5,10 @@ import path from 'node:path';
 // (import.meta.dirname: __dirname is unavailable in ES module scope)
 const root = path.resolve(import.meta.dirname, '../..');
 
+// API port for the E2E web server. Defaults to 3001; override with
+// E2E_API_PORT when 3001 is occupied locally (e.g. by another service).
+const apiPort = process.env.E2E_API_PORT || '3001';
+
 export default defineConfig({
   testDir: './e2e',
   timeout: 30_000,
@@ -20,14 +24,16 @@ export default defineConfig({
   projects: [{ name: 'chromium', use: { browserName: 'chromium' } }],
   // Start both servers ourselves (no manual `npm run dev`) with per-server
   // readiness checks so tests never race a half-started server.
+  // E2E_API_PORT lets local runs avoid a port already taken by another
+  // service on the machine; CI and the default stay on 3001.
   webServer: [
     {
       command: 'npm run dev -w api',
       cwd: root,
-      url: 'http://localhost:3001/health',
+      url: `http://localhost:${apiPort}/health`,
       reuseExistingServer: !process.env.CI,
       timeout: 30_000,
-      env: { ...process.env, CHAT_PROVIDER: 'mock' },
+      env: { ...process.env, CHAT_PROVIDER: 'mock', PORT: apiPort },
     },
     {
       command: 'npm run dev -w web',

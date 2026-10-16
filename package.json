@@ -36,7 +36,7 @@
     {
       "name": "web",
       "path": "apps/web/dist/assets/*.js",
-      "limit": "110 kB"
+      "limit": "112 kB"
     }
   ],
   "lint-staged": {

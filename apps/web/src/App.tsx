@@ -4,10 +4,12 @@ import { Settings } from './components/Settings';
 import { Sidebar } from './components/Sidebar';
 import { useChatHistory } from './hooks/useChatHistory';
 import type { ChatMessage } from './hooks/useChat';
+import { useAppearance } from './appearance';
 import { VoiceProvider } from './voice/VoiceContext';
 
 export default function App() {
   const history = useChatHistory();
+  const { banner, bannerVisible, logo } = useAppearance();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -61,6 +63,7 @@ export default function App() {
           onRename={history.renameChat}
           onOpenSettings={() => setSettingsOpen(true)}
           onClose={() => setSidebarOpen(false)}
+          logo={logo}
         />
 
         <div className="chat-panel">
@@ -73,11 +76,14 @@ export default function App() {
             ☰
           </button>
 
+          {banner && bannerVisible && <img className="app-banner" src={banner} alt="Banner" />}
+
           <Chat
             key={chatKey}
             initialMessages={history.activeMessages}
             chatId={history.activeChatId}
             onMessagesChange={handleMessagesChange}
+            logo={logo}
           />
         </div>
 

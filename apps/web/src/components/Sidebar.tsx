@@ -12,6 +12,8 @@ interface SidebarProps {
   onOpenSettings: () => void;
   /** Called after any action to close the sidebar (mobile). */
   onClose?: () => void;
+  /** Custom logo (PNG data URL) shown in the sidebar header, or `null`. */
+  logo?: string | null;
 }
 
 /** Format a timestamp as a short relative label. */
@@ -38,6 +40,7 @@ export function Sidebar({
   onRename,
   onOpenSettings,
   onClose,
+  logo = null,
 }: SidebarProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -73,7 +76,10 @@ export function Sidebar({
   return (
     <aside className="sidebar" role="complementary" aria-label="Chatverlauf">
       <div className="sidebar-header">
-        <span className="sidebar-title">Chat</span>
+        <div className="sidebar-brand">
+          {logo && <img className="sidebar-logo" src={logo} alt="Logo" />}
+          <span className="sidebar-title">Chat</span>
+        </div>
         <div className="sidebar-header-actions">
           <button
             className="sidebar-icon-btn"

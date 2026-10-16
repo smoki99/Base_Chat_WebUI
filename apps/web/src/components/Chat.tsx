@@ -43,6 +43,8 @@ interface ChatProps {
   initialMessages?: ChatMessage[];
   chatId?: string | null;
   onMessagesChange?: (messages: ChatMessage[]) => void;
+  /** Custom logo (PNG data URL) shown in the chat header, or `null`. */
+  logo?: string | null;
 }
 
 /**
@@ -50,7 +52,12 @@ interface ChatProps {
  * the two-column app shell. Assistant & user messages are rendered as
  * Markdown (tables, lists, code) via the `Markdown` component.
  */
-export function Chat({ initialMessages = [], chatId = null, onMessagesChange }: ChatProps) {
+export function Chat({
+  initialMessages = [],
+  chatId = null,
+  onMessagesChange,
+  logo = null,
+}: ChatProps) {
   const { messages, input, setInput, isLoading, error, send } = useChat({
     initialMessages,
     chatId,
@@ -128,6 +135,10 @@ export function Chat({ initialMessages = [], chatId = null, onMessagesChange }: 
 
   return (
     <section className="chat" aria-label="Chat">
+      <header className="chat-header">
+        {logo && <img className="chat-header-logo" src={logo} alt="Logo" />}
+        <span className="chat-header-title">Base Chat</span>
+      </header>
       <div
         ref={messagesRef}
         className="chat-messages"
