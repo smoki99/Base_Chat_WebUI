@@ -5,9 +5,9 @@ import path from 'node:path';
 // (import.meta.dirname: __dirname is unavailable in ES module scope)
 const root = path.resolve(import.meta.dirname, '../..');
 
-// API port for the E2E web server. Defaults to 3001; override with
-// E2E_API_PORT when 3001 is occupied locally (e.g. by another service).
-const apiPort = process.env.E2E_API_PORT || '3001';
+// API port for the E2E web server. Defaults to 4001; override with
+// E2E_API_PORT when 4001 is occupied locally (e.g. by another service).
+const apiPort = process.env.E2E_API_PORT || '4001';
 
 export default defineConfig({
   testDir: './e2e',
@@ -25,7 +25,7 @@ export default defineConfig({
   // Start both servers ourselves (no manual `npm run dev`) with per-server
   // readiness checks so tests never race a half-started server.
   // E2E_API_PORT lets local runs avoid a port already taken by another
-  // service on the machine; CI and the default stay on 3001.
+  // service on the machine; CI and the default stay on 4001.
   webServer: [
     {
       command: 'npm run dev -w api',

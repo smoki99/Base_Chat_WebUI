@@ -119,13 +119,13 @@ dieses Format und werden in der Web-App zur Typisierung der Fetch-Antworten verw
 
 ### Dev-Proxy
 
-In der Entwicklung proxys Vite `/api/*` auf `http://localhost:3001`,
+In der Entwicklung proxys Vite `/api/*` auf `http://localhost:4001`,
 somit ist `VITE_API_URL` in dev nicht erforderlich.
 In Produktion wird `VITE_API_URL` aus der Environment gesetzt.
 
 ### CORS & Prod-Deployment
 
-In der Entwicklung proxys Vite `/api/*` auf `http://localhost:3001` (same-origin),
+In der Entwicklung proxys Vite `/api/*` auf `http://localhost:4001` (same-origin),
 somit ist CORS in dev nicht relevant. In Produktion hängen Web und API typischerweise
 an **unterschiedlichen Origins** – hier braucht der Browser CORS-Header oder einen
 same-origin-Aufbau. Zwei Wege:
@@ -156,7 +156,7 @@ server {
 
   # API-Proxy
   location /api/ {
-    proxy_pass http://127.0.0.1:3001;
+    proxy_pass http://127.0.0.1:4001;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
   }
