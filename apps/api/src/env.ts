@@ -41,7 +41,7 @@ export const env = {
   },
 
   get PORT(): number {
-    return intFromEnv('PORT', 3001);
+    return intFromEnv('PORT', 4001);
   },
 
   /** CORS – comma-separated allowed origins. Empty = allow all (dev). */

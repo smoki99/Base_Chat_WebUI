@@ -18,7 +18,7 @@ Chat-Verhalten über JSON-Regeln steuerbar, Provider-agnostisch (Mock, OpenAI-ko
 ```
 ┌────────────┐   HTTP    ┌────────────────┐   stdio   ┌──────────────┐
 │  React UI  │ ────────► │  Express API   │ ─────────► │  MCP-Server  │ (optional)
-│ :3000/5173 │           │  :3001 (tsx)   │            │  (qmd, sql)  │
+│ :3000/5173 │           │  :4001 (tsx)   │            │  (qmd, sql)  │
 └────────────┘           └───────┬────────┘            └──────────────┘
                                  │ HTTP
                           ┌──────▼────────┐
@@ -48,12 +48,12 @@ Chat-Verhalten über JSON-Regeln steuerbar, Provider-agnostisch (Mock, OpenAI-ko
 ```bash
 npm install
 cp .env.example .env          # Werte ggf. anpassen
-npm run dev                   # startet API (3001) + Web (5173) parallel
+npm run dev                   # startet API (4001) + Web (5173) parallel
 ```
 
 - Web: http://localhost:5173
-- API: http://localhost:3001/health
-- API-Docs: http://localhost:3001/docs
+- API: http://localhost:4001/health
+- API-Docs: http://localhost:4001/docs
 
 > `npm run dev` startet `concurrently` über `tsx watch` (API) und `vite` (Web).
 > Beenden mit `Ctrl+C` (dev:clean toetet zusätzlich verwaiste Prozesse: `npm run dev:clean`).
@@ -62,11 +62,11 @@ npm run dev                   # startet API (3001) + Web (5173) parallel
 
 | Variable             | Beschreibung                                                                                                                                           | Default                 |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------- |
-| `PORT`               | API-Port                                                                                                                                               | `3001`                  |
+| `PORT`               | API-Port                                                                                                                                               | `4001`                  |
 | `CORS_ORIGIN`        | Erlaubte CORS-Origin(s), kommagetrennt. **Fail-closed:** in Produktion (`NODE_ENV=production`) werden Cross-Origin-Requests bei leerer Liste abgelehnt | leer (dev: alle)        |
 | `RATE_LIMIT_GENERAL` | Rate-Limit (Requests/Fenster) für API-Routen (außer `/api/voice/*`)                                                                                    | `100` (60 s)            |
 | `RATE_LIMIT_VOICE`   | Rate-Limit (Requests/Fenster) für `/api/voice/*`                                                                                                       | `20` (60 s)             |
-| `VITE_API_URL`       | API-Basis-URL für das Web (prod)                                                                                                                       | `http://localhost:3001` |
+| `VITE_API_URL`       | API-Basis-URL für das Web (prod)                                                                                                                       | `http://localhost:4001` |
 | `CHAT_PROVIDER`      | Aktiver Chat-Provider: `mock` oder `openai`                                                                                                            | `mock`                  |
 | `OPENAI_BASE_URL`    | Basis-URL für OpenAI-kompatible Endpunkte (z. B. `http://localhost:1234/v1`)                                                                           | leer                    |
 | `OPENAI_API_KEY`     | API-Key (leer = kein Header, z. B. für lokale Modelle)                                                                                                 | leer                    |
@@ -163,7 +163,7 @@ npm start -w apps/api         # API (tsx src/index.ts)
 
 | Variable            | Default                    | Beschreibung                     |
 | ------------------- | -------------------------- | -------------------------------- |
-| `PORT`              | `3001`                     | API-Port                         |
+| `PORT`              | `4001`                     | API-Port                         |
 | `HOST`              | `127.0.0.1`                | Bind-Adresse (Default: Loopback) |
 | `CHAT_PROVIDER`     | `mock`                     | `mock` \| `openai`               |
 | `OPENAI_BASE_URL`   | `http://localhost:1234/v1` | OpenAI-kompatibler Endpunkt      |

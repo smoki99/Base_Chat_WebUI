@@ -84,3 +84,6 @@ export interface SttRequest {
 export interface SttResult {
   text: string;
 }
+
+// ── UI customization (Story-0032) ────────────────────────────────────────────
+export type { UiCustomization, UiThemeColors } from './ui';

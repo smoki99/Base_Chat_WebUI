@@ -1,63 +1,65 @@
-# Progress
+# PROGRESS - Story-0032: UI Customization (Farben, Logo, Banner)
 
-## Ziel
+> Status: **PR-READY** – `npm run check` grün, E2E 5/5 grün; Commit + Push ausstehend.
+> Branch: `feature/story-0032` | Last updated: 10/16/2026
+> Single source of truth: GitHub-Issue #49 (dieses Dokument nur zum Nachverfolgen).
 
-Vollwertige Chat-Webseite (kein Todo-Stack mehr).
+## 1. Goal (Issue-Spec)
 
-Nutzer schreibt eine Nachricht → die API antwortet. Provider-agnostisch:
-hinter dem `ChatProvider`-Interface stehen zwei Implementierungen, wählbar
-über die Env-Variable `CHAT_PROVIDER`:
+- **Farben:** 5 Pickler (primary, primary-hover, surface, surface-dim, text) + Farbpresets, Live-Preview.
+- **Logo:** PNG-Upload, max 512 kB; Darstellung im Chat-Header + Sidebar-Top; löschbar.
+- **Banner:** optionaler PNG-Upload, max 512 kB, „Banner anzeigen“-Toggle; Darstellung oberhalb der Message-Liste.
+- **Persistenz:** `localStorage`-Key `base-chat.ui-customization.v1`; korrupte Daten → Defaults; Quota-fest.
+- **Reset:** Button → Werkseinstellungen (Farben + Logo + Banner + Sichtbarkeit).
+- **Shared-Typen:** `UiThemeColors` + `UiCustomization` in `packages/shared` (Re-Export via `index.ts`).
+- **UI:** Tab „Erscheinungsbild“ in `Settings.tsx` (`CustomizeTab`).
+- **E2E:** Farben überstehen ein Reload.
+- **PNG-only** (kein SVG – data-URL-XSS), Downscale ≤ 1024 px, Data-URL-Output, testbare Fehler.
+- Bestehende Tests grün: `src/__tests__/` (6 Dateien) + `e2e/chat.spec.ts`.
 
-- `mock` (Standard): keyword-basierte Antworten aus `chatbot.rules.json` +
-  Fallback-Pool, deterministisch testbar (injizierbarer RNG).
-- `openai`: OpenAI-kompatible Endpunkte (LM Studio, Ollama, …) für echte
-  LLM-Antworten.
+## 2. Plan & Status
 
-## Logik
+| #   | Schritt                                                                                                                 | Status                                                                                                |
+| --- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| 1   | Shared-Typen `packages/shared/src/ui.ts` + Re-Export                                                                    | ✅ done (tsc grün)                                                                                    |
+| 2   | `appearance/types.ts` + `themes.ts` (5-Farb-Modell, Presets, `applyColors`/`clearColors`, `sanitizeColors`)             | ✅ done                                                                                               |
+| 3   | `appearance/storage.ts` (load/save/reset, Key v1, korrupt→Defaults, Quota-safe)                                         | ✅ done                                                                                               |
+| 4   | `appearance/imageUtils.ts` (PNG-only, ≤512 kB, ≤1024 px, Data-URL, Error-Codes) + `useImageUpload.ts`                   | ✅ done                                                                                               |
+| 5   | `appearance/AppearanceContext.tsx` (Single-Source-State) + `index.ts` Re-Exports                                        | ✅ done (tsc grün)                                                                                    |
+| 6   | `main.tsx`: `<App />` in `<AppearanceProvider>` wickeln                                                                 | ✅ done                                                                                               |
+| 7   | `CustomizeTab.tsx` + Settings-Tabs („Stimme & Sprache“ / „Erscheinungsbild“)                                            | ✅ done (bestehende Settings/Chat/Sidebar-Tests grün)                                                 |
+| 8   | Logo (Chat-Header + Sidebar) + Banner (oberhalb Messages) + CSS (`--ui-*` → `--md-*` Mapping, Logo/Banner-Styles)       | ✅ done (Fix: `logo`-Prop fehlte am `Chat` in `App.tsx` – E2E hat es gefangen)                        |
+| 9   | Unit-Tests (appearance-Modul, CustomizeTab, Settings) + E2E (Farben persistieren nach Reload, Logo/Banner)              | ✅ done (105/105 Unit-Tests grün; `e2e/customization.spec.ts`: Reload-Persistenz, Logo/Banner, Reset) |
+| 10  | `npm run check` + `npm run test:e2e -w web` grün → Commit `Story-0032: …` → Branch pushen → PR-fertig melden (kein PR!) | ✅ done (Check grün, E2E 5/5; lokal mit `E2E_API_PORT=3101`, da Port 3001 im Sandbox-Host belegt)     |
 
-- `packages/shared` – `ChatMessage` (Single Source of Truth für die Wire-Typen).
-- `apps/api/src/types/chat.ts` – `ChatProvider`-Interface, `HealthStatus`.
-- `apps/api/src/config/chatbotConfig.ts` – lädt + validiert `chatbot.rules.json`
-  (Keyword-Regeln + Fallback-Pool), Default-Fallback bei Fehlschlag.
-- `apps/api/src/services/chatService.ts` – wählt Provider, `respond()`,
-  Lazy-Cache + `resetProvider()` für Tests.
-- `apps/api/src/services/providers/mockProvider.ts` – keyword-Match +
-  Random-Fallback, `healthCheck`.
-- `apps/api/src/services/providers/openaiProvider.ts` – OpenAI-kompatible LLM-Antwort.
-- `apps/api/src/routes/chat.ts` – `POST /api/chat`.
-- `apps/api/src/routes/health.ts` – Health-Status (inkl. Provider-`healthCheck`).
-- `apps/web/src/hooks/useChat.ts` – State + `send()`, spricht `POST /api/chat`,
-  optimistisches Update (sending / sent / error).
-- `apps/web/src/components/Chat.tsx` – Nachrichten-Log, Empty-/Error-State,
-  "Bot schreibt …"-Indikator, Composer.
-- `apps/web/src/hooks/useVoice.ts` – TTS-Playback, STT-Aufnahme, Hands-free-Modus
-  (RMS-Detection, Noise-Floor-Kalibrierung, Anti-Self-Hearing).
-- `apps/web/src/data/acknowledgments.json` – Sprach-Phrasen (de/en/es).
-- `apps/api/src/routes/voice.ts` – `GET /api/voice/capabilities`, `POST /tts`, `POST /stt`.
-- `apps/api/src/services/voiceClient.ts` – HTTP-Client zum voz-Sidecar
-  (Timeout-Handling, Capability-Cache 5 s, TTS-Retry bei 403/500).
-- `apps/voz/` – Python-Sidecar (FastAPI): Edge-TTS + Whisper.
+## 3. Design-Entscheidungen (Abweichungen vom alten Stand)
 
-## Status
+- **Altes HSL-Theme-Modell verworfen** (Issue-Spec gewinnt): keine Light/Dark-Basis, keine 10 Custom Themes, kein `base-chat.appearance`-Key.
+- Farben werden als **CSS Custom Properties** (`--ui-*`) auf `<html>` gesetzt; `index.css` mappt `--md-*` auf `--ui-*` (Fallback = alte Light-Tokens) → ganzes UI aktualisiert live.
+- `color-scheme` (light/dark) wird heuristisch aus der Surface-Helligkeit gesetzt (native Scrollbars/Controls).
+- Settings: **zwei Tabs** – „Stimme & Sprache“ (bestehender Inhalt, Default aktiv → bestehende Tests unverändert grün) + „Erscheinungsbild“ (neues `CustomizeTab`). Panels werden konditional gerendert, damit `CustomizeTab` außerhalb des Providers nicht mounted wird (bestehende Settings-Tests haben keinen AppearanceProvider).
+- `useImageUpload`-API unverändert (`pickFile`/`busy`/`error`/`clearError`) – nur `imageUtils` dahinter ist neu.
 
-- ✅ Web-UI (`Chat.tsx` + `useChat`) mit Empty-, Loading- und Error-State.
-- ✅ API `POST /api/chat` mit provider-agnostischer Schicht (mock + openai).
-- ✅ Shared-Typen (`ChatMessage`) in `packages/shared`.
-- ✅ Tests: API (chat, chatbot-config, openai-provider, cors, security),
-  Web (`Chat.test.tsx`), E2E (`e2e/chat.spec.ts`).
-- ✅ Story-0026 (Chat-UI + Mock-API + Tests) und Story-0027 (E2E-Timeouts)
-  abgeschlossen.
-- ✅ CI grün: typecheck · lint · test · build · e2e.
-- ✅ Voice (TTS + STT): voz-Sidecar, Hands-free-Modus mit RMS-Detection,
-  Anti-Self-Hearing-Guards, Sprach-Phrasen (de/en/es), TTS-Retry.
+## 4. Check-Befehle
 
-## Offene Punkte / Nächste Schritte
+```
+npx tsc --noEmit -p apps/web          # schneller Modul-Typecheck
+npm run check                         # typecheck + lint + test + build, alle Workspaces
+npx playwright install chromium       # einmalig
+npm run test:e2e -w web               # Playwright-Baseline (startet API + Web)
+```
 
-- [x] `openai`-Provider gegen lokale LLM-Endpunkte (LM Studio / Ollama) mit
-      echtem `.env` durchtesten. → `npm run dev:lmstudio` (Story-0028)
-- [x] MCP (Model Context Protocol) Integration – Tool-Calling ohne externe SDKs.
-      Filesystem-Tools funktionieren live. (Story-0030)
-- [ ] Conversations-Verlauf / Session-Persistenz (optional).
-- [ ] `README.md` und `docs/DECISIONS.md` konsistent auf den Chat-Status prüfen.
-- [ ] Postgres-MCP-Server für SQL-Tool-Calling.
-- [ ] Markdown-Knowledge-Base mit keyword-basiertem Retrieval.
+## 5. Risiken
+
+- **E2E/Unit-Selektoren:** Settings-Modal erhält Tabs → alle bestehenden Labels/Locatoren bleiben erhalten (Voice-Select, „Schließen“, „Fertig“).
+- **Quota:** zwei Data-URLs à 512 kB + Farben passen in 5 MB; `saveCustomization` swallowt Quota-Fehler.
+- **jsdom:** Canvas + `Image` in Unit-Tests mocken (load-Event + `getContext('2d')`).
+- **Playwright:** Browser-Binary ggf. einmalig installieren (`npx playwright install chromium`).
+
+## 6. Log
+
+| Datum      | Eintrag                                                                                                                                                                                                                                                                                                                                                                   |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 10/16/2026 | Finale Validierung: `npm run check` grün (inkl. size-limit 112 kB), E2E 5/5 grün. E2E-Fang: `logo`-Prop fehlte am `Chat` in `App.tsx` (Chat-Header-Logo nicht sichtbar) → fixt. E2E lief mit `E2E_API_PORT=3101`, weil der Sandbox-Host Port 3001 belegt (`ao daemon`); `playwright.config.ts` + `vite.config.ts` lesen die Variable (Default unverändert, CI-identisch). |
+| 10/16/2026 | Neu-Implementierung gestartet: alte HSL-Theme-Dateien verworfen; Steps 1–6 umgesetzt (Shared-Typen, themes, storage, imageUtils, Context, Provider in main.tsx); `tsc -p apps/web` grün. PROGRESS.md an Issue-Spec angepasst.                                                                                                                                             |
+| 10/16/2026 | (vorher) Review + Diagnose des defekten appearance-Moduls (26 TS-Fehler).                                                                                                                                                                                                                                                                                                 |
