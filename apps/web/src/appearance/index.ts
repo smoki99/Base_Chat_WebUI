@@ -4,6 +4,6 @@
  */
 export { AppearanceProvider, useAppearance } from './AppearanceContext';
 export { COLOR_PRESETS, findMatchingPresetId } from './themes';
-export { ALLOWED_IMAGE_TYPE, MAX_IMAGE_BYTES } from './imageUtils';
+export { ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from './imageUtils';
 export { useImageUpload } from './useImageUpload';
 export type { UiThemeColors } from './types';

@@ -43,7 +43,7 @@ interface ChatProps {
   initialMessages?: ChatMessage[];
   chatId?: string | null;
   onMessagesChange?: (messages: ChatMessage[]) => void;
-  /** Custom logo (PNG data URL) shown in the chat header, or `null`. */
+  /** Custom logo (PNG/SVG data URL) shown in the chat header, or `null`. */
   logo?: string | null;
 }
 

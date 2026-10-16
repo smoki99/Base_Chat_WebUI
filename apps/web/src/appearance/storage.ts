@@ -12,9 +12,17 @@ export const DEFAULT_CUSTOMIZATION: UiCustomization = {
   bannerVisible: false,
 };
 
-/** A data URL of a PNG image – the only accepted logo/banner payload. */
-function isPngDataUrl(value: unknown): value is string {
-  return typeof value === 'string' && value.startsWith('data:image/png;base64,');
+/**
+ * A data URL of a PNG or SVG image – the accepted logo/banner payload types
+ * (SVG content is validated at upload time in `imageUtils.ts`).
+ */
+function isImageDataUrl(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  return (
+    value.startsWith('data:image/png;base64,') ||
+    value.startsWith('data:image/svg+xml;base64,') ||
+    value.startsWith('data:image/svg+xml;charset=utf-8,')
+  );
 }
 
 /** Merges untrusted data (e.g. localStorage) into a safe customization state. */
@@ -25,8 +33,8 @@ export function sanitizeCustomization(raw: unknown): UiCustomization {
   const data = raw as Record<string, unknown>;
   return {
     colors: sanitizeColors(data.colors),
-    logo: isPngDataUrl(data.logo) ? data.logo : null,
-    banner: isPngDataUrl(data.banner) ? data.banner : null,
+    logo: isImageDataUrl(data.logo) ? data.logo : null,
+    banner: isImageDataUrl(data.banner) ? data.banner : null,
     bannerVisible: data.bannerVisible === true,
   };
 }

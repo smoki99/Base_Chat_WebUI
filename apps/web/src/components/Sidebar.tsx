@@ -12,7 +12,7 @@ interface SidebarProps {
   onOpenSettings: () => void;
   /** Called after any action to close the sidebar (mobile). */
   onClose?: () => void;
-  /** Custom logo (PNG data URL) shown in the sidebar header, or `null`. */
+  /** Custom logo (PNG/SVG data URL) shown in the sidebar header, or `null`. */
   logo?: string | null;
 }
 

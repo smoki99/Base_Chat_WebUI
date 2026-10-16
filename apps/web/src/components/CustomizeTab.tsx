@@ -1,6 +1,6 @@
 import type { ChangeEvent } from 'react';
 import {
-  ALLOWED_IMAGE_TYPE,
+  ALLOWED_IMAGE_TYPES,
   COLOR_PRESETS,
   MAX_IMAGE_BYTES,
   findMatchingPresetId,
@@ -72,7 +72,7 @@ function ImageSection({
         <input
           id={`${idBase}-file`}
           type="file"
-          accept={ALLOWED_IMAGE_TYPE}
+          accept={ALLOWED_IMAGE_TYPES.join(',')}
           className="visually-hidden"
           aria-label={`${title}-Datei wählen`}
           disabled={upload.busy}
@@ -84,7 +84,7 @@ function ImageSection({
           {title} entfernen
         </button>
       )}
-      <div className="form-text">PNG, max. {Math.round(MAX_IMAGE_BYTES / 1024)} kB.</div>
+      <div className="form-text">PNG oder SVG, max. {Math.round(MAX_IMAGE_BYTES / 1024)} kB.</div>
       {upload.error && (
         <div className="customize-error" role="alert">
           {upload.error}
@@ -95,7 +95,7 @@ function ImageSection({
 }
 /**
  * "Erscheinungsbild" settings panel: color customization with presets +
- * live preview, logo/banner upload (PNG) and the factory reset.
+ * live preview, logo/banner upload (PNG or SVG) and the factory reset.
  * All state comes from the AppearanceProvider (persistence included).
  */
 export function CustomizeTab() {

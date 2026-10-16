@@ -22,9 +22,9 @@ export interface AppearanceContextValue {
   setColor: (key: keyof UiThemeColors, value: string) => void;
   /** Apply a whole preset / custom color set at once. */
   setColors: (colors: UiThemeColors) => void;
-  /** Set or remove (null) the logo (PNG data URL). */
+  /** Set or remove (null) the logo (PNG/SVG data URL). */
   setLogo: (logo: string | null) => void;
-  /** Set or remove (null) the banner (PNG data URL). */
+  /** Set or remove (null) the banner (PNG/SVG data URL). */
   setBanner: (banner: string | null) => void;
   /** Toggle the "show banner" switch. */
   setBannerVisible: (visible: boolean) => void;

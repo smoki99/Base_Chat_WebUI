@@ -62,10 +62,10 @@ describe('sanitizeCustomization', () => {
     expect(sanitizeCustomization(payload)).toEqual(payload);
   });
 
-  it('drops non-PNG data URLs and invalid colors', () => {
+  it('drops unsupported image types and invalid colors', () => {
     const result = sanitizeCustomization({
       colors: { primary: 'javascript:alert(1)' },
-      logo: 'data:image/svg+xml;base64,PHN2Zz4=',
+      logo: 'data:image/jpeg;base64,AAA',
       banner: 'https://example.com/b.png',
       bannerVisible: 'yes',
     });
@@ -73,6 +73,15 @@ describe('sanitizeCustomization', () => {
     expect(result.logo).toBeNull();
     expect(result.banner).toBeNull();
     expect(result.bannerVisible).toBe(false);
+  });
+
+  it('accepts validated SVG data URLs (allowed since the SVG follow-up)', () => {
+    const payload = {
+      logo: 'data:image/svg+xml;base64,PHN2Zz4=',
+      bannerVisible: false,
+    };
+    const result = sanitizeCustomization(payload);
+    expect(result.logo).toBe(payload.logo);
   });
 });
 

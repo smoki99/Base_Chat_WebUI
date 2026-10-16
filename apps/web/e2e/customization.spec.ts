@@ -8,6 +8,12 @@ const TINY_PNG = Buffer.from(
   'base64'
 );
 
+/** A minimal valid SVG with explicit size. */
+const TINY_SVG = Buffer.from(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><rect width="32" height="32" fill="#4f46e5"/></svg>',
+  'utf8'
+);
+
 async function openAppearanceTab(page: Page) {
   await page.getByRole('button', { name: 'Einstellungen' }).click();
   await page.getByRole('tab', { name: 'Erscheinungsbild' }).click();
@@ -91,5 +97,29 @@ test.describe('Customization (Story-0032)', () => {
     await page.getByRole('button', { name: 'Fertig' }).click();
     await expect(page.locator('img.sidebar-logo[alt="Logo"]')).not.toBeVisible();
     await expect(page.locator('img.app-banner[alt="Banner"]')).not.toBeVisible();
+  });
+
+  test('accepts an SVG logo and renders it in header and sidebar', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('aside[aria-label="Chatverlauf"]')).toBeVisible();
+
+    await openAppearanceTab(page);
+    await page.locator('#customize-logo-file').setInputFiles({
+      name: 'logo.svg',
+      mimeType: 'image/svg+xml',
+      buffer: TINY_SVG,
+    });
+    await expect(page.locator('img[alt="Logo (Vorschau)"]')).toBeVisible();
+    await page.getByRole('button', { name: 'Fertig' }).click();
+
+    // The SVG renders as a data URL in the sidebar and the chat header.
+    const logoSrc = () => page.locator('img.chat-header-logo[alt="Logo"]').getAttribute('src');
+    await expect.poll(logoSrc).toMatch(/^data:image\/svg\+xml/);
+    await expect(page.locator('img.sidebar-logo[alt="Logo"]')).toBeVisible();
+
+    // It survives a reload.
+    await page.reload();
+    await expect(page.locator('img.sidebar-logo[alt="Logo"]')).toBeVisible();
+    await expect.poll(logoSrc).toMatch(/^data:image\/svg\+xml/);
   });
 });
