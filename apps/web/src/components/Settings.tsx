@@ -86,7 +86,7 @@ export function Settings({ open, onClose }: SettingsProps) {
 
             <div className="modal-body">
               <nav
-                className="nav-tabs settings-tabs"
+                className="nav nav-tabs settings-tabs"
                 role="tablist"
                 aria-label="Einstellungsbereiche"
               >
