@@ -68,7 +68,7 @@ apps/web = React 19 + Vite (nur UI) · apps/api = Express (REST) · packages/sha
 - Gemeinsame Typen/DTOs immer in packages/shared definieren, nie duplizieren.
 - API-Antworten immer in Form: { "data": ... } oder { "error": { "message": ... } }.
 - apps/api: Routen in src/routes/, Logik in src/services/.
-- apps/web: holt Daten über fetch von der API (URL aus VITE_API_URL).
+- apps/web: holt Daten über fetch von der API (relative `/api/*`-Pfade; dev: Vite-Proxy, Produktion: Reverse-Proxy).
 
 ## Befehle
 

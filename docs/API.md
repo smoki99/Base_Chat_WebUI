@@ -26,12 +26,16 @@ Sendet eine Chat-Nachricht an den aktiven Provider.
 
 **Request-Body**
 
-| Feld      | Typ    | Pflicht | Beschreibung                              |
-| --------- | ------ | ------- | ----------------------------------------- |
-| `message` | string | ✅      | Nachricht (nicht leer, max. 2000 Zeichen) |
+| Feld      | Typ                    | Pflicht | Beschreibung                                                                                                                                |
+| --------- | ---------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `message` | string                 | ✅      | Nachricht (nicht leer, max. 2000 Zeichen)                                                                                                   |
+| `history` | `ChatHistoryMessage[]` | –       | Vorherige Nachrichten (alt → neu); nur gültige Einträge (`role: user/assistant`, `content` ≤ 4000 Zeichen) werden genutzt, max. 50 (letzte) |
 
 ```json
-{ "message": "Hallo!" }
+{
+  "message": "Hallo!",
+  "history": [{ "role": "assistant", "content": "Wie kann ich helfen?" }]
+}
 ```
 
 **Response `201`**
@@ -449,11 +453,15 @@ Liefert die aktuelle Voice-Verfügbarkeit, verfügbare Stimmen und Sprachen.
     "tts": true,
     "stt": true,
     "voices": [
-      { "id": "de-DE-Webm-1", "name": "Webm (German, Female)", "gender": "f", "language": "de" },
-      { "id": "en-US-Webm-1", "name": "Webm (English, Female)", "gender": "f", "language": "en" }
+      { "id": "de-DE-KatjaNeural", "name": "Katja", "gender": "f", "language": "de" },
+      { "id": "en-US-JennyNeural", "name": "Jenny", "gender": "f", "language": "en" }
     ],
-    "languages": ["de", "en", "es"],
-    "defaultVoiceByLanguage": { "de": "de-DE-Webm-1", "en": "en-US-Webm-1", "es": "es-ES-Webm-1" }
+    "languages": ["de", "es", "en"],
+    "defaultVoiceByLanguage": {
+      "de": "de-DE-KatjaNeural",
+      "es": "es-ES-ElviraNeural",
+      "en": "en-US-JennyNeural"
+    }
   }
 }
 ```

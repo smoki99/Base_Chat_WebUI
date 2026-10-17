@@ -11,9 +11,9 @@ mit Express-Backend, gemeinsamen Typen in `packages/shared`, Voice über den
 Excel/CSV-Import nach PostgreSQL, Schema-Vorschau, CSV/XLSX-Export und
 MCP-Tools (`qmd`, `sql`, `admin-db`) als Chat-Tools.
 
-Zustand: Story-0034 abgeschlossen (Postgres-Admin inkl. MCP `admin-db`
-und CSV/XLSX-Export, PR #57). Nächstes Ziel: Story-0035 (MCP-Chat-Export,
-Issue #56).
+Zustand: Story-0034 (Postgres-Admin, PR #57), Story-0035 (MCP-Chat-Export,
+Issue #56) und Story-0036 (Custom-Prompt, PR #61) abgeschlossen.
+Nächste Ziele: Offene Punkte unten (Admin-Edge-Cases, Persistenz).
 
 ## Story-Überblick
 
@@ -23,7 +23,7 @@ Issue #56).
 | 29–33 | Qualitäts-Tore (size-limit, knip, dependency-cruiser), UI-Customization (Themes, Logo, Banner), Chat-Export | ✅             |
 | 34    | Postgres-Admin: MCP `admin-db` (read-only) + CSV/XLSX-Tabelle-Export                                        | ✅ (PR #57)    |
 | 35    | MCP-Chat-Export: `export_table`-Tool + einmalige Download-Links im Chat                                     | ✅ (Issue #56) |
-| 36    | Eigener Chatbot-Prompt: Prompt-Erweiterung in den Einstellungen (serverseitig)                              | 🟡 vorbereitet |
+| 36    | Eigener Chatbot-Prompt: Prompt-Erweiterung in den Einstellungen (serverseitig)                              | ✅ (PR #61)    |
 
 > Details zu 29–33: `docs/DECISIONS.md` (Story-0032 UI-Customization u. a.).
 
@@ -123,6 +123,19 @@ Issue #56).
 - Tests: API `custom-prompt.test.ts` (Store, Routen, Wiring) +
   Provider-Tests; Web `PromptTab.test.tsx` + `Settings.test.tsx`.
 - Issue: #60.
+
+### Doku-Release (2026-10-17)
+
+- ✅ Doku-Audit gegen Code & Config, danach Sync: `README.md`,
+  `docs/API.md` (Chat-`history`-Feld, Voice-Beispiele),
+  `docs/ARCHITECTURE.md` (Shared-Typen, api/web-Struktur, Dev-Proxy),
+  `docs/RULES.md`, `.clinerules/main.md`, `.env.example`.
+- ✅ `VITE_API_URL` aus Doku & Env-Vorlage entfernt – in keinem Code-Pfad
+  genutzt; der Browser nutzt relative `/api/*`-Pfade (dev: Vite-Proxy,
+  Override `E2E_API_PORT`; prod: Reverse-Proxy).
+- ✅ Root `PROGRESS.md` auf einen Arbeits-Log-Stub minimiert (Vorlage:
+  Ziel/Steps/Status-Log bei jeder neuen Story befüllen); das dauerhafte
+  Projekt-Log bleibt `docs/PROGRESS.md`, ältere Story-Logs in der Git-Historie.
 
 ## Offene Punkte / Nächstes Ziel
 

@@ -7,7 +7,7 @@ nicht angezeigt.
 
 ## Voraussetzungen
 
-- Python ≥ 3.10
+- Python ≥ 3.11
 - Für STT (Whisper): ~2 GB RAM (CPU) bzw. GPU mit ≥ 4 GB VRAM (empfohlen)
 - Für TTS (edge-tts): Internetzugang
 
