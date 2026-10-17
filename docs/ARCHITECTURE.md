@@ -73,6 +73,11 @@ import type { ApiResponse, ChatMessage } from 'shared';
 ```
 
 > **Regel:** Keine lokalen Typ-Duplikate. Neue Typen/DTOs immer in `packages/shared`.
+>
+> **Admin-Typen** (`packages/shared/src/admin.ts`): `AdminTable`,
+> `AdminTablePreview`, `AdminTableColumn`, `AdminImportResult`,
+> `AdminRelation`, `AdminRelationCreate` – gemeinsam von `apps/api`
+> (Routen/Service) und `apps/web` (Admin-Panel) verwendet.
 
 ## API-Antwortformat
 
@@ -93,29 +98,38 @@ dieses Format und werden in der Web-App zur Typisierung der Fetch-Antworten verw
 
 ## apps/api – Struktur
 
-| Verzeichnis               | Zweck                                                        |
-| ------------------------- | ------------------------------------------------------------ |
-| `src/routes/`             | HTTP-Endpunkte: Routing, Request/Response, Validierung       |
-| `src/services/`           | Business-Logik: rein, ohne HTTP-Abhängigkeiten               |
-| `src/services/providers/` | Chat-Provider-Implementierungen (`mock`, `openai`)           |
-| `src/config/`             | JSON-Konfiguration laden & validieren (`chatbot.rules.json`) |
-| `src/app.ts`              | Express-App-Instanz (export für Tests)                       |
-| `src/index.ts`            | Server-Start (`app.listen`)                                  |
-| `src/__tests__/`          | Integrationstests (Vitest + Supertest)                       |
+| Verzeichnis                       | Zweck                                                        |
+| --------------------------------- | ------------------------------------------------------------ |
+| `src/routes/`                     | HTTP-Endpunkte: Routing, Request/Response, Validierung       |
+| `src/services/`                   | Business-Logik: rein, ohne HTTP-Abhängigkeiten               |
+| `src/services/providers/`         | Chat-Provider-Implementierungen (`mock`, `openai`)           |
+| `src/services/pgPool.ts`          | PostgreSQL-Verbindungspool (Admin: Import/Preview/Export)    |
+| `src/services/adminService.ts`    | Tabellen-Import, -Vorschau, -Export (CSV/XLSX), Relationen   |
+| `src/services/mcpClient.ts`       | MCP-Client: startet Server, ruft Tools als Chat-Tools auf    |
+| `scripts/admin-db-mcp-server.mjs` | MCP-Server `admin-db` (read-only SQL für den Chat)           |
+| `scripts/lib/admin-sql-guard.mjs` | SQL-Guard: nur `SELECT`/`WITH … SELECT`, DML/DDL blockiert   |
+| `mcp-config.json`                 | MCP-Server-Definitionen (Pflege wie Code – startet Befehle!) |
+| `src/config/`                     | JSON-Konfiguration laden & validieren (`chatbot.rules.json`) |
+| `src/app.ts`                      | Express-App-Instanz (export für Tests)                       |
+| `src/index.ts`                    | Server-Start (`app.listen`)                                  |
+| `src/__tests__/`                  | Integrationstests (Vitest + Supertest)                       |
 
 ## apps/web – Struktur
 
-| Verzeichnis/Datei      | Zweck                                              |
-| ---------------------- | -------------------------------------------------- |
-| `src/components/`      | React-Komponenten                                  |
-| `src/__tests__/`       | Komponenten-Tests (Vitest + React Testing Library) |
-| `src/test/setup.ts`    | Test-Setup (`@testing-library/jest-dom`)           |
-| `src/main.tsx`         | React Entry Point                                  |
-| `src/index.css`        | Material Design 3 CSS (Bootstrap + MD3-Tokens)     |
-| `e2e/`                 | Playwright-E2E-Tests (headless Chromium)           |
-| `playwright.config.ts` | E2E-Konfiguration (webServer startet API + Web)    |
-| `vite.config.ts`       | Vite-Plugin, Dev-Proxy, Vitest-Config              |
-| `index.html`           | Vite HTML-Entry                                    |
+| Verzeichnis/Datei      | Zweck                                                   |
+| ---------------------- | ------------------------------------------------------- |
+| `src/components/`      | React-Komponenten (Chat, AdminPanel, CustomizeTab, …)   |
+| `src/appearance/`      | UI-Customization: Themes, Logo, Banner (`localStorage`) |
+| `src/lib/`             | API-Clients: `api.ts` (Chat/Admin), `adminDownload()`   |
+| `src/hooks/`           | `useChatHistory`, `useVoice`, …                         |
+| `src/__tests__/`       | Komponenten-Tests (Vitest + React Testing Library)      |
+| `src/test/setup.ts`    | Test-Setup (`@testing-library/jest-dom`)                |
+| `src/main.tsx`         | React Entry Point                                       |
+| `src/index.css`        | Material Design 3 CSS (Bootstrap + MD3-Tokens)          |
+| `e2e/`                 | Playwright-E2E-Tests (headless Chromium)                |
+| `playwright.config.ts` | E2E-Konfiguration (webServer startet API + Web)         |
+| `vite.config.ts`       | Vite-Plugin, Dev-Proxy, Vitest-Config                   |
+| `index.html`           | Vite HTML-Entry                                         |
 
 ### Dev-Proxy
 
