@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { Voice } from 'shared';
 import { useVoiceContext } from '../voice/VoiceContext';
 import { CustomizeTab } from './CustomizeTab';
+import { PromptTab } from './PromptTab';
 
 interface SettingsProps {
   /** Controls whether the settings dialog is visible. */
@@ -10,7 +11,7 @@ interface SettingsProps {
   onClose: () => void;
 }
 
-type SettingsTab = 'voice' | 'appearance';
+type SettingsTab = 'voice' | 'appearance' | 'prompt';
 
 const SAMPLE_DE = 'Hallo! Dies ist dein gewähltes Sprachprofil.';
 const SAMPLE_PHRASES: Record<string, string> = {
@@ -112,6 +113,17 @@ export function Settings({ open, onClose }: SettingsProps) {
                 >
                   Erscheinungsbild
                 </button>
+                <button
+                  type="button"
+                  role="tab"
+                  id="settings-tab-prompt"
+                  className={`nav-link${activeTab === 'prompt' ? ' active' : ''}`}
+                  aria-selected={activeTab === 'prompt'}
+                  aria-controls="settings-panel-prompt"
+                  onClick={() => setActiveTab('prompt')}
+                >
+                  Chatbot-Prompt
+                </button>
               </nav>
 
               {activeTab === 'voice' && (
@@ -185,6 +197,15 @@ export function Settings({ open, onClose }: SettingsProps) {
                   aria-labelledby="settings-tab-appearance"
                 >
                   <CustomizeTab />
+                </div>
+              )}
+              {activeTab === 'prompt' && (
+                <div
+                  role="tabpanel"
+                  id="settings-panel-prompt"
+                  aria-labelledby="settings-tab-prompt"
+                >
+                  <PromptTab />
                 </div>
               )}
             </div>

@@ -23,6 +23,7 @@ Issue #56).
 | 29–33 | Qualitäts-Tore (size-limit, knip, dependency-cruiser), UI-Customization (Themes, Logo, Banner), Chat-Export | ✅             |
 | 34    | Postgres-Admin: MCP `admin-db` (read-only) + CSV/XLSX-Tabelle-Export                                        | ✅ (PR #57)    |
 | 35    | MCP-Chat-Export: `export_table`-Tool + einmalige Download-Links im Chat                                     | ✅ (Issue #56) |
+| 36    | Eigener Chatbot-Prompt: Prompt-Erweiterung in den Einstellungen (serverseitig)                              | 🟡 vorbereitet |
 
 > Details zu 29–33: `docs/DECISIONS.md` (Story-0032 UI-Customization u. a.).
 
@@ -99,6 +100,29 @@ Issue #56).
 - ✅ Doku-Sync: `README.md`, `docs/API.md` (neuer Endpunkt),
   `docs/DECISIONS.md` (On-Demand + Einmaligkeit/TTL).
 - Issue: #56.
+
+### Story-0036: Eigener Prompt für den Chatbot
+
+- ✅ Status: implementiert (2026-10-17) – GitHub-Issue #60 (`Story-0036: …`)
+  ist Single Source of Truth. Prompt-Erweiterung in den Einstellungen (neuer
+  Tab „Chatbot-Prompt“), serverseitige Persistenz auf dem Filesystem
+  (gemeinsam für alle Nutzer, nie localStorage), Datei in `.gitignore`;
+  der Text wird dem LLM-Systemprompt hinzugefügt (Hilfe bei
+  Begrifflichkeiten importierter Tabellen/Spalten).
+- Entscheidungen (2026-10-17): Auth über das **gleiche `ADMIN_TOKEN`** wie
+  die Admin-Routen (eigene Token-Prüfung `requireAdminToken`, ohne
+  `DATABASE_URL`-Pflicht); Dateipfad
+  `apps/api/data/chatbot-custom-prompt.md` (Override:
+  `CHATBOT_CUSTOM_PROMPT_FILE`); Max-Länge **20 000 Zeichen** (→ `400`).
+- Umsetzung: shared-DTOs + `customPromptStore` (atomares Schreiben) +
+  `GET/PUT /api/chat/custom-prompt` (Supertest) + Provider-Abschnitt
+  `## Additional instructions` (vor der Voice-Anweisung) + chatService
+  lädt den Prompt pro Request + Web-Tab mit Editor, Zeichen-Zähler,
+  Speichern/Zurücksetzen, Statusanzeige + Doku-Sync (README, API.md,
+  DECISIONS.md).
+- Tests: API `custom-prompt.test.ts` (Store, Routen, Wiring) +
+  Provider-Tests; Web `PromptTab.test.tsx` + `Settings.test.tsx`.
+- Issue: #60.
 
 ## Offene Punkte / Nächstes Ziel
 

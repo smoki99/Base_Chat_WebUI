@@ -92,6 +92,15 @@ export const env = {
   },
 
   /**
+   * File path for the stored custom chatbot prompt (system prompt extension).
+   * Default: `<api package>/data/chatbot-custom-prompt.md`.
+   * The file is gitignored and shared across all users of the instance.
+   */
+  get CUSTOM_PROMPT_FILE(): string | undefined {
+    return optionalString('CHATBOT_CUSTOM_PROMPT_FILE');
+  },
+
+  /**
    * Max rows per admin table export (CSV/XLSX). Default: 10000.
    * The per-request `limit` can only go lower, never above this cap.
    */

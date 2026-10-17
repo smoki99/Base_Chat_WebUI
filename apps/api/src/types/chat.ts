@@ -27,6 +27,12 @@ export interface ReplyOptions {
   toolHandlers?: Map<string, ToolHandler>;
   /** Previous conversation messages (oldest → newest), sent from the client. */
   history?: ChatHistoryMessage[];
+  /**
+   * Custom prompt extension (Story-0036): stored server-side, shared across
+   * all users. Appended to the system prompt (e.g. glossary for imported
+   * tables/columns). Whitespace-only values are ignored by providers.
+   */
+  customPrompt?: string;
 }
 
 // A chat provider produces a reply for a given user message.

@@ -22,3 +22,6 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+
+# Runtime data – custom chatbot prompt (Story-0036), never commit
+apps/api/data/

@@ -7,6 +7,9 @@ Chat-Verhalten über JSON-Regeln steuerbar, Provider-agnostisch (Mock, OpenAI-ko
 
 - 💬 Chat-UI mit Markdown, Code-Blöcken, Copy-Buttons und „Letzte 5" Verlauf
 - 🧠 Chatbot-Regeln (JSON) werden serverseitig als System-Prompt injiziert
+- ✍️ Eigener Chatbot-Prompt: nutzerdefinierte Prompt-Erweiterung (z. B. Glossar
+  für importierte Tabellen) in den Einstellungen – serverseitig gespeichert,
+  für alle Nutzer der Instanz (Story-0036)
 - 🔌 Provider-agnostisch: `mock`, `openai` (OpenAI-kompatibel: LM Studio, Ollama, …)
 - 🛡️ Sicherheit: `helmet`, CORS-Whitelist, Rate-Limit, Input-Sanitizing, JSON-Size-Limit
 - 🔊 Voice: TTS (edge-tts) + STT (Whisper) über den `voz`-Sidecar
@@ -63,21 +66,22 @@ npm run dev                   # startet API (4001) + Web (5173) parallel
 
 ## Chat-Provider konfigurieren
 
-| Variable                | Beschreibung                                                                                                                                           | Default                 |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------- |
-| `PORT`                  | API-Port                                                                                                                                               | `4001`                  |
-| `CORS_ORIGIN`           | Erlaubte CORS-Origin(s), kommagetrennt. **Fail-closed:** in Produktion (`NODE_ENV=production`) werden Cross-Origin-Requests bei leerer Liste abgelehnt | leer (dev: alle)        |
-| `RATE_LIMIT_GENERAL`    | Rate-Limit (Requests/Fenster) für API-Routen (außer `/api/voice/*`)                                                                                    | `100` (60 s)            |
-| `RATE_LIMIT_VOICE`      | Rate-Limit (Requests/Fenster) für `/api/voice/*`                                                                                                       | `20` (60 s)             |
-| `VITE_API_URL`          | API-Basis-URL für das Web (prod)                                                                                                                       | `http://localhost:4001` |
-| `CHAT_PROVIDER`         | Aktiver Chat-Provider: `mock` oder `openai`                                                                                                            | `mock`                  |
-| `OPENAI_BASE_URL`       | Basis-URL für OpenAI-kompatible Endpunkte (z. B. `http://localhost:1234/v1`)                                                                           | leer                    |
-| `OPENAI_API_KEY`        | API-Key (leer = kein Header, z. B. für lokale Modelle)                                                                                                 | leer                    |
-| `OPENAI_MODEL`          | Modellname (z. B. `gpt-4o`, `llama3.1-8b`)                                                                                                             | leer                    |
-| `CHATBOT_RULES_FILE`    | Pfad zur `chatbot.rules.json` (leer = eingebauter Default)                                                                                             | leer                    |
-| `VOICE_SERVICE_URL`     | Base-URL des Voice-Sidecars (`apps/voz`), leer = Voice deaktiviert                                                                                     | `http://127.0.0.1:8765` |
-| `ADMIN_TOKEN`           | Token für das Admin-Panel (`Authorization: Bearer <Token>`); leer = Admin-Routen deaktiviert                                                           | `change-me`             |
-| `ADMIN_EXPORT_MAX_ROWS` | Zeilen-Cap für den CSV/XLSX-Tabelle-Export (Per-Request-`limit` darf nur darunter)                                                                     | `10000`                 |
+| Variable                     | Beschreibung                                                                                                                                           | Default                 |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------- |
+| `PORT`                       | API-Port                                                                                                                                               | `4001`                  |
+| `CORS_ORIGIN`                | Erlaubte CORS-Origin(s), kommagetrennt. **Fail-closed:** in Produktion (`NODE_ENV=production`) werden Cross-Origin-Requests bei leerer Liste abgelehnt | leer (dev: alle)        |
+| `RATE_LIMIT_GENERAL`         | Rate-Limit (Requests/Fenster) für API-Routen (außer `/api/voice/*`)                                                                                    | `100` (60 s)            |
+| `RATE_LIMIT_VOICE`           | Rate-Limit (Requests/Fenster) für `/api/voice/*`                                                                                                       | `20` (60 s)             |
+| `VITE_API_URL`               | API-Basis-URL für das Web (prod)                                                                                                                       | `http://localhost:4001` |
+| `CHAT_PROVIDER`              | Aktiver Chat-Provider: `mock` oder `openai`                                                                                                            | `mock`                  |
+| `OPENAI_BASE_URL`            | Basis-URL für OpenAI-kompatible Endpunkte (z. B. `http://localhost:1234/v1`)                                                                           | leer                    |
+| `OPENAI_API_KEY`             | API-Key (leer = kein Header, z. B. für lokale Modelle)                                                                                                 | leer                    |
+| `OPENAI_MODEL`               | Modellname (z. B. `gpt-4o`, `llama3.1-8b`)                                                                                                             | leer                    |
+| `CHATBOT_RULES_FILE`         | Pfad zur `chatbot.rules.json` (leer = eingebauter Default)                                                                                             | leer                    |
+| `CHATBOT_CUSTOM_PROMPT_FILE` | Pfad zur Custom-Prompt-Datei (Story-0036; leer = `apps/api/data/chatbot-custom-prompt.md`, gitignored)                                                 | leer                    |
+| `VOICE_SERVICE_URL`          | Base-URL des Voice-Sidecars (`apps/voz`), leer = Voice deaktiviert                                                                                     | `http://127.0.0.1:8765` |
+| `ADMIN_TOKEN`                | Token für das Admin-Panel (`Authorization: Bearer <Token>`); leer = Admin-Routen deaktiviert                                                           | `change-me`             |
+| `ADMIN_EXPORT_MAX_ROWS`      | Zeilen-Cap für den CSV/XLSX-Tabelle-Export (Per-Request-`limit` darf nur darunter)                                                                     | `10000`                 |
 
 ```env
 CHAT_PROVIDER=mock            # oder: openai
@@ -163,6 +167,9 @@ Das Admin-Panel (Dialog im Web) verwaltet eine lokale PostgreSQL-Datenbank:
 
 - Auth: `ADMIN_TOKEN` als `Authorization: Bearer <Token>`; ohne Token sind alle
   Admin-Routen deaktiviert (403).
+- Der Settings-Tab „Chatbot-Prompt“ (eigene Prompt-Erweiterung für den
+  Chatbot, Story-0036) nutzt denselben `ADMIN_TOKEN`; die gespeicherte Datei
+  liegt unter `apps/api/data/` (gitignored) – nie im Repository.
 - Export-Cap: `ADMIN_EXPORT_MAX_ROWS` (Default `10000`); größere Exporte werden
   auf die ersten N Zeilen gekürzt und die UI meldet die Trunkation.
 - API-Referenz aller Endpunkte: [`docs/API.md`](docs/API.md#admin-datenbank)

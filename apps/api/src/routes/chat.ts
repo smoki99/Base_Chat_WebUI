@@ -1,7 +1,20 @@
 import { Router } from 'express';
 import { chatService } from '../services/chatService';
 import type { HealthStatus } from '../types/chat';
-import type { ChatHistoryMessage, ChatRequest, ChatResponse } from 'shared';
+import { MAX_CUSTOM_PROMPT_CHARS } from 'shared';
+import type {
+  ChatHistoryMessage,
+  ChatRequest,
+  ChatResponse,
+  CustomPromptResponse,
+  UpdateCustomPrompt,
+} from 'shared';
+import { requireAdminToken } from '../middleware/adminAuth';
+import {
+  CustomPromptTooLongError,
+  loadCustomPrompt,
+  saveCustomPrompt,
+} from '../services/customPromptStore';
 
 export const chatRouter = Router();
 
@@ -70,6 +83,46 @@ chatRouter.post('/api/chat', async (req, res, next) => {
     const reply = await chatService.respond(trimmed, history);
     res.status(201).json({ data: reply } satisfies ChatResponse);
   } catch (error) {
+    next(error);
+  }
+});
+
+// ── Custom prompt (system prompt extension, Story-0036) ─────────────────────
+// Admin-protected (same ADMIN_TOKEN as /api/admin/*), but unlike the admin
+// routes it does NOT require a database (no DATABASE_URL check).
+
+// GET /api/chat/custom-prompt – read the stored prompt extension.
+chatRouter.get('/api/chat/custom-prompt', requireAdminToken, async (_req, res, next) => {
+  try {
+    const content = await loadCustomPrompt();
+    res.json({ data: { content } } satisfies CustomPromptResponse);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PUT /api/chat/custom-prompt – store (or clear with `""`) the prompt extension.
+chatRouter.put('/api/chat/custom-prompt', requireAdminToken, async (req, res, next) => {
+  const body = req.body as Partial<UpdateCustomPrompt> | undefined;
+  const content = body?.content;
+  if (typeof content !== 'string') {
+    res.status(400).json({ error: { message: 'content (string) is required' } });
+    return;
+  }
+  if (content.length > MAX_CUSTOM_PROMPT_CHARS) {
+    res.status(400).json({
+      error: { message: `content must be at most ${MAX_CUSTOM_PROMPT_CHARS} characters` },
+    });
+    return;
+  }
+  try {
+    const stored = await saveCustomPrompt(content);
+    res.json({ data: { content: stored } } satisfies CustomPromptResponse);
+  } catch (error) {
+    if (error instanceof CustomPromptTooLongError) {
+      res.status(400).json({ error: { message: error.message } });
+      return;
+    }
     next(error);
   }
 });

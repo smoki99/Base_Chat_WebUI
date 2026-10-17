@@ -16,6 +16,7 @@ import type { ChatHistoryMessage } from 'shared';
 import { createMockProvider } from './providers/mockProvider';
 import { createOpenAIProvider } from './providers/openaiProvider';
 import { loadMcpConfig, connectAllMcpServers, type McpContext } from './mcpClient';
+import { loadCustomPrompt } from './customPromptStore';
 
 let cachedProvider: ChatProvider | null = null;
 let mcpContext: McpContext | null = null;
@@ -87,6 +88,12 @@ export const chatService = {
         options.tools = filteredTools;
       }
       options.toolHandlers = mcpContext.toolHandlers;
+    }
+    // Custom prompt extension (Story-0036): loaded per request so edits in the
+    // settings tab apply to the very next message (no restart needed).
+    const customPrompt = await loadCustomPrompt();
+    if (customPrompt) {
+      options.customPrompt = customPrompt;
     }
     return getProvider().reply(message, options);
   },

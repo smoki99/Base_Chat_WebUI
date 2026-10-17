@@ -477,3 +477,53 @@ describe('createOpenAIProvider', () => {
     await expect(provider.reply('test')).rejects.toThrow(/timed out/i);
   });
 });
+
+describe('custom prompt extension (Story-0036)', () => {
+  const originalFetch = global.fetch;
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    global.fetch = originalFetch;
+  });
+
+  function sentSystemPrompt(): string {
+    const fetchSpy = vi.mocked(global.fetch);
+    const init = fetchSpy.mock.calls[0]?.[1] as RequestInit;
+    const body = JSON.parse(init.body as string);
+    return body.messages[0].content;
+  }
+
+  it('appends the custom prompt section before the voice instruction', async () => {
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(
+      mockFetchResponse(200, {
+        id: 'c-1',
+        choices: [{ message: { role: 'assistant', content: 'ok' } }],
+      }) as Response
+    );
+
+    const provider = createOpenAIProvider({ baseUrl: 'http://localhost:1234/v1' });
+    await provider.reply('Hi', { customPrompt: 'SKU means "Artikelnummer".' });
+
+    const systemPrompt = sentSystemPrompt();
+    expect(systemPrompt).toContain('## Additional instructions');
+    expect(systemPrompt).toContain('SKU means "Artikelnummer".');
+    // The voice summary instruction must stay last.
+    expect(systemPrompt.indexOf('## Additional instructions')).toBeLessThan(
+      systemPrompt.indexOf('## Voice Summary')
+    );
+  });
+
+  it('keeps the system prompt unchanged when customPrompt is empty or whitespace', async () => {
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(
+      mockFetchResponse(200, {
+        id: 'c-2',
+        choices: [{ message: { role: 'assistant', content: 'ok' } }],
+      }) as Response
+    );
+
+    const provider = createOpenAIProvider({ baseUrl: 'http://localhost:1234/v1' });
+    await provider.reply('Hi', { customPrompt: '   ' });
+
+    expect(sentSystemPrompt()).not.toContain('## Additional instructions');
+  });
+});
