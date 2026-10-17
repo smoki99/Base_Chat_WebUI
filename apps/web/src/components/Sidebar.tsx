@@ -10,6 +10,8 @@ interface SidebarProps {
   onRename: (id: string, title: string) => void;
   /** Opens the settings dialog (voice + language). */
   onOpenSettings: () => void;
+  /** Opens the admin (database) dialog. */
+  onOpenAdmin: () => void;
   /** Called after any action to close the sidebar (mobile). */
   onClose?: () => void;
   /** Custom logo (PNG/SVG data URL) shown in the sidebar header, or `null`. */
@@ -39,6 +41,7 @@ export function Sidebar({
   onDelete,
   onRename,
   onOpenSettings,
+  onOpenAdmin,
   onClose,
   logo = null,
 }: SidebarProps) {
@@ -81,6 +84,14 @@ export function Sidebar({
           <span className="sidebar-title">Chat</span>
         </div>
         <div className="sidebar-header-actions">
+          <button
+            className="sidebar-icon-btn"
+            onClick={onOpenAdmin}
+            aria-label="Datenbank"
+            title="Datenbank-Verwaltung"
+          >
+            🗄️
+          </button>
           <button
             className="sidebar-icon-btn"
             onClick={onOpenSettings}

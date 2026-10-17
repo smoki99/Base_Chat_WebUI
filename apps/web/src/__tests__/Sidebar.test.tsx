@@ -15,6 +15,7 @@ const baseProps = {
   onDelete: vi.fn(),
   onRename: vi.fn(),
   onOpenSettings: vi.fn(),
+  onOpenAdmin: vi.fn(),
 };
 
 describe('Sidebar', () => {
@@ -55,6 +56,13 @@ describe('Sidebar', () => {
     render(<Sidebar {...baseProps} onOpenSettings={onOpenSettings} />);
     fireEvent.click(screen.getByLabelText('Einstellungen'));
     expect(onOpenSettings).toHaveBeenCalled();
+  });
+
+  it('calls onOpenAdmin when the admin button is clicked', () => {
+    const onOpenAdmin = vi.fn();
+    render(<Sidebar {...baseProps} onOpenAdmin={onOpenAdmin} />);
+    fireEvent.click(screen.getByLabelText('Datenbank'));
+    expect(onOpenAdmin).toHaveBeenCalled();
   });
 
   it('calls onDelete when the delete button is clicked', () => {

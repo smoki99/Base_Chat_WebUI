@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { AdminPanel } from './components/AdminPanel';
 import { Chat } from './components/Chat';
 import { Settings } from './components/Settings';
 import { Sidebar } from './components/Sidebar';
@@ -12,6 +13,7 @@ export default function App() {
   const { banner, bannerVisible, logo } = useAppearance();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
 
   // When a chat is selected, replace the active messages in useChat.
   // We use a key to force-remount the Chat component with the restored messages.
@@ -62,6 +64,7 @@ export default function App() {
           onDelete={history.deleteChat}
           onRename={history.renameChat}
           onOpenSettings={() => setSettingsOpen(true)}
+          onOpenAdmin={() => setAdminOpen(true)}
           onClose={() => setSidebarOpen(false)}
           logo={logo}
         />
@@ -88,6 +91,7 @@ export default function App() {
         </div>
 
         <Settings open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+        <AdminPanel open={adminOpen} onClose={() => setAdminOpen(false)} />
       </div>
     </VoiceProvider>
   );
