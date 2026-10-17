@@ -119,7 +119,7 @@ function TablesTab(props: {
       <section className="customize-section mt-4" aria-label="Import">
         <h3 className="customize-section-title">Tabelle importieren (Excel/CSV)</h3>
         <div className="row g-2 align-items-end">
-          <div className="col-sm-7">
+          <div className="col-sm-6">
             <label className="form-label" htmlFor="admin-import-file">
               Datei
             </label>
@@ -144,7 +144,7 @@ function TablesTab(props: {
               onChange={(e) => props.onNameChange(e.target.value)}
             />
           </div>
-          <div className="col-sm-1">
+          <div className="col-sm-2">
             <button
               type="button"
               className="btn btn-primary w-100"
@@ -606,7 +606,7 @@ export function AdminPanel({ open, onClose }: AdminPanelProps) {
         aria-modal="true"
         aria-labelledby="admin-title"
       >
-        <div className="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div className="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
           <div className="modal-content">
             <div className="modal-header">
               <h2 className="modal-title" id="admin-title">
@@ -635,6 +635,10 @@ export function AdminPanel({ open, onClose }: AdminPanelProps) {
                     const value = e.target.value;
                     setToken(value);
                     persistToken(value);
+                    // A stale auth error no longer applies once the user edits
+                    // the token – clear it instead of leaving the old 403/401
+                    // message hanging above the tabs.
+                    if (notice) setNotice(null);
                   }}
                   autoComplete="off"
                 />

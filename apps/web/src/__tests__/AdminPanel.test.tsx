@@ -116,6 +116,24 @@ describe('AdminPanel – rendering', () => {
     );
   });
 
+  it('clears the stale 401 notice when the user corrects the token', async () => {
+    setupFetch({
+      'GET /api/admin/tables': (init) => {
+        const auth = new Headers(init?.headers).get('Authorization');
+        if (auth === 'Bearer geheim') return { status: 200, body: { data: tables } };
+        return { status: 401, body: { error: { message: 'Ungültiges Admin-Token' } } };
+      },
+    });
+    renderOpen();
+    // Initial load (no token) fails → danger alert is visible.
+    await waitFor(() => expect(screen.getByText('Ungültiges Admin-Token')).toBeInTheDocument());
+
+    // User corrects the token → stale notice disappears, tables load.
+    fireEvent.change(screen.getByLabelText('Admin-Token'), { target: { value: 'geheim' } });
+    await waitFor(() => expect(screen.getByText('kunden')).toBeInTheDocument());
+    expect(screen.queryByText('Ungültiges Admin-Token')).not.toBeInTheDocument();
+  });
+
   it('closes on Escape', () => {
     setupFetch({ 'GET /api/admin/tables': () => ({ status: 200, body: { data: tables } }) });
     const { onClose } = renderOpen();
