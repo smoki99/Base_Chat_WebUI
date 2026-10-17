@@ -74,4 +74,20 @@ export const env = {
   get MCP_REQUEST_TIMEOUT_MS(): number {
     return intFromEnv('MCP_REQUEST_TIMEOUT_MS', 30_000);
   },
+
+  /**
+   * PostgreSQL connection string (e.g. postgres://user:pass@host:5432/db).
+   * Used by the admin table manager; unset = admin DB features disabled (503).
+   */
+  get DATABASE_URL(): string | undefined {
+    return optionalString('DATABASE_URL');
+  },
+
+  /**
+   * Shared secret for the /api/admin/* endpoints.
+   * Unset = admin feature disabled (403).
+   */
+  get ADMIN_TOKEN(): string | undefined {
+    return optionalString('ADMIN_TOKEN');
+  },
 };

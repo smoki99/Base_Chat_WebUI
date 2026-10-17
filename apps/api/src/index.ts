@@ -2,6 +2,7 @@
 import app from './app';
 import { env } from './env';
 import { initializeMcp, chatService } from './services/chatService';
+import { closePool } from './services/pgPool';
 
 async function start() {
   // Start the API server immediately – MCP init runs in the background.
@@ -19,7 +20,7 @@ async function start() {
 // Graceful shutdown.
 function shutdown() {
   chatService.closeMcp();
-  process.exit(0);
+  void closePool().finally(() => process.exit(0));
 }
 
 process.on('SIGINT', shutdown);
