@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 import type { AdminImportResult, AdminRelation, AdminTable, AdminTablePreview } from 'shared';
-import { ApiError, adminRequest } from '../lib/api';
+import { ApiError, adminDownload, adminRequest } from '../lib/api';
 
 interface AdminPanelProps {
   /** Controls whether the dialog is visible. */
@@ -93,6 +93,7 @@ function TablesTab(props: {
   onFileChange: (file: File | null) => void;
   onNameChange: (name: string) => void;
   onImport: () => void;
+  onExport: (format: 'csv' | 'xlsx') => void;
 }) {
   const { tables, selected, busy } = props;
 
@@ -114,7 +115,9 @@ function TablesTab(props: {
         onPreview={props.onPreview}
         onDelete={props.onDelete}
       />
-      {props.preview && <PreviewSection preview={props.preview} />}
+      {props.preview && (
+        <PreviewSection preview={props.preview} busy={props.busy} onExport={props.onExport} />
+      )}
 
       <section className="customize-section mt-4" aria-label="Import">
         <h3 className="customize-section-title">Tabelle importieren (Excel/CSV)</h3>
@@ -194,12 +197,42 @@ function TablesList(props: {
 }
 
 /** Preview table for the selected table. */
-function PreviewSection({ preview }: { preview: AdminTablePreview }) {
+function PreviewSection({
+  preview,
+  busy,
+  onExport,
+}: {
+  preview: AdminTablePreview;
+  busy: boolean;
+  onExport: (format: 'csv' | 'xlsx') => void;
+}) {
   return (
     <section className="customize-section" aria-label="Vorschau">
-      <h3 className="customize-section-title">
-        {preview.schema}.{preview.table}
-      </h3>
+      <div className="d-flex align-items-center justify-content-between gap-2">
+        <h3 className="customize-section-title mb-0">
+          {preview.schema}.{preview.table}
+        </h3>
+        <div className="btn-group" role="group" aria-label="Tabelle exportieren">
+          <button
+            type="button"
+            className="btn btn-outline-secondary btn-sm"
+            onClick={() => onExport('csv')}
+            disabled={busy}
+            title="Als CSV herunterladen"
+          >
+            CSV
+          </button>
+          <button
+            type="button"
+            className="btn btn-outline-secondary btn-sm"
+            onClick={() => onExport('xlsx')}
+            disabled={busy}
+            title="Als Excel-Datei herunterladen"
+          >
+            XLSX
+          </button>
+        </div>
+      </div>
       <div className="table-responsive" style={{ maxHeight: '320px' }}>
         <table className="table table-sm table-striped align-top">
           <thead>
@@ -514,6 +547,20 @@ export function AdminPanel({ open, onClose }: AdminPanelProps) {
     if (data) setPreview(data);
   }
 
+  /** Download the selected table as CSV or XLSX (read-only export). */
+  async function handleExport(format: 'csv' | 'xlsx') {
+    if (!selected) return;
+    const done = await run(async () => {
+      await adminDownload(
+        `/tables/${encodeURIComponent(selected)}/export?format=${format}`,
+        token,
+        `${selected}.${format}`
+      );
+      return true;
+    });
+    if (done) ok(`Export gestartet – bitte Downloads prüfen.`);
+  }
+
   async function handleDeleteTable(name: string) {
     if (!window.confirm(`Tabelle "${name}" wirklich löschen? Alle Daten gehen verloren.`)) {
       return;
@@ -687,6 +734,7 @@ export function AdminPanel({ open, onClose }: AdminPanelProps) {
                   onFileChange={(file) => setImportFile(file)}
                   onNameChange={(name) => setImportName(name)}
                   onImport={() => void handleImport()}
+                  onExport={(format) => void handleExport(format)}
                 />
               ) : (
                 <RelationsTab

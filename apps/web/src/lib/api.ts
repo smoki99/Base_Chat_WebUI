@@ -51,3 +51,49 @@ export async function adminRequest<T>(path: string, token: string, init?: Reques
   if (payload && 'data' in payload) return payload.data as T;
   return payload as unknown as T;
 }
+
+/**
+ * Download a binary file from the admin API and trigger a browser save.
+ *
+ * The admin token stays in the `Authorization` header (never in the URL).
+ * The filename is taken from the `Content-Disposition` header with a
+ * fallback.
+ *
+ * @param path          - Route path relative to `/api/admin`, e.g. `/tables/products/export?format=csv`.
+ * @param token         - Admin token (sent as `Authorization: Bearer <token>`).
+ * @param fallbackName  - Filename used when the server does not send one.
+ */
+export async function adminDownload(
+  path: string,
+  token: string,
+  fallbackName: string
+): Promise<void> {
+  const headers = new Headers();
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+  let res: Response;
+  try {
+    res = await fetch(`/api/admin${path}`, { headers });
+  } catch {
+    throw new ApiError(0, 'API nicht erreichbar');
+  }
+  if (!res.ok) {
+    const payload = (await res.json().catch(() => null)) as {
+      error?: { message?: string };
+    } | null;
+    throw new ApiError(
+      res.status,
+      payload?.error?.message ?? `Export fehlgeschlagen (${res.status})`
+    );
+  }
+  const blob = await res.blob();
+  const dispo = res.headers.get('Content-Disposition') ?? '';
+  const match = /filename="?([^";]+)"?/.exec(dispo);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = match?.[1] ?? fallbackName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}

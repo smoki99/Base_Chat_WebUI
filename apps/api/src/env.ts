@@ -90,4 +90,12 @@ export const env = {
   get ADMIN_TOKEN(): string | undefined {
     return optionalString('ADMIN_TOKEN');
   },
+
+  /**
+   * Max rows per admin table export (CSV/XLSX). Default: 10000.
+   * The per-request `limit` can only go lower, never above this cap.
+   */
+  get ADMIN_EXPORT_MAX_ROWS(): number {
+    return intFromEnv('ADMIN_EXPORT_MAX_ROWS', 10_000);
+  },
 };

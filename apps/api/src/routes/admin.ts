@@ -7,6 +7,7 @@ import {
   createRelation,
   deleteRelation,
   deleteTable,
+  exportTable,
   importTable,
   listRelations,
   listTables,
@@ -46,6 +47,26 @@ adminRouter.get('/tables/:name/preview', async (req, res, next) => {
   try {
     const data = await previewTable(req.params.name, Number(req.query.limit ?? 50));
     res.json({ data });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/admin/tables/:name/export?format=csv|xlsx&limit=n
+ * Downloads the table as a CSV (UTF-8 BOM) or XLSX file.
+ * Row cap: ADMIN_EXPORT_MAX_ROWS (default 10000); `limit` may go lower.
+ */
+adminRouter.get('/tables/:name/export', async (req, res, next) => {
+  try {
+    const file = await exportTable(
+      req.params.name,
+      typeof req.query.format === 'string' ? req.query.format : '',
+      req.query.limit
+    );
+    res.setHeader('Content-Type', file.contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${file.filename}"`);
+    res.send(file.buffer);
   } catch (err) {
     next(err);
   }
