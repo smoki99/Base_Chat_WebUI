@@ -245,6 +245,64 @@ describe('createOpenAIProvider', () => {
     expect(systemMsg.content).toContain('qmd.query');
   });
 
+  it('uses the admin-db system prompt when only admin-db tools are provided', async () => {
+    const mockJson = {
+      id: 'chat-admin-1',
+      choices: [{ message: { role: 'assistant', content: 'OK' } }],
+    };
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(mockFetchResponse(200, mockJson) as Response);
+
+    const adminTools = [
+      { name: 'admin-db.list_tables', description: 'List tables', parameters: { type: 'object' } },
+      {
+        name: 'admin-db.search_tables',
+        description: 'Search tables',
+        parameters: { type: 'object' },
+      },
+      {
+        name: 'admin-db.run_sql',
+        description: 'Run read-only SQL',
+        parameters: { type: 'object' },
+      },
+    ];
+    const provider = createOpenAIProvider({ baseUrl: 'http://localhost:1234/v1' });
+
+    await provider.reply('Welche Tabellen gibt es?', { tools: adminTools });
+
+    const fetchSpy = vi.mocked(global.fetch);
+    const callArgs = fetchSpy.mock.calls[0]![1] as RequestInit;
+    const body = JSON.parse(callArgs.body as string);
+    const systemMsg = body.messages.find((m: { role: string }) => m.role === 'system')!;
+    expect(systemMsg.content).toContain('admin-db.list_tables');
+    expect(systemMsg.content).toContain('admin-db.run_sql');
+    expect(systemMsg.content).toMatch(/read-only/i);
+    expect(systemMsg.content).not.toContain('sql.search_products');
+  });
+
+  it('combines the sql and admin-db prompts when both tool families are provided', async () => {
+    const mockJson = {
+      id: 'chat-sql-admin-1',
+      choices: [{ message: { role: 'assistant', content: 'OK' } }],
+    };
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(mockFetchResponse(200, mockJson) as Response);
+
+    const tools = [
+      { name: 'sql.search_products', description: 'Search', parameters: { type: 'object' } },
+      { name: 'admin-db.run_sql', description: 'Run SQL', parameters: { type: 'object' } },
+    ];
+    const provider = createOpenAIProvider({ baseUrl: 'http://localhost:1234/v1' });
+
+    await provider.reply('Was gibt es?', { tools });
+
+    const fetchSpy = vi.mocked(global.fetch);
+    const callArgs = fetchSpy.mock.calls[0]![1] as RequestInit;
+    const body = JSON.parse(callArgs.body as string);
+    const systemMsg = body.messages.find((m: { role: string }) => m.role === 'system')!;
+    expect(systemMsg.content).toContain('sql.search_products');
+    expect(systemMsg.content).toContain('admin-db.list_tables');
+    expect(systemMsg.content).toContain('Routing Rules');
+  });
+
   it('QMD prompt instructs to split compound words and avoid padding', async () => {
     const mockJson = {
       id: 'chat-qmd-1',

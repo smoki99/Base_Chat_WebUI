@@ -13,6 +13,14 @@
       "env": {
         "DATABASE_URL": "postgres://chatbot:chatbot@localhost:5432/chatbot"
       }
+    },
+    {
+      "name": "admin-db",
+      "command": "node",
+      "args": ["scripts/admin-db-mcp-server.mjs"],
+      "env": {
+        "DATABASE_URL": "postgres://chatbot:chatbot@localhost:5432/chatbot"
+      }
     }
   ]
 }

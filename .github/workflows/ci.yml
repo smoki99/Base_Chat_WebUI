@@ -141,3 +141,101 @@ jobs:
             console.log('OK: get_product');
             console.log(text);
           "
+
+      - name: Test admin-db initialize
+        run: |
+          echo '{"jsonrpc":"2.0","id":1,"method":"initialize"}' | \
+            DATABASE_URL=$DATABASE_URL node apps/api/scripts/admin-db-mcp-server.mjs | \
+            node -e "
+            const lines = require('fs').readFileSync('/dev/stdin','utf8').trim().split('\n');
+            const last = JSON.parse(lines[lines.length-1]);
+            if (last.result?.serverInfo?.name !== 'admin-db') {
+              console.error('FAIL: bad initialize response', JSON.stringify(last));
+              process.exit(1);
+            }
+            console.log('OK: admin-db initialize');
+          "
+
+      - name: Test admin-db list_tables
+        run: |
+          printf '%s\n' \
+            '{"jsonrpc":"2.0","id":1,"method":"initialize"}' \
+            '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"list_tables","arguments":{}}}' \
+            | DATABASE_URL=$DATABASE_URL node apps/api/scripts/admin-db-mcp-server.mjs | \
+          node -e "
+            const lines = require('fs').readFileSync('/dev/stdin','utf8').trim().split('\n');
+            const last = JSON.parse(lines[lines.length-1]);
+            const text = last.result?.content?.[0]?.text ?? '';
+            if (!text.includes('products')) {
+              console.error('FAIL: list_tables did not include the products table');
+              console.error(text);
+              process.exit(1);
+            }
+            console.log('OK: admin-db list_tables');
+            console.log(text);
+          "
+
+      - name: Test admin-db search_tables
+        run: |
+          printf '%s\n' \
+            '{"jsonrpc":"2.0","id":1,"method":"initialize"}' \
+            '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"search_tables","arguments":{"query":"sku"}}}' \
+            | DATABASE_URL=$DATABASE_URL node apps/api/scripts/admin-db-mcp-server.mjs | \
+          node -e "
+            const lines = require('fs').readFileSync('/dev/stdin','utf8').trim().split('\n');
+            const last = JSON.parse(lines[lines.length-1]);
+            const text = last.result?.content?.[0]?.text ?? '';
+            if (!text.toLowerCase().includes('products')) {
+              console.error('FAIL: search_tables did not match the products table');
+              console.error(text);
+              process.exit(1);
+            }
+            console.log('OK: admin-db search_tables');
+            console.log(text);
+          "
+
+      - name: Test admin-db run_sql (read-only SELECT)
+        run: |
+          printf '%s\n' \
+            '{"jsonrpc":"2.0","id":1,"method":"initialize"}' \
+            '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"run_sql","arguments":{"sql":"SELECT COUNT(*) AS n FROM products"}}}' \
+            | DATABASE_URL=$DATABASE_URL node apps/api/scripts/admin-db-mcp-server.mjs | \
+          node -e "
+            const lines = require('fs').readFileSync('/dev/stdin','utf8').trim().split('\n');
+            const last = JSON.parse(lines[lines.length-1]);
+            const text = last.result?.content?.[0]?.text ?? '';
+            if (!/Zeile/.test(text) || !/[0-9]+/.test(text)) {
+              console.error('FAIL: run_sql did not return row data');
+              console.error(text);
+              process.exit(1);
+            }
+            console.log('OK: admin-db run_sql SELECT');
+            console.log(text);
+          "
+
+      - name: Test admin-db run_sql rejects writes and multi-statements
+        run: |
+          for payload in \
+            '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"run_sql","arguments":{"sql":"DELETE FROM products"}}}' \
+            '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"run_sql","arguments":{"sql":"SELECT 1; DROP TABLE products"}}}' \
+            '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"run_sql","arguments":{"sql":"WITH x AS (DELETE FROM products RETURNING 1) SELECT * FROM x"}}}'; do
+            OUT=$(printf '%s\n' \
+              '{"jsonrpc":"2.0","id":1,"method":"initialize"}' \
+              "$payload" \
+              | DATABASE_URL=$DATABASE_URL node apps/api/scripts/admin-db-mcp-server.mjs)
+            LAST=$(printf '%s\n' "$OUT" | tail -n 1)
+            echo "$LAST" | node -e "
+              const last = JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));
+              const text = last.result?.content?.[0]?.text ?? '';
+              if (!/Verweigert/.test(text)) {
+                console.error('FAIL: write/multi-statement was NOT rejected');
+                console.error(text);
+                process.exit(1);
+              }
+            " || exit 1
+          done
+          # Database must be intact after the attempts
+          COUNT=$(psql "$DATABASE_URL" -tAc "SELECT COUNT(*) FROM products;")
+          echo "products rows after attack attempts: $COUNT"
+          [ "$COUNT" -gt 0 ] || { echo 'FAIL: products table was modified'; exit 1; }
+          echo 'OK: admin-db run_sql is read-only'

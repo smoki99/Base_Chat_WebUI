@@ -67,12 +67,16 @@ export const chatService = {
       options.history = history;
     }
     if (mcpContext && mcpContext.allTools.length > 0) {
-      // SQL tools (primary: structured product search) + QMD (fallback: recipes/knowledge).
+      // SQL tools (primary: structured product search) + QMD (fallback: recipes/knowledge)
+      // + admin-db (read-only access to imported tables: list/search/run SELECT).
       const allowedTools = new Set([
         'sql.search_products',
         'sql.get_product',
         'qmd.query',
         'qmd.multi_get',
+        'admin-db.list_tables',
+        'admin-db.search_tables',
+        'admin-db.run_sql',
       ]);
       const filteredTools = mcpContext.allTools.filter((t) => allowedTools.has(t.name));
       if (filteredTools.length === 0) {

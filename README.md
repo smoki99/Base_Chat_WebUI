@@ -16,15 +16,15 @@ Chat-Verhalten über JSON-Regeln steuerbar, Provider-agnostisch (Mock, OpenAI-ko
 ## Architektur
 
 ```
-┌────────────┐   HTTP    ┌────────────────┐   stdio   ┌──────────────┐
-│  React UI  │ ────────► │  Express API   │ ─────────► │  MCP-Server  │ (optional)
-│ :3000/5173 │           │  :4001 (tsx)   │            │  (qmd, sql)  │
-└────────────┘           └───────┬────────┘            └──────────────┘
-                                 │ HTTP
-                          ┌──────▼────────┐
-                          │ voz (Python)  │  TTS (edge-tts) + STT (Whisper)
-                          │ :8765         │
-                          └───────────────┘
+┌────────────┐   HTTP   ┌────────────────┐  stdio   ┌─────────────────────┐
+│  React UI  │ ──────►  │  Express API   │ ──────►  │      MCP-Server     │ (optional)
+│ :3000/5173 │          │  :4001 (tsx)   │          │ qmd, sql, admin-db  │
+└────────────┘          └───────┬────────┘          └─────────────────────┘
+                                │ HTTP
+                         ┌──────▼────────┐
+                         │ voz (Python)  │  TTS (edge-tts) + STT (Whisper)
+                         │ :8765         │
+                         └───────────────┘
 ```
 
 **Pakete**
@@ -125,7 +125,7 @@ Details: [`apps/voz/README.md`](apps/voz/README.md).
 
 ## MCP (Model Context Protocol)
 
-Die API kann optional MCP-Server als Chat-Tools anbinden (z. B. `sql`, `qmd`).
+Die API kann optional MCP-Server als Chat-Tools anbinden (z. B. `sql`, `qmd`, `admin-db`).
 MCP-Server laufen als **Subprozesse** der API – daher die Sicherheitseinstellungen:
 
 | Variable                 | Default | Beschreibung                                                                                                            |
