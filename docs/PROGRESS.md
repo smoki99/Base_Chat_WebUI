@@ -22,7 +22,7 @@ Issue #56).
 | 1–8   | Boilerplate, CI, Shared-DTOs, API, Chat-UI, E2E, Docs, Voice                                                | ✅             |
 | 29–33 | Qualitäts-Tore (size-limit, knip, dependency-cruiser), UI-Customization (Themes, Logo, Banner), Chat-Export | ✅             |
 | 34    | Postgres-Admin: MCP `admin-db` (read-only) + CSV/XLSX-Tabelle-Export                                        | ✅ (PR #57)    |
-| 35    | MCP-Chat-Export (Chat-Verlauf als MCP-Tool)                                                                 | ⏳ (Issue #56) |
+| 35    | MCP-Chat-Export: `export_table`-Tool + einmalige Download-Links im Chat                                     | ✅ (Issue #56) |
 
 > Details zu 29–33: `docs/DECISIONS.md` (Story-0032 UI-Customization u. a.).
 
@@ -77,9 +77,30 @@ Issue #56).
   `docs/ARCHITECTURE.md`, `docs/PROGRESS.md`.
 - PR: #57 · Issue: #53.
 
+### Story-0035: MCP-Chat-Export (einmalige Download-Links)
+
+- ✅ **Architektur (Abweichung von Issue #56):** On-Demand-Generierung statt
+  Temp-Dateien + Cleanup-Job – gemeinsame Postgres-Registry
+  `public.admin_exports` (Token, Tabelle, Format, Limit, TTL, `redeemed_at`);
+  Datei wird beim ersten Request generiert. Read-only bleibt gewahrt.
+- ✅ **MCP:** neues Tool `export_table` im `admin-db`-Server
+  (Validierung Format/Tabelle/Limit, Registry-Eintrag, liefert Markdown-Link
+  für den Chat, `API_BASE_URL` aus Env).
+- ✅ **API:** `GET /api/admin/exports/:token` – UUID-Selbsttoken als
+  Authentifizierung (kein Bearer), `404` unbekannt, `410` bereits genutzt oder
+  abgelaufen (TTL 15 Min), `Content-Disposition: attachment`,
+  `adminService.exportTable` wiederverwendet.
+- ✅ **Web:** keine Änderung nötig – `Markdown.tsx` rendert Links bereits als
+  `<a target="_blank">` (Vite-Proxy bzw. nginx in Produktion).
+- ✅ Tests: 6 MCP-stdio-Tests (Validierung, Link, Registry-SQL, Cleanup,
+  Tools/list) + 6 Route-Tests (404/410/200 CSV+XLSX, Limit, `redeemed`);
+  Smoke-Test gegen echtes Postgres: MCP-Call → 200 CSV → 410 → 410 (expired)
+  → 404.
+- ✅ Doku-Sync: `README.md`, `docs/API.md` (neuer Endpunkt),
+  `docs/DECISIONS.md` (On-Demand + Einmaligkeit/TTL).
+- Issue: #56.
+
 ## Offene Punkte / Nächstes Ziel
 
-- [ ] **Story-0035 (Issue #56):** MCP-Chat-Export – Chat-Verlauf als
-      MCP-Tool exportierbar (JSON/Markdown), baut auf der Admin-Export-Basis auf.
 - [ ] Admin: weitere Typableitungen/Edge-Cases beim Import (z. B. Datumsformate).
 - [ ] UX-Details: Konversations-Historie über Session-Grenzen (Persistenz).

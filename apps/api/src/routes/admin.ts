@@ -14,6 +14,7 @@ import {
   previewTable,
   toAdminError,
 } from '../services/adminService';
+import { getExportEntry, markExportRedeemed } from '../services/exportRegistry';
 
 /**
  * Admin routes – Postgres table manager.
@@ -28,6 +29,31 @@ const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: MAX_UPLOAD_BYTES }, // eslint-disable-line sonarjs/content-length -- explicit 25 MB cap, intentional
+});
+
+/**
+ * One-time chat export link (Story-0035) – registered BEFORE requireAdmin:
+ * the token in the URL is the authorization itself (no Bearer needed).
+ * 404 unknown token · 410 expired or already redeemed.
+ * The file is generated on demand (no temp files, no cleanup job).
+ */
+adminRouter.get('/exports/:token', async (req, res, next) => {
+  try {
+    const entry = await getExportEntry(req.params.token);
+    if (entry.redeemedAt !== null) {
+      throw new AdminError(410, 'Export link already used');
+    }
+    if (entry.expiresAt.getTime() <= Date.now()) {
+      throw new AdminError(410, 'Export link expired');
+    }
+    const file = await exportTable(`${entry.schema}.${entry.table}`, entry.format, entry.limit);
+    await markExportRedeemed(entry.token);
+    res.setHeader('Content-Type', file.contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${file.filename}"`);
+    res.send(file.buffer);
+  } catch (err) {
+    next(err);
+  }
 });
 
 adminRouter.use(requireAdmin);
