@@ -4,21 +4,36 @@
  * (imported tables from the Admin-UI) via the MCP stdio protocol.
  *
  * Server name: admin-db
- * Tools:       list_tables, search_tables, run_sql (strictly read-only)
+ * Tools:       list_tables, search_tables, run_sql (strictly read-only),
+ *              export_table (one-time chat download links, Story-0035)
  * Usage:       node scripts/admin-db-mcp-server.mjs
- * Env:         DATABASE_URL
+ * Env:         DATABASE_URL, API_BASE_URL (default http://127.0.0.1:4001),
+ *              ADMIN_EXPORT_MAX_ROWS (default 10000)
  *
  * Security: run_sql validates the statement (lib/admin-sql-guard.mjs) and
  * executes it inside a READ ONLY transaction – writes are impossible.
+ * export_table only registers internal metadata in public.admin_exports;
+ * data tables stay read-only.
  */
 import { Client } from 'pg';
 import { createInterface } from 'node:readline';
+import { randomUUID } from 'node:crypto';
 import { validateReadOnlySql } from './lib/admin-sql-guard.mjs';
 
 const DATABASE_URL =
   process.env.DATABASE_URL ?? 'postgres://chatbot:chatbot@localhost:5432/chatbot';
 const MAX_ROWS = Math.min(Number(process.env.ADMIN_MCP_MAX_ROWS) || 200, 1000);
 const STATEMENT_TIMEOUT_MS = Number(process.env.ADMIN_MCP_STATEMENT_TIMEOUT_MS) || 10_000;
+
+// Chat export links (Story-0035): base URL of the API that serves
+// GET /api/admin/exports/:token, plus the row cap for exports.
+const API_BASE_URL = (() => {
+  const raw = (process.env.API_BASE_URL ?? 'http://127.0.0.1:4001').trim();
+  return raw.endsWith('/') ? raw.slice(0, -1) : raw;
+})();
+const EXPORT_MAX_ROWS = Math.min(Number(process.env.ADMIN_EXPORT_MAX_ROWS) || 10_000, 100_000);
+const EXPORT_TTL_MS = 15 * 60 * 1000; // one-time link, valid for 15 minutes
+const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_$]*$/;
 
 const TOOLS = [
   {
@@ -52,6 +67,30 @@ const TOOLS = [
         },
       },
       required: ['sql'],
+    },
+  },
+  {
+    name: 'export_table',
+    description:
+      'Create a one-time download link for a table as CSV or XLSX. The file is generated on demand by the API (no data leaves the server before the user clicks). The link is valid for 15 minutes and can only be used once. Returns a Markdown link – share it in the chat so the user can download the file.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        table: {
+          type: 'string',
+          description: 'Table name ("products" or "schema.products")',
+        },
+        format: {
+          type: 'string',
+          enum: ['csv', 'xlsx'],
+          description: 'File format (default: csv)',
+        },
+        limit: {
+          type: 'integer',
+          description: 'Maximum number of rows (default: all rows up to the server cap)',
+        },
+      },
+      required: ['table'],
     },
   },
 ];
@@ -179,6 +218,93 @@ async function runSql({ sql }) {
   });
 }
 
+/** Validate export_table arguments (format defaults to csv). */
+function validateExportArgs(table, format, limit) {
+  const fmt = format === undefined || format === null || format === '' ? 'csv' : format;
+  if (fmt !== 'csv' && fmt !== 'xlsx') throw new Error('format must be "csv" or "xlsx"');
+
+  const parts = String(table ?? '')
+    .trim()
+    .split('.');
+  if (parts.length < 1 || parts.length > 2) throw new Error('Expected "table" or "schema.table"');
+  const checkIdentifier = (name, field) => {
+    if (!IDENTIFIER.test(name)) throw new Error(`Invalid ${field} "${name}"`);
+    return name;
+  };
+  const schema = parts.length === 2 ? checkIdentifier(parts[0], 'schema') : 'public';
+  const tableName = checkIdentifier(parts[parts.length - 1], 'table name');
+
+  const cap = EXPORT_MAX_ROWS;
+  let lim = cap;
+  if (limit !== undefined && limit !== null && limit !== '') {
+    const n = Number(limit);
+    if (!Number.isInteger(n) || n < 1) throw new Error('limit must be a positive integer');
+    lim = Math.min(n, cap);
+  }
+  return { schema, tableName, fmt, lim };
+}
+
+/**
+ * Register a one-time export link in the shared Postgres registry
+/**
+ * Register a one-time export link in the shared Postgres registry
+ * (public.admin_exports) and return a Markdown download link.
+ *
+ * NOTE: the registry DDL below is duplicated from
+ * apps/api/src/services/exportRegistry.ts (this script cannot import
+ * TypeScript) – keep both in sync. The registry holds internal metadata
+ * only; the data tables themselves stay read-only.
+ */
+/** Create the registry row for a new one-time export link. */
+async function createExportRow(client, schema, tableName, fmt, lim) {
+  const exists = await client.query(
+    `SELECT 1 FROM information_schema.tables
+      WHERE table_schema = $1 AND table_name = $2`,
+    [schema, tableName]
+  );
+  if (exists.rows.length === 0) {
+    throw new Error(`Table "${schema}.${tableName}" not found`);
+  }
+
+  await client.query(
+    `CREATE TABLE IF NOT EXISTS public.admin_exports (
+       token       UUID PRIMARY KEY,
+       table_schema TEXT NOT NULL,
+       table_name  TEXT NOT NULL,
+       format      TEXT NOT NULL CHECK (format IN ('csv', 'xlsx')),
+       row_limit   INTEGER NOT NULL CHECK (row_limit > 0),
+       created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+       expires_at  TIMESTAMPTZ NOT NULL,
+       redeemed_at TIMESTAMPTZ
+     )`
+  );
+  // Opportunistic cleanup of expired links.
+  await client.query('DELETE FROM public.admin_exports WHERE expires_at < now()');
+
+  const token = randomUUID();
+  const expiresAt = new Date(Date.now() + EXPORT_TTL_MS);
+  await client.query(
+    `INSERT INTO public.admin_exports
+       (token, table_schema, table_name, format, row_limit, expires_at)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [token, schema, tableName, fmt, lim, expiresAt]
+  );
+  return token;
+}
+
+async function exportTable({ table, format, limit }) {
+  const { schema, tableName, fmt, lim } = validateExportArgs(table, format, limit);
+
+  return withClient(async (client) => {
+    const token = await createExportRow(client, schema, tableName, fmt, lim);
+    const url = `${API_BASE_URL}/api/admin/exports/${token}`;
+    return (
+      `Export-Link erstellt: [${tableName}.${fmt} herunterladen](${url})\n\n` +
+      'Hinweis: Der Link ist einmalig und 15 Minuten gültig – bitte direkt im Chat teilen.'
+    );
+  });
+}
+
 function respond(id, result) {
   process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id, result }) + '\n');
 }
@@ -186,6 +312,20 @@ function respond(id, result) {
 function respondError(id, code, message) {
   process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id, error: { code, message } }) + '\n');
 }
+
+/** Dispatch table for tools/call (keeps handleRequest simple). */
+const TOOL_HANDLERS = {
+  list_tables: () => listTables(),
+  search_tables: (args) => searchTables(args),
+  run_sql: (args) => runSql(args),
+  export_table: async (args) => {
+    try {
+      return await exportTable(args);
+    } catch (err) {
+      return `Fehler: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  },
+};
 
 async function handleRequest(msg) {
   const id = msg.id ?? 0;
@@ -208,14 +348,12 @@ async function handleRequest(msg) {
       case 'tools/call': {
         const name = params.name;
         const args = params.arguments ?? {};
-        let result;
-        if (name === 'list_tables') result = await listTables();
-        else if (name === 'search_tables') result = await searchTables(args);
-        else if (name === 'run_sql') result = await runSql(args);
-        else {
+        const handler = TOOL_HANDLERS[name];
+        if (!handler) {
           respondError(id, -32601, `Unknown tool: ${name}`);
           return;
         }
+        const result = await handler(args);
         respond(id, { content: [{ type: 'text', text: result }] });
         break;
       }

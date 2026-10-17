@@ -11,7 +11,7 @@ Chat-Verhalten über JSON-Regeln steuerbar, Provider-agnostisch (Mock, OpenAI-ko
 - 🛡️ Sicherheit: `helmet`, CORS-Whitelist, Rate-Limit, Input-Sanitizing, JSON-Size-Limit
 - 🔊 Voice: TTS (edge-tts) + STT (Whisper) über den `voz`-Sidecar
 - 🗄️ Admin-Panel: Excel/CSV-Import nach PostgreSQL, Schema-Vorschau, **CSV/XLSX-Export**
-- 🧩 MCP-Tools für den Chat: `qmd`, `sql`, `admin-db` (read-only SQL auf importierte Tabellen)
+- 🧩 MCP-Tools für den Chat: `qmd`, `sql`, `admin-db` (read-only SQL auf importierte Tabellen) + `export_table` (einmalige Download-Links für Tabellen, direkt im Chat teilbar)
 - 🎨 UI-Customization: Themes, Logo & Banner (client-seitig, `localStorage`)
 - 📦 Monorepo mit npm Workspaces, zentraler Prettier/ESLint-Konfiguration
 - 🧪 Tests mit Vitest (API + Web), `dependency-cruiser` gegen Zyklen
@@ -152,13 +152,14 @@ MCP_CONFIG_FILE=./apps/api/mcp-config.json MCP_ENABLED_SERVERS=sql npm run dev -
 
 Das Admin-Panel (Dialog im Web) verwaltet eine lokale PostgreSQL-Datenbank:
 
-| Feature        | Beschreibung                                                                  |
-| -------------- | ----------------------------------------------------------------------------- |
-| **Import**     | Excel/CSV-Datei (max. 25 MB) → neue Tabelle inkl. automatischer Typableitung  |
-| **Vorschau**   | Spalten + erste 20 Zeilen einer Tabelle (read-only)                           |
-| **Export**     | `CSV` (BOM + RFC-4180, Excel-kompatibel) oder `XLSX` – serverseitig generiert |
-| **Relationen** | Fremdschlüssel-Beziehungen anlegen/listen/löschen                             |
-| **Löschen**    | Tabelle per `DROP` entfernen                                                  |
+| Feature         | Beschreibung                                                                                                                                           |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Import**      | Excel/CSV-Datei (max. 25 MB) → neue Tabelle inkl. automatischer Typableitung                                                                           |
+| **Vorschau**    | Spalten + erste 20 Zeilen einer Tabelle (read-only)                                                                                                    |
+| **Export**      | `CSV` (BOM + RFC-4180, Excel-kompatibel) oder `XLSX` – serverseitig generiert                                                                          |
+| **Chat-Export** | LLM erzeugt über das MCP-Tool `export_table` einen **einmaligen Download-Link** (CSV/XLSX) und teilt ihn im Chat – gültig 15 Min., on-demand generiert |
+| **Relationen**  | Fremdschlüssel-Beziehungen anlegen/listen/löschen                                                                                                      |
+| **Löschen**     | Tabelle per `DROP` entfernen                                                                                                                           |
 
 - Auth: `ADMIN_TOKEN` als `Authorization: Bearer <Token>`; ohne Token sind alle
   Admin-Routen deaktiviert (403).

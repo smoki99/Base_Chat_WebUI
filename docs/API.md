@@ -134,16 +134,17 @@ Alle Fehlerantworten folgen demselben Schema:
 
 ### Endpunkte im Überblick
 
-| Method   | Pfad                               | Zweck                                  |
-| -------- | ---------------------------------- | -------------------------------------- |
-| `GET`    | `/api/admin/tables`                | Tabellen & Views auflisten             |
-| `GET`    | `/api/admin/tables/:name/preview`  | Spalten + Zeilen-Vorschau (read-only)  |
-| `GET`    | `/api/admin/tables/:name/export`   | Tabelle als CSV/XLSX herunterladen     |
-| `POST`   | `/api/admin/tables/import`         | Excel/CSV als neue Tabelle importieren |
-| `DELETE` | `/api/admin/tables/:name`          | Tabelle löschen (`DROP`)               |
-| `GET`    | `/api/admin/relations`             | Fremdschlüssel-Beziehungen auflisten   |
-| `POST`   | `/api/admin/relations`             | Fremdschlüssel anlegen                 |
-| `DELETE` | `/api/admin/relations/:constraint` | Fremdschlüssel löschen                 |
+| Method   | Pfad                               | Zweck                                            |
+| -------- | ---------------------------------- | ------------------------------------------------ |
+| `GET`    | `/api/admin/tables`                | Tabellen & Views auflisten                       |
+| `GET`    | `/api/admin/tables/:name/preview`  | Spalten + Zeilen-Vorschau (read-only)            |
+| `GET`    | `/api/admin/tables/:name/export`   | Tabelle als CSV/XLSX herunterladen               |
+| `GET`    | `/api/admin/exports/:token`        | Einmaliger Chat-Export-Link (MCP `export_table`) |
+| `POST`   | `/api/admin/tables/import`         | Excel/CSV als neue Tabelle importieren           |
+| `DELETE` | `/api/admin/tables/:name`          | Tabelle löschen (`DROP`)                         |
+| `GET`    | `/api/admin/relations`             | Fremdschlüssel-Beziehungen auflisten             |
+| `POST`   | `/api/admin/relations`             | Fremdschlüssel anlegen                           |
+| `DELETE` | `/api/admin/relations/:constraint` | Fremdschlüssel löschen                           |
 
 `<name>` = `<schema>.<tabelle>` (z. B. `public.produtos`); `<constraint>` =
 Postgres-Constraint-Name.
@@ -231,6 +232,31 @@ Lädt die Tabelle als **Datei-Download** (kein JSON-Envelope).
 | ------ | ----------------------------------------------------- |
 | `400`  | `format` ≠ `csv`/`xlsx` · `limit` ungültig oder > Cap |
 | `404`  | Tabelle/View nicht gefunden                           |
+
+---
+
+### GET /api/admin/exports/:token
+
+Einmaliger Download-Link für einen Tabellen-Export – wird vom MCP-Tool
+`export_table` (admin-db) erzeugt und als Markdown-Link im Chat geteilt.
+Die Datei wird **on-demand** generiert (keine Temp-Dateien).
+
+> **Kein Bearer-Token nötig:** Der UUID-Selbsttoken ist der Zugriffsschutz.
+
+**Response `200`** – wie `GET /api/admin/tables/:name/export`
+(`Content-Disposition: attachment`, CSV mit BOM bzw. XLSX)
+
+**Fehler**
+
+| Status | Bedingung                                                                 |
+| ------ | ------------------------------------------------------------------------- |
+| `404`  | Token unbekannt (z. B. gelöscht)                                          |
+| `410`  | Link bereits einmal genutzt (`redeemed`) oder abgelaufen (Default 15 Min) |
+
+**Ablauf:** LLM ruft `export_table` auf → MCP-Server legt eine Zeile in der
+Registry-Tabelle `public.admin_exports` an → LLM teilt den Markdown-Link im
+Chat → Browser lädt die Datei über diesen Endpunkt → Link wird als
+verbraucht markiert (zweiter Klick: `410`).
 
 ---
 
