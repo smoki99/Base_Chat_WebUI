@@ -5,7 +5,7 @@
  * to the API server in dev; the reverse proxy does the same in prod) and
  * respond with `{ "data": ... }` or `{ "error": { "message": ... } }`.
  */
-import type { CustomPrompt } from 'shared';
+import type { CustomPrompt, SystemStatus } from 'shared';
 
 /** Error thrown for non-2xx admin responses (or network failures). */
 export class ApiError extends Error {
@@ -134,6 +134,15 @@ async function apiRequest<T>(path: string, token: string, init?: RequestInit): P
 export async function fetchCustomPrompt(token: string): Promise<string> {
   const data = await apiRequest<CustomPrompt>('/api/chat/custom-prompt', token);
   return data.content;
+}
+
+/**
+ * Fetch the system status (Story-0037): LLM / database / voice reachability.
+ * Public endpoint (no token), used by the sidebar status dot and the
+ * Settings → Verbindung diagnostics tab.
+ */
+export async function fetchSystemStatus(): Promise<SystemStatus> {
+  return apiRequest<SystemStatus>('/api/status', '');
 }
 
 /** Store (or clear with `''`) the custom chatbot prompt. Returns stored text. */

@@ -1,6 +1,7 @@
 /** Shared types and DTOs for all workspaces. */
 
 export * from './admin';
+export * from './status';
 
 export interface ApiResponse<T> {
   data: T;

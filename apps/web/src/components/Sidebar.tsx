@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { StoredChat } from '../hooks/useChatHistory';
+import { StatusDot } from './StatusDot';
 
 interface SidebarProps {
   chats: StoredChat[];
@@ -82,6 +83,7 @@ export function Sidebar({
         <div className="sidebar-brand">
           {logo && <img className="sidebar-logo" src={logo} alt="Logo" />}
           <span className="sidebar-title">Chat</span>
+          <StatusDot />
         </div>
         <div className="sidebar-header-actions">
           <button

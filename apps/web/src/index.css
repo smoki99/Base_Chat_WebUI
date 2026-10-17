@@ -953,3 +953,88 @@ body {
 .customize-banner-toggle {
   margin-bottom: 1.25rem;
 }
+
+/* ── Story-0037: status dot (sidebar + diagnostics tab) ─────────────── */
+.status-dot {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: #94a3b8; /* loading / off – neutral */
+  flex: none;
+  box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.25);
+}
+
+.status-dot--ok {
+  background: #16a34a;
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.25);
+}
+
+.status-dot--mock {
+  background: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+}
+
+.status-dot--error {
+  background: #dc2626;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.25);
+}
+
+.sidebar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* ── Story-0037: settings "Verbindung" diagnostics tab ─────────────── */
+.diagnostics {
+  display: grid;
+  gap: 1rem;
+}
+
+.diagnostics-heading {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.diagnostics-instance code {
+  font-size: 0.85rem;
+}
+
+.diagnostics-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.diagnostics-table th,
+.diagnostics-table td {
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.diagnostics-table thead th {
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.diagnostics-table th[scope='row'] {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  white-space: nowrap;
+}
+
+.diagnostics-table td code {
+  font-size: 0.82rem;
+}
+
+.diagnostics-error {
+  color: #b91c1c;
+}

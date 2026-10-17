@@ -10,6 +10,8 @@ import type { Voice, VoiceCapabilities } from 'shared';
 
 const _raw = process.env.VOICE_SERVICE_URL ?? 'http://127.0.0.1:8765';
 const VOICE_URL = _raw.endsWith('/') ? _raw.slice(0, -1) : _raw;
+export const VOICE_SERVICE_URL = VOICE_URL;
+
 const DEFAULT_TIMEOUT_MS = 2000;
 
 // Short-lived capability cache (avoid hammering the sidecar on every request).
@@ -70,6 +72,38 @@ export async function getCapabilities(): Promise<VoiceCapabilities> {
   }
   cachedAt = now;
   return cachedCapabilities;
+}
+
+/**
+ * Probe the sidecar /health endpoint and report reachability with details.
+ * Unlike getCapabilities() (which degrades silently), this returns a `detail`
+ * string so the status UI can explain *why* the sidecar is unreachable.
+ */
+export async function probeVoice(timeoutMs = 5000): Promise<{
+  ok: boolean;
+  health?: SidecarHealth;
+  detail?: string;
+}> {
+  try {
+    const res = await fetchWithTimeout(`${VOICE_URL}/health`, {}, timeoutMs);
+    if (!res.ok) {
+      return { ok: false, detail: `voz /health antwortete mit HTTP ${res.status}` };
+    }
+    const health = (await res.json()) as SidecarHealth;
+    return { ok: true, health };
+  } catch (err) {
+    return { ok: false, detail: describeFetchError(err) };
+  }
+}
+
+/** Turns a fetch failure into a short, safe diagnostic string. */
+function describeFetchError(err: unknown): string {
+  const cause = (err as { cause?: { code?: string } } | null)?.cause?.code;
+  if (err instanceof DOMException && err.name === 'AbortError') return 'timeout (5 s)';
+  if (cause === 'ECONNREFUSED') return 'Verbindung verweigert (Port frei?)';
+  if (cause === 'ENOTFOUND') return 'Hostname unbekannt';
+  if (cause === 'ETIMEDOUT') return 'timeout (5 s)';
+  return err instanceof Error ? err.message : String(err);
 }
 
 /** Synthesize speech and return the raw audio bytes + content type. */
