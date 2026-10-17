@@ -87,3 +87,15 @@ def test_stt_serializes_inference_with_a_lock():
     import threading
 
     assert isinstance(voz.stt_lock, type(threading.Lock()))
+
+
+def test_voice_host_env_default_loopback(monkeypatch):
+    """VOICE_HOST unset -> local-first default 127.0.0.1."""
+    monkeypatch.delenv("VOICE_HOST", raising=False)
+    assert voz._resolve_host() == "127.0.0.1"
+
+
+def test_voice_host_env_override(monkeypatch):
+    """VOICE_HOST=0.0.0.0 -> reachable from other containers/machines."""
+    monkeypatch.setenv("VOICE_HOST", "0.0.0.0")
+    assert voz._resolve_host() == "0.0.0.0"

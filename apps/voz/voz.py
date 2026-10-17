@@ -39,6 +39,16 @@ def _resolve_port() -> int:
     return int(os.environ.get("VOICE_PORT", "8765"))
 
 
+def _resolve_host() -> str:
+    """Bind address from VOICE_HOST env, default 127.0.0.1 (local-first).
+
+    Set VOICE_HOST=0.0.0.0 to make the sidecar reachable from other
+    containers/machines (Docker deployment).
+    """
+    return os.environ.get("VOICE_HOST", "127.0.0.1")
+
+
+HOST = _resolve_host()
 PORT = _resolve_port()
 WHISPER_MODEL = os.environ.get("WHISPER_MODEL") or (
     "openai/whisper-large-v3-turbo" if DEVICE == "cuda" else "openai/whisper-small"
@@ -168,6 +178,6 @@ async def stt(req: Request):
 
 
 if __name__ == "__main__":
-    print(f"[voz] Voice sidecar · port {PORT} · device {DEVICE}", flush=True)
+    print(f"[voz] Voice sidecar · {HOST}:{PORT} · device {DEVICE}", flush=True)
     threading.Thread(target=_load_stt, daemon=True).start()
-    uvicorn.run(app, host="127.0.0.1", port=PORT, log_level="warning")
+    uvicorn.run(app, host=HOST, port=PORT, log_level="warning")
