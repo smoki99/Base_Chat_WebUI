@@ -23,6 +23,7 @@ Issue #56).
 | 29–33 | Qualitäts-Tore (size-limit, knip, dependency-cruiser), UI-Customization (Themes, Logo, Banner), Chat-Export | ✅             |
 | 34    | Postgres-Admin: MCP `admin-db` (read-only) + CSV/XLSX-Tabelle-Export                                        | ✅ (PR #57)    |
 | 35    | MCP-Chat-Export: `export_table`-Tool + einmalige Download-Links im Chat                                     | ✅ (Issue #56) |
+| 36    | Eigener Chatbot-Prompt: Prompt-Erweiterung in den Einstellungen (serverseitig)                              | 🟡 vorbereitet |
 
 > Details zu 29–33: `docs/DECISIONS.md` (Story-0032 UI-Customization u. a.).
 
@@ -100,7 +101,29 @@ Issue #56).
   `docs/DECISIONS.md` (On-Demand + Einmaligkeit/TTL).
 - Issue: #56.
 
+### Story-0036: Eigener Prompt für den Chatbot (vorbereitet)
+
+- 🟡 Status: vorbereitet – GitHub-Issue #60 (`Story-0036: …`) ist Single
+  Source of Truth. Ziel: Prompt-Erweiterung in den Einstellungen (neuer
+  Tab „Prompt"), serverseitige Persistenz auf dem Filesystem (gemeinsam
+  für alle Nutzer, nicht localStorage), Datei in `.gitignore`; der Text
+  wird dem LLM-Systemprompt hinzugefügt (Hilfe bei Begrifflichkeiten
+  importierter Tabellen/Spalten).
+- 10 Steps (Details im Issue #60):
+  1. shared-DTOs (`CustomPrompt`, `UpdateCustomPrompt`, `MAX_CUSTOM_PROMPT_CHARS`).
+  2. Store-Service `customPromptStore.ts` (atomares Schreiben, Env-Override, Tests).
+  3. `.gitignore` (`apps/api/data/`) + `.env.example` (Datei nie im Git-Index).
+  4. Routen `GET/PUT /api/chat/custom-prompt` (Validierung, Supertest).
+  5. Provider: `ReplyOptions.customPrompt` + Abschnitt `## Additional instructions`.
+  6. chatService-Wiring (Custom-Prompt pro Request laden).
+  7. Web: neuer Settings-Tab „Prompt“ (Editor, Zeichen-Zähler, Speichern, Status).
+  8. Web-API-Client (`fetchCustomPrompt` / `saveCustomPrompt`).
+  9. Doku-Sync (README, API, DECISIONS, PROGRESS).
+  10. `npm run check` + E2E grün, Conventional Commits, PR-Bereitschaft.
+- Offene Fragen (bei GO): Auth (Default: ohne Token), Dateipfad, Max-Länge.
+
 ## Offene Punkte / Nächstes Ziel
 
 - [ ] Admin: weitere Typableitungen/Edge-Cases beim Import (z. B. Datumsformate).
 - [ ] UX-Details: Konversations-Historie über Session-Grenzen (Persistenz).
+- [ ] Story-0036: Eigener Prompt für den Chatbot – vorbereitet (Issue #60), wartet auf GO.
