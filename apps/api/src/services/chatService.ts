@@ -68,7 +68,8 @@ export const chatService = {
     }
     if (mcpContext && mcpContext.allTools.length > 0) {
       // SQL tools (primary: structured product search) + QMD (fallback: recipes/knowledge)
-      // + admin-db (read-only access to imported tables: list/search/run SELECT).
+      // + admin-db (read-only access to imported tables: list/search/run SELECT
+      // and one-time chat export links via export_table, Story-0035).
       const allowedTools = new Set([
         'sql.search_products',
         'sql.get_product',
@@ -77,6 +78,7 @@ export const chatService = {
         'admin-db.list_tables',
         'admin-db.search_tables',
         'admin-db.run_sql',
+        'admin-db.export_table',
       ]);
       const filteredTools = mcpContext.allTools.filter((t) => allowedTools.has(t.name));
       if (filteredTools.length === 0) {
