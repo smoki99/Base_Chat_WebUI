@@ -6,7 +6,7 @@
 ┌────────────────────────────────────────────────────────────┐
 │  apps/web (React 19 + Vite)                                │
 │  – Holt Daten via fetch von der API                        │
-│  – VITE_API_URL (aus .env) oder Vite-Proxy in dev          │
+│  – relative /api/*-Pfade (dev: Vite-Proxy, prod: Reverse-Proxy) │
 │  – Importiert Typen aus packages/shared                    │
 └──────────────────────┬─────────────────────────────────────┘
                        │ HTTP / REST
@@ -36,14 +36,19 @@ definiert und von beiden Apps importiert:
 // packages/shared/src/index.ts
 export interface ChatMessage {
   id: string;
-  role: 'user' | 'assistant';
   content: string;
-  createdAt: string; // ISO-8601
 }
 
-/** Payload for sending a chat message. */
-export interface CreateChatMessage {
+/** A single message in the conversation history (role + content only). */
+export interface ChatHistoryMessage {
+  role: 'user' | 'assistant';
   content: string;
+}
+
+/** Request body for POST /api/chat. */
+export interface ChatRequest {
+  message: string;
+  history?: ChatHistoryMessage[];
 }
 
 export interface ApiResponse<T> {
@@ -98,21 +103,27 @@ dieses Format und werden in der Web-App zur Typisierung der Fetch-Antworten verw
 
 ## apps/api – Struktur
 
-| Verzeichnis                       | Zweck                                                        |
-| --------------------------------- | ------------------------------------------------------------ |
-| `src/routes/`                     | HTTP-Endpunkte: Routing, Request/Response, Validierung       |
-| `src/services/`                   | Business-Logik: rein, ohne HTTP-Abhängigkeiten               |
-| `src/services/providers/`         | Chat-Provider-Implementierungen (`mock`, `openai`)           |
-| `src/services/pgPool.ts`          | PostgreSQL-Verbindungspool (Admin: Import/Preview/Export)    |
-| `src/services/adminService.ts`    | Tabellen-Import, -Vorschau, -Export (CSV/XLSX), Relationen   |
-| `src/services/mcpClient.ts`       | MCP-Client: startet Server, ruft Tools als Chat-Tools auf    |
-| `scripts/admin-db-mcp-server.mjs` | MCP-Server `admin-db` (read-only SQL für den Chat)           |
-| `scripts/lib/admin-sql-guard.mjs` | SQL-Guard: nur `SELECT`/`WITH … SELECT`, DML/DDL blockiert   |
-| `mcp-config.json`                 | MCP-Server-Definitionen (Pflege wie Code – startet Befehle!) |
-| `src/config/`                     | JSON-Konfiguration laden & validieren (`chatbot.rules.json`) |
-| `src/app.ts`                      | Express-App-Instanz (export für Tests)                       |
-| `src/index.ts`                    | Server-Start (`app.listen`)                                  |
-| `src/__tests__/`                  | Integrationstests (Vitest + Supertest)                       |
+| Verzeichnis                         | Zweck                                                          |
+| ----------------------------------- | -------------------------------------------------------------- |
+| `src/routes/`                       | HTTP-Endpunkte: Routing, Request/Response, Validierung         |
+| `src/services/`                     | Business-Logik: rein, ohne HTTP-Abhängigkeiten                 |
+| `src/services/providers/`           | Chat-Provider-Implementierungen (`mock`, `openai`)             |
+| `src/services/pgPool.ts`            | PostgreSQL-Verbindungspool (Admin: Import/Preview/Export)      |
+| `src/services/adminService.ts`      | Tabellen-Import, -Vorschau, -Export (CSV/XLSX), Relationen     |
+| `src/services/chatService.ts`       | Chat-Logik: Provider-Auswahl, Context (History), Custom-Prompt |
+| `src/services/customPromptStore.ts` | Custom-Prompt-Persistenz (Datei, atomares Schreiben)           |
+| `src/services/voiceClient.ts`       | Voice-Client: TTS/STT/Capabilities via voz-Sidecar             |
+| `src/services/mcpClient.ts`         | MCP-Client: startet Server, ruft Tools als Chat-Tools auf      |
+| `scripts/admin-db-mcp-server.mjs`   | MCP-Server `admin-db` (read-only SQL für den Chat)             |
+| `scripts/lib/admin-sql-guard.mjs`   | SQL-Guard: nur `SELECT`/`WITH … SELECT`, DML/DDL blockiert     |
+| `scripts/sql-mcp-server.mjs`        | MCP-Server `sql` (`search_products`, `get_product`)            |
+| `scripts/qmd-setup.mjs`             | Initialisiert den `qmd`-Markdown-Suchindex (idempotent)        |
+| `scripts/setup-db.sh`               | PostgreSQL-Setup (Details: `DATABASE_SETUP.md`)                |
+| `mcp-config.json`                   | MCP-Server-Definitionen (Pflege wie Code – startet Befehle!)   |
+| `src/config/`                       | JSON-Konfiguration laden & validieren (`chatbot.rules.json`)   |
+| `src/app.ts`                        | Express-App-Instanz (export für Tests)                         |
+| `src/index.ts`                      | Server-Start (`app.listen`)                                    |
+| `src/__tests__/`                    | Integrationstests (Vitest + Supertest)                         |
 
 ## apps/web – Struktur
 
@@ -133,9 +144,11 @@ dieses Format und werden in der Web-App zur Typisierung der Fetch-Antworten verw
 
 ### Dev-Proxy
 
-In der Entwicklung proxys Vite `/api/*` auf `http://localhost:4001`,
-somit ist `VITE_API_URL` in dev nicht erforderlich.
-In Produktion wird `VITE_API_URL` aus der Environment gesetzt.
+Der Browser nutzt ausschließlich **relative `/api/*`-Pfade** (es gibt kein
+`VITE_API_URL` zur Laufzeit). In der Entwicklung proxys Vite `/api/*` auf
+`http://localhost:4001` (Override via `E2E_API_PORT`, Default: `4001`).
+In Produktion übernimmt ein Reverse-Proxy dieselbe same-origin-Rolle
+(siehe „CORS & Prod-Deployment“, Option B).
 
 ### CORS & Prod-Deployment
 
@@ -197,7 +210,8 @@ server {
    - `src/services/` – Business-Logik (keine HTTP-Kenntnisse)
 
 4. **apps/web**
-   - Holt Daten über `fetch` von der API (URL: `VITE_API_URL` oder Proxy)
+   - Holt Daten über `fetch` von der API (relative `/api/*`-Pfade;
+     dev: Vite-Proxy, Produktion: Reverse-Proxy)
    - Keine direkten Datenbankzugriffe
 
 5. **Konfiguration**

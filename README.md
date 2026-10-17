@@ -5,7 +5,8 @@ Chat-Verhalten über JSON-Regeln steuerbar, Provider-agnostisch (Mock, OpenAI-ko
 
 ## Features
 
-- 💬 Chat-UI mit Markdown, Code-Blöcken, Copy-Buttons und „Letzte 5" Verlauf
+- 💬 Chat-UI mit Markdown, Code-Blöcken, Copy-Buttons und Konversations-Verlauf
+  (letzte 20 Nachrichten, konfigurierbar via `VITE_CONTEXT_MESSAGES`)
 - 🧠 Chatbot-Regeln (JSON) werden serverseitig als System-Prompt injiziert
 - ✍️ Eigener Chatbot-Prompt: nutzerdefinierte Prompt-Erweiterung (z. B. Glossar
   für importierte Tabellen) in den Einstellungen – serverseitig gespeichert,
@@ -17,14 +18,14 @@ Chat-Verhalten über JSON-Regeln steuerbar, Provider-agnostisch (Mock, OpenAI-ko
 - 🧩 MCP-Tools für den Chat: `qmd`, `sql`, `admin-db` (read-only SQL auf importierte Tabellen) + `export_table` (einmalige Download-Links für Tabellen, direkt im Chat teilbar)
 - 🎨 UI-Customization: Themes, Logo & Banner (client-seitig, `localStorage`)
 - 📦 Monorepo mit npm Workspaces, zentraler Prettier/ESLint-Konfiguration
-- 🧪 Tests mit Vitest (API + Web), `dependency-cruiser` gegen Zyklen
+- 🧪 Tests: Vitest (API + Web) + Playwright-E2E, `dependency-cruiser` gegen Zyklen
 
 ## Architektur
 
 ```
 ┌────────────┐   HTTP   ┌────────────────┐  stdio   ┌─────────────────────┐
 │  React UI  │ ──────►  │  Express API   │ ──────►  │      MCP-Server     │ (optional)
-│ :3000/5173 │          │  :4001 (tsx)   │          │ qmd, sql, admin-db  │
+│   :5173    │          │  :4001 (tsx)   │          │ qmd, sql, admin-db  │
 └────────────┘          └───────┬────────┘          └─────────────────────┘
                                 │ HTTP
                          ┌──────▼────────┐
@@ -40,12 +41,11 @@ Chat-Verhalten über JSON-Regeln steuerbar, Provider-agnostisch (Mock, OpenAI-ko
 | `apps/web`         | React-UI (Vite, Bootstrap, react-markdown)     |
 | `apps/api`         | Express-API, Provider-Logik, MCP-Client        |
 | `apps/voz`         | Voice-Sidecar (FastAPI, TTS/STT)               |
-| `packages/config`  | Geteilte Prettier-/ESLint-Konfiguration        |
 | `markdown-knowhow` | Wissensbasis (Markdown), von MCP/`qmd` genutzt |
 
 ## Voraussetzungen
 
-- **Node.js ≥ 22** (siehe `.nvmrc`)
+- **Node.js ≥ 24** (siehe `.nvmrc`)
 - Optional: **Python ≥ 3.11** für den Voice-Sidecar
 - Optional: **PostgreSQL** für das SQL-Tool (MCP)
 
@@ -72,7 +72,6 @@ npm run dev                   # startet API (4001) + Web (5173) parallel
 | `CORS_ORIGIN`                | Erlaubte CORS-Origin(s), kommagetrennt. **Fail-closed:** in Produktion (`NODE_ENV=production`) werden Cross-Origin-Requests bei leerer Liste abgelehnt | leer (dev: alle)        |
 | `RATE_LIMIT_GENERAL`         | Rate-Limit (Requests/Fenster) für API-Routen (außer `/api/voice/*`)                                                                                    | `100` (60 s)            |
 | `RATE_LIMIT_VOICE`           | Rate-Limit (Requests/Fenster) für `/api/voice/*`                                                                                                       | `20` (60 s)             |
-| `VITE_API_URL`               | API-Basis-URL für das Web (prod)                                                                                                                       | `http://localhost:4001` |
 | `CHAT_PROVIDER`              | Aktiver Chat-Provider: `mock` oder `openai`                                                                                                            | `mock`                  |
 | `OPENAI_BASE_URL`            | Basis-URL für OpenAI-kompatible Endpunkte (z. B. `http://localhost:1234/v1`)                                                                           | leer                    |
 | `OPENAI_API_KEY`             | API-Key (leer = kein Header, z. B. für lokale Modelle)                                                                                                 | leer                    |

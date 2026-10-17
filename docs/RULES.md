@@ -51,7 +51,8 @@ npm run test:e2e -w web
 - Gemeinsame Typen/DTOs **immer** in `packages/shared` – nie duplizieren.
 - API-Antworten: `{ "data": ... }` oder `{ "error": { "message": ... } }`.
 - `apps/api`: Routen in `src/routes/`, Logik in `src/services/`.
-- `apps/web`: holt Daten via `fetch` (URL aus `VITE_API_URL`).
+- `apps/web`: holt Daten via `fetch` über **relative `/api/*`-Pfade** (dev:
+  Vite-Proxy, Produktion: Reverse-Proxy).
 
 ## 6. Git & Commits
 
@@ -140,4 +141,4 @@ gh pr diff <PR-Nummer> > /tmp/pr-diff.txt
 
 ---
 
-_Letzte Aktualisierung: 2026-10-11_
+_Letzte Aktualisierung: 2026-10-17_
