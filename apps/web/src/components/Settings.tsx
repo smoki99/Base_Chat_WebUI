@@ -3,6 +3,7 @@ import type { Voice } from 'shared';
 import { useVoiceContext } from '../voice/VoiceContext';
 import { CustomizeTab } from './CustomizeTab';
 import { PromptTab } from './PromptTab';
+import { DiagnosticsTab } from './DiagnosticsTab';
 
 interface SettingsProps {
   /** Controls whether the settings dialog is visible. */
@@ -11,7 +12,7 @@ interface SettingsProps {
   onClose: () => void;
 }
 
-type SettingsTab = 'voice' | 'appearance' | 'prompt';
+type SettingsTab = 'voice' | 'diagnostics' | 'appearance' | 'prompt';
 
 const SAMPLE_DE = 'Hallo! Dies ist dein gewähltes Sprachprofil.';
 const SAMPLE_PHRASES: Record<string, string> = {
@@ -71,7 +72,7 @@ export function Settings({ open, onClose }: SettingsProps) {
         aria-modal="true"
         aria-labelledby="settings-title"
       >
-        <div className="modal-dialog modal-dialog-centered">
+        <div className="modal-dialog modal-dialog-centered modal-lg">
           <div className="modal-content">
             <div className="modal-header">
               <h2 className="modal-title" id="settings-title">
@@ -101,6 +102,17 @@ export function Settings({ open, onClose }: SettingsProps) {
                   onClick={() => setActiveTab('voice')}
                 >
                   Stimme &amp; Sprache
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  id="settings-tab-diagnostics"
+                  className={`nav-link${activeTab === 'diagnostics' ? ' active' : ''}`}
+                  aria-selected={activeTab === 'diagnostics'}
+                  aria-controls="settings-panel-diagnostics"
+                  onClick={() => setActiveTab('diagnostics')}
+                >
+                  Verbindung
                 </button>
                 <button
                   type="button"
@@ -188,6 +200,15 @@ export function Settings({ open, onClose }: SettingsProps) {
                       Bestimmt, in welcher Sprache deine Spracheingabe erkannt wird.
                     </div>
                   </div>
+                </div>
+              )}
+              {activeTab === 'diagnostics' && (
+                <div
+                  role="tabpanel"
+                  id="settings-panel-diagnostics"
+                  aria-labelledby="settings-tab-diagnostics"
+                >
+                  <DiagnosticsTab />
                 </div>
               )}
               {activeTab === 'appearance' && (

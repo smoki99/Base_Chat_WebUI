@@ -108,4 +108,52 @@ describe('Settings', () => {
     expect(voiceSelect).toBeDisabled();
     expect(screen.getByText(/Voice-Sidecar nicht erreichbar/i)).toBeInTheDocument();
   });
+
+  it('renders the "Verbindung" diagnostics tab and its content (Story-0037)', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.includes('/api/voice/capabilities')) {
+        return { ok: true, json: async () => caps } as unknown as Response;
+      }
+      if (url.includes('/api/status')) {
+        return {
+          ok: true,
+          json: async () => ({
+            data: {
+              uptime: 12,
+              api: { host: '0.0.0.0', port: 4001, ip: '172.17.0.3' }, // eslint-disable-line sonarjs/no-hardcoded-ip
+              llm: {
+                ok: false,
+                configured: true,
+                provider: 'openai',
+                endpoint: 'http://localhost:1234/v1',
+                detail: 'LLM nicht erreichbar: ECONNREFUSED',
+              },
+              database: { ok: true, configured: true, endpoint: '172.17.0.2:5432', latencyMs: 5 },
+              voice: {
+                ok: true,
+                configured: true,
+                tts: true,
+                stt: true,
+                endpoint: 'http://127.0.0.1:8765',
+              },
+            },
+          }),
+        } as unknown as Response;
+      }
+      return { ok: false, status: 404, json: async () => ({}) } as unknown as Response;
+    });
+
+    renderSettings();
+    const tab = await screen.findByRole('tab', { name: 'Verbindung' });
+    await user.click(tab);
+
+    // The panel shows the own instance address and the per-service rows.
+    expect(screen.getByRole('tabpanel', { name: 'Verbindung' })).toBeInTheDocument();
+    expect(await screen.findByText(/Eigene Instanz/)).toBeInTheDocument();
+    expect(screen.getByText(/172\.17\.0\.3:4001/)).toBeInTheDocument();
+    expect(screen.getByText(/ECONNREFUSED/)).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Testen' })).toHaveLength(3);
+  });
 });

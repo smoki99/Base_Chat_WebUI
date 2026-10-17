@@ -21,7 +21,7 @@ import { loadCustomPrompt } from './customPromptStore';
 let cachedProvider: ChatProvider | null = null;
 let mcpContext: McpContext | null = null;
 
-function getProviderName(): string {
+export function getProviderName(): string {
   return process.env.CHAT_PROVIDER ?? 'mock';
 }
 

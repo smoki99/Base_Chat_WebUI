@@ -8,6 +8,7 @@ import { healthRouter } from './routes/health';
 import { chatRouter } from './routes/chat';
 import { voiceRouter } from './routes/voice';
 import { adminRouter } from './routes/admin';
+import { statusRouter } from './routes/status';
 
 const app = express();
 app.disable('x-powered-by');
@@ -73,6 +74,7 @@ export async function resetRateLimits(): Promise<void> {
 }
 
 app.use(healthRouter);
+app.use(statusRouter);
 app.use('/api/voice', voiceLimiter);
 app.use(generalLimiter);
 app.use('/api/admin', adminRouter);
