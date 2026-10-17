@@ -1,0 +1,40 @@
+# base-chat-webui – voice sidecar stack (5090 machine, LAN-only!)
+#
+# voz: TTS (edge-tts, online) + STT (Whisper on GPU or CPU).
+# The base file runs WITHOUT a GPU reservation – torch auto-detects the
+# device (no CUDA device -> CPU + whisper-small). Add the GPU override to
+# reserve the 5090 (requires nvidia-container-toolkit on the host):
+#
+#   CPU (no toolkit needed):
+#     docker compose -f deploy/voz/docker-compose.yml up -d
+#   GPU (needs nvidia-container-toolkit):
+#     docker compose -f deploy/voz/docker-compose.yml \
+#                    -f deploy/voz/docker-compose.gpu.yml up -d
+#
+# SECURITY: port 8765 is unauthenticated – keep it on the LAN, never the
+# internet. LM Studio (1234) follows the same rule.
+
+name: voz
+
+services:
+  voz:
+    image: ghcr.io/smoki99/base-chat-webui-voz:latest
+    build:
+      context: ../../apps/voz
+      dockerfile: Dockerfile
+    ports:
+      # LAN-only – do not expose to the internet (unauthenticated service)
+      - '${VOICE_PORT:-8765}:8765'
+    environment:
+      # Bind the container network interface (default is 127.0.0.1)
+      VOICE_HOST: 0.0.0.0
+      VOICE_PORT: '8765'
+      # Whisper model auto-selected by voz.py: CUDA → large-v3-turbo, CPU → small
+      # (override with WHISPER_MODEL if needed)
+    volumes:
+      # Hugging Face model cache – survives restarts (no re-download)
+      - hf-cache:/home/voz/.cache/huggingface
+    restart: unless-stopped
+
+volumes:
+  hf-cache:
