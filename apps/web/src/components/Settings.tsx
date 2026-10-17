@@ -72,7 +72,7 @@ export function Settings({ open, onClose }: SettingsProps) {
         aria-modal="true"
         aria-labelledby="settings-title"
       >
-        <div className="modal-dialog modal-dialog-centered">
+        <div className="modal-dialog modal-dialog-centered modal-lg">
           <div className="modal-content">
             <div className="modal-header">
               <h2 className="modal-title" id="settings-title">
