@@ -1,4 +1,10 @@
-import { Workbook } from 'exceljs';
+import { createRequire } from 'node:module';
+import type * as ExcelJS from 'exceljs';
+
+// exceljs bundles its CommonJS exports in a way Node's ESM loader cannot
+// statically detect, so load it through CJS require instead of a named ESM
+// import (which throws "does not provide an export named 'Workbook'").
+const { Workbook } = createRequire(import.meta.url)('exceljs') as typeof import('exceljs');
 import type {
   AdminImportResult,
   AdminRelation,
@@ -156,21 +162,8 @@ function normalizeCellValue(value: unknown): unknown {
 
 /** Minimal RFC-4180 CSV parser (quotes, escaped quotes, CRLF). */
 export function parseCsv(text: string): string[][] {
-  const lines: string[] = [];
-  let line = '';
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i]!;
-    if (ch === '\n' || ch === '\r') {
-      if (ch === '\r' && text[i + 1] === '\n') i++;
-      lines.push(line);
-      line = '';
-      continue;
-    }
-    line += ch;
-  }
-  if (line !== '' || lines.length === 0) lines.push(line);
-  const rows = lines.map((l) => parseCsvLine(l)).filter((r) => r.some((c) => c.trim() !== ''));
-  return rows;
+  const lines = text.split(/\r\n|\n|\r/);
+  return lines.map((l) => parseCsvLine(l)).filter((r) => r.some((c) => c.trim() !== ''));
 }
 
 /** Parse a single CSV line into fields (handles quotes and escaped quotes). */
@@ -178,17 +171,22 @@ function parseCsvLine(line: string): string[] {
   const fields: string[] = [];
   let field = '';
   let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i]!;
-    if (inQuotes) {
-      if (ch === '"' && line[i + 1] === '"') {
+  // A quote inside a quoted field is ambiguous until the next char arrives:
+  // `""` is an escaped quote, anything else closes the quoted section.
+  let pendingQuote = false;
+  for (const ch of line) {
+    if (pendingQuote) {
+      pendingQuote = false;
+      if (ch === '"') {
         field += '"';
-        i++;
-      } else if (ch === '"') {
-        inQuotes = false;
-      } else {
-        field += ch;
+        continue;
       }
+      inQuotes = false;
+      // Fall through and process `ch` as an unquoted character.
+    }
+    if (inQuotes) {
+      if (ch === '"') pendingQuote = true;
+      else field += ch;
     } else if (ch === '"') {
       inQuotes = true;
     } else if (ch === ',') {
@@ -242,7 +240,9 @@ async function parseSheet(data: Uint8Array): Promise<ParsedSheet> {
   const workbook = new Workbook();
   // exceljs declares its own global `Buffer` interface that conflicts with
   // @types/node's generic Buffer class; the runtime accepts any byte array.
-  await workbook.xlsx.load(Buffer.from(data) as unknown as Parameters<Workbook['xlsx']['load']>[0]);
+  await workbook.xlsx.load(
+    Buffer.from(data) as unknown as Parameters<ExcelJS.Workbook['xlsx']['load']>[0]
+  );
   const sheet = workbook.worksheets[0];
   if (!sheet) throw new AdminError(400, 'File contains no worksheet');
   const raw: unknown[][] = [];
