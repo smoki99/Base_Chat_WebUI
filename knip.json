@@ -1,5 +1,6 @@
 {
   "ignoreBinaries": ["pkill"],
+  "ignore": ["apps/api/scripts/lib/admin-sql-guard.d.mts"],
   "workspaces": {
     "apps/api": {},
     "apps/web": {},
