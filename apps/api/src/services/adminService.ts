@@ -13,6 +13,7 @@ import type {
   AdminTableDeleted,
   AdminTablePreview,
 } from 'shared';
+import { env } from '../env';
 import { getPool, type PgClient, type PgPoolLike, type PgQueryable } from './pgPool';
 
 /**
@@ -334,6 +335,121 @@ export async function importTable(
     table,
     columns: columns.map((c) => ({ name: c.name, dataType: c.type, nullable: c.nullable })),
     rowsImported: rows.length,
+  };
+}
+
+// ── Export (table → CSV/XLSX) ────────────────────────────────────────────────
+
+/** Supported export formats. */
+type AdminExportFormat = 'csv' | 'xlsx';
+
+/** A generated export file ready to stream to the client. */
+export interface AdminExportFile {
+  buffer: Buffer;
+  /** Suggested download name, e.g. "products.csv". */
+  filename: string;
+  /** MIME type, e.g. "text/csv; charset=utf-8". */
+  contentType: string;
+  /** Number of data rows written (header row excluded). */
+  rowsExported: number;
+  /** True when the row cap cut the export short. */
+  truncated: boolean;
+}
+
+/** Escape one CSV cell per RFC 4180 (quotes, doubled quotes, CRLF). */
+export function csvCell(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === 'object') return JSON.stringify(value);
+  const s = String(value);
+  return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+/**
+ * Build a CSV document: header row + data rows, CRLF line breaks,
+ * UTF-8 BOM (so Excel opens it with the correct encoding).
+ */
+export function buildCsv(columns: string[], rows: Record<string, unknown>[]): Buffer {
+  const lines = [columns.map(csvCell).join(',')];
+  for (const row of rows) lines.push(columns.map((c) => csvCell(row[c])).join(','));
+  return Buffer.concat([
+    Buffer.from('\ufeff', 'utf8'),
+    Buffer.from(lines.join('\r\n') + '\r\n', 'utf8'),
+  ]);
+}
+
+/** Build a one-sheet XLSX workbook with header row + data rows. */
+async function buildXlsx(
+  sheetName: string,
+  columns: string[],
+  rows: Record<string, unknown>[]
+): Promise<Buffer> {
+  const workbook = new Workbook();
+  const sheet = workbook.addWorksheet(sheetName);
+  sheet.addRow(columns);
+  for (const row of rows) sheet.addRow(columns.map((c) => row[c] ?? null));
+  const out = await workbook.xlsx.writeBuffer();
+  return Buffer.from(out as unknown as ArrayBuffer);
+}
+
+/**
+ * Export a table as CSV or XLSX (read-only).
+ *
+ * Row cap: `env.ADMIN_EXPORT_MAX_ROWS` (default 10000). A per-request
+ * `limit` may go lower but never above the cap. When the table has more
+ * rows than the limit, the export is truncated (`truncated: true`).
+ */
+export async function exportTable(
+  rawName: string,
+  format: string,
+  limit?: unknown,
+  pool?: PgQueryable
+): Promise<AdminExportFile> {
+  const db = requirePool(pool ?? getPool());
+  const { schema, table } = parseTableName(rawName);
+  const fmt: AdminExportFormat | null = format === 'csv' || format === 'xlsx' ? format : null;
+  if (!fmt) throw new AdminError(400, 'format must be "csv" or "xlsx"');
+
+  const cap = Math.max(1, env.ADMIN_EXPORT_MAX_ROWS);
+  const requested = Number(limit);
+  const lim = Number.isInteger(requested) && requested >= 1 ? Math.min(requested, cap) : cap;
+
+  const [colRes, rowRes] = await Promise.all([
+    db
+      .query<{ column_name: string }>(
+        `SELECT column_name
+           FROM information_schema.columns
+          WHERE table_schema = $1 AND table_name = $2
+          ORDER BY ordinal_position`,
+        [schema, table]
+      )
+      .then((r) => r.rows),
+    db.query<Record<string, unknown>>(`SELECT * FROM "${schema}"."${table}" LIMIT $1`, [lim + 1]),
+  ]);
+
+  if (colRes.length === 0) {
+    throw new AdminError(404, `Table "${schema}.${table}" not found`);
+  }
+
+  const truncated = rowRes.rows.length > lim;
+  const rows = rowRes.rows.slice(0, lim);
+  const columns = colRes.map((c) => c.column_name);
+
+  if (fmt === 'csv') {
+    return {
+      buffer: buildCsv(columns, rows),
+      filename: `${table}.csv`,
+      contentType: 'text/csv; charset=utf-8',
+      rowsExported: rows.length,
+      truncated,
+    };
+  }
+  return {
+    buffer: await buildXlsx(table, columns, rows),
+    filename: `${table}.xlsx`,
+    contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    rowsExported: rows.length,
+    truncated,
   };
 }
 
