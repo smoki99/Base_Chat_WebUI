@@ -1,29 +1,30 @@
 # Progress Log
 
 > Chronologisches Log der Storys und Etappen. Neueste Einträge oben.
+> Single Source of Truth für Story-Inhalte: GitHub Issues (`Story-XXXX: …`).
 
 ## Projektziel (aktuell)
 
-**Chat-Webseite** – eine moderne Web-Chat-Oberfläche mit Client (React 19)
-und Server (Express), angebunden über REST, getrennt durch gemeinsame Typen
-in `packages/shared`.
+**Chat-Webseite mit Daten-Admin** – moderne Web-Chat-Oberfläche (React 19)
+mit Express-Backend, gemeinsamen Typen in `packages/shared`, Voice über den
+`voz`-Sidecar, UI-Customization (Themes/Logo/Banner) und einem Admin-Panel:
+Excel/CSV-Import nach PostgreSQL, Schema-Vorschau, CSV/XLSX-Export und
+MCP-Tools (`qmd`, `sql`, `admin-db`) als Chat-Tools.
 
-Zustand: Boilerplate-Baseline steht (Monorepo, CI, E2E, Docs). Der
-Client-Server-Chat-Flow (Nachrichten senden/empfangen, `chatService` als
-Swap-Punkt für echten Backend/LLM-Anschluss) ist das nächste Ziel.
+Zustand: Story-0034 abgeschlossen (Postgres-Admin inkl. MCP `admin-db`
+und CSV/XLSX-Export, PR #57). Nächstes Ziel: Story-0035 (MCP-Chat-Export,
+Issue #56).
 
 ## Story-Überblick
 
-| Story | Thema                                                    | Status |
-| ----- | -------------------------------------------------------- | ------ |
-| 1     | Boilerplate & Monorepo-Setup                             | ✅     |
-| 2     | CI/CD & Qualitäts-Tore (typecheck · lint · test · build) | ✅     |
-| 3     | Shared-DTOs (`ChatMessage` / `CreateChatMessage`)        | ✅     |
-| 4     | API: Health-Check & API-Form `{ data } / { error }`      | ✅     |
-| 5     | Web: `Chat`-Komponente (Nachrichtenfluss)                | ✅     |
-| 6     | E2E-Suite (Playwright)                                   | ✅     |
-| 7     | Docs (API, Architektur, Rules)                           | ✅     |
-| 8     | Voice: TTS + STT + Hands-free (voz-Sidecar)              | ✅     |
+| Story | Thema                                                                                                       | Status         |
+| ----- | ----------------------------------------------------------------------------------------------------------- | -------------- |
+| 1–8   | Boilerplate, CI, Shared-DTOs, API, Chat-UI, E2E, Docs, Voice                                                | ✅             |
+| 29–33 | Qualitäts-Tore (size-limit, knip, dependency-cruiser), UI-Customization (Themes, Logo, Banner), Chat-Export | ✅             |
+| 34    | Postgres-Admin: MCP `admin-db` (read-only) + CSV/XLSX-Tabelle-Export                                        | ✅ (PR #57)    |
+| 35    | MCP-Chat-Export (Chat-Verlauf als MCP-Tool)                                                                 | ⏳ (Issue #56) |
+
+> Details zu 29–33: `docs/DECISIONS.md` (Story-0032 UI-Customization u. a.).
 
 ## Log
 
@@ -53,9 +54,32 @@ Swap-Punkt für echten Backend/LLM-Anschluss) ist das nächste Ziel.
 - ✅ StrictMode-Double-Effect-Guard (`processedTranscriptRef`).
 - ✅ Tests: `voice-client.test.ts`, `voice-routes.test.ts`.
 
+### Story 29–33: Qualitäts-Tore & UI-Customization
+
+- ✅ `size-limit` (Bundle-Budget web, aktuell 112 kB brotli), `knip`
+  (Unused-Exports), `dependency-cruiser` (Circular-Import-Detection) im Check.
+- ✅ Story-0032: UI-Customization komplett client-seitig – Themes (5
+  Hex-Farben + Presets), Logo & Banner (PNG/SVG, validiert, ≤ 512 kB),
+  Storage-Key `base-chat.ui-customization` in `localStorage`.
+- ✅ Port-Migration 3001 → 4001 (API-Default, Vite-Proxy, E2E, Doku).
+- Details: `docs/DECISIONS.md`.
+
+### Story-0034: Postgres-Admin (MCP + Export)
+
+- ✅ Phase 3: MCP-Server `admin-db` (`scripts/admin-db-mcp-server.mjs`) mit
+  Tools `list_tables`, `search_tables`, `run_sql`; `run_sql` strikt
+  read-only via `admin-sql-guard.mjs` + `SET TRANSACTION READ ONLY`.
+- ✅ Phase 4: Tabelle-Export `GET /api/admin/tables/:name/export` (CSV/XLSX),
+  Cap `ADMIN_EXPORT_MAX_ROWS` (Default 10000), CSV mit UTF-8-BOM + RFC-4180,
+  XLSX via `exceljs`; UI-Buttons im Admin-Preview-Header, Download per Blob.
+- ✅ 14 neue Tests (Escapes, BOM, XLSX-Round-Trip, 400/404/403, Cap).
+- ✅ Doku-Sync: `README.md`, `docs/API.md` (Admin-Referenz),
+  `docs/ARCHITECTURE.md`, `docs/PROGRESS.md`.
+- PR: #57 · Issue: #53.
+
 ## Offene Punkte / Nächstes Ziel
 
-- [ ] Client-Server-Chat-Flow: `POST /api/chat` + `GET /api/chat` als
-      Swap-Punkt für echten Backend/LLM-Anschluss (`chatService.ts`).
-- [ ] Persistenz (optional) hinter `chatService` – aktuell in-memory.
-- [ ] UX-Details: Auto-Scroll, Markdown/Code-Rendering, Konversations-Historie.
+- [ ] **Story-0035 (Issue #56):** MCP-Chat-Export – Chat-Verlauf als
+      MCP-Tool exportierbar (JSON/Markdown), baut auf der Admin-Export-Basis auf.
+- [ ] Admin: weitere Typableitungen/Edge-Cases beim Import (z. B. Datumsformate).
+- [ ] UX-Details: Konversations-Historie über Session-Grenzen (Persistenz).

@@ -93,12 +93,12 @@ Alle Fehlerantworten folgen demselben Schema:
 { "error": { "message": "<menschleserbare Beschreibung>" } }
 ```
 
-| Status | Bedeutung                           |
-| ------ | ----------------------------------- |
-| `400`  | Ungültige Anfrage (Body, Parameter) |
-| `403`  | CORS: Origin nicht erlaubt          |
-| `404`  | Ressource oder Route nicht gefunden |
-| `500`  | Interner Serverfehler               |
+| Status | Bedeutung                                             |
+| ------ | ----------------------------------------------------- |
+| `400`  | Ungültige Anfrage (Body, Parameter)                   |
+| `403`  | CORS: Origin nicht erlaubt · Admin-Token fehlt/falsch |
+| `404`  | Ressource oder Route nicht gefunden                   |
+| `500`  | Interner Serverfehler                                 |
 
 ---
 
@@ -122,6 +122,224 @@ Alle Fehlerantworten folgen demselben Schema:
 | `HealthStatus` | `{ status: "healthy" \| "unhealthy"; detail?: string }` |
 
 > Quelle: `apps/api/src/types/chat.ts`
+
+---
+
+## Admin (Datenbank)
+
+> **Authentifizierung:** Jeder Admin-Request braucht
+> `Authorization: Bearer <ADMIN_TOKEN>`.
+> Ist `ADMIN_TOKEN` leer/ungesetzt, sind **alle** Admin-Routen deaktiviert
+> (`403` mit „Admin access is not configured …").
+
+### Endpunkte im Überblick
+
+| Method   | Pfad                               | Zweck                                  |
+| -------- | ---------------------------------- | -------------------------------------- |
+| `GET`    | `/api/admin/tables`                | Tabellen & Views auflisten             |
+| `GET`    | `/api/admin/tables/:name/preview`  | Spalten + Zeilen-Vorschau (read-only)  |
+| `GET`    | `/api/admin/tables/:name/export`   | Tabelle als CSV/XLSX herunterladen     |
+| `POST`   | `/api/admin/tables/import`         | Excel/CSV als neue Tabelle importieren |
+| `DELETE` | `/api/admin/tables/:name`          | Tabelle löschen (`DROP`)               |
+| `GET`    | `/api/admin/relations`             | Fremdschlüssel-Beziehungen auflisten   |
+| `POST`   | `/api/admin/relations`             | Fremdschlüssel anlegen                 |
+| `DELETE` | `/api/admin/relations/:constraint` | Fremdschlüssel löschen                 |
+
+`<name>` = `<schema>.<tabelle>` (z. B. `public.produtos`); `<constraint>` =
+Postgres-Constraint-Name.
+
+---
+
+### GET /api/admin/tables
+
+Listet alle Tabellen und Views (ohne System-Schemata).
+
+**Response `200`**
+
+```json
+{
+  "data": [
+    { "schema": "public", "table": "Firmen", "kind": "table" },
+    { "schema": "public", "table": "groesse", "kind": "view" }
+  ]
+}
+```
+
+**Fehler**
+
+| Status | Bedingung                                  |
+| ------ | ------------------------------------------ |
+| `403`  | Token fehlt, falsch oder Admin deaktiviert |
+| `500`  | Datenbankfehler (z. B. keine Verbindung)   |
+
+---
+
+### GET /api/admin/tables/:name/preview
+
+Spalten-Metadaten + erste Zeilen (Default 20, `?limit=` 1–1000). Read-only.
+
+**Response `200`**
+
+```json
+{
+  "data": {
+    "schema": "public",
+    "table": "Firmen",
+    "columns": [
+      { "name": "Index", "dataType": "integer", "nullable": false },
+      { "name": "Name", "dataType": "text", "nullable": true }
+    ],
+    "rows": [{ "Index": 1, "Name": "Ferrell LLC" }],
+    "hasMore": true,
+    "limit": 20
+  }
+}
+```
+
+**Fehler**
+
+| Status | Bedingung                    |
+| ------ | ---------------------------- |
+| `400`  | `limit` nicht ganzzahlig > 0 |
+| `404`  | Tabelle/View nicht gefunden  |
+
+---
+
+### GET /api/admin/tables/:name/export
+
+Lädt die Tabelle als **Datei-Download** (kein JSON-Envelope).
+
+| Query-Parameter | Default | Beschreibung                                                 |
+| --------------- | ------- | ------------------------------------------------------------ |
+| `format`        | `csv`   | `csv` oder `xlsx`                                            |
+| `limit`         | –       | max. Zeilen (nur ≤ `ADMIN_EXPORT_MAX_ROWS`, Default `10000`) |
+
+**Response `200`**
+
+| `format` | `Content-Type`                                                      | `Content-Disposition`                   |
+| -------- | ------------------------------------------------------------------- | --------------------------------------- |
+| `csv`    | `text/csv; charset=utf-8` (UTF-8-BOM, CRLF, RFC-4180-Escapes)       | `attachment; filename="<Tabelle>.csv"`  |
+| `xlsx`   | `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` | `attachment; filename="<Tabelle>.xlsx"` |
+
+> **Trunkation:** Wird das Zeilen-Cap erreicht, enthält die Datei nur die
+> ersten N Zeilen. Die Web-UI zeigt die Meldung; bei `curl` ist die
+> tatsächliche Zeilenanzahl der Datei der Indikator.
+
+**Fehler**
+
+| Status | Bedingung                                             |
+| ------ | ----------------------------------------------------- |
+| `400`  | `format` ≠ `csv`/`xlsx` · `limit` ungültig oder > Cap |
+| `404`  | Tabelle/View nicht gefunden                           |
+
+---
+
+### POST /api/admin/tables/import
+
+Importiert eine Excel/CSV-Datei (multipart/form-data, max. 25 MB) als neue
+Tabelle. Typableitung pro Spalte (integer, numeric, boolean, timestamp, text).
+
+**Request** – `multipart/form-data` mit dem Feld `file`
+
+**Response `201`**
+
+```json
+{
+  "data": {
+    "schema": "public",
+    "table": "firmen",
+    "columns": [{ "name": "name", "dataType": "text", "nullable": true }],
+    "rowsImported": 42
+  }
+}
+```
+
+**Fehler**
+
+| Status | Bedingung                         |
+| ------ | --------------------------------- |
+| `400`  | Datei fehlt / kein Excel oder CSV |
+| `413`  | Datei > 25 MB                     |
+| `500`  | Datenbankfehler                   |
+
+---
+
+### DELETE /api/admin/tables/:name
+
+Löscht die Tabelle (`DROP TABLE`). Views: `DROP VIEW`.
+
+**Response `200`**
+
+```json
+{ "data": { "schema": "public", "table": "firmen" } }
+```
+
+---
+
+### GET /api/admin/relations
+
+Listet alle Fremdschlüssel-Beziehungen (ohne System-Schemata).
+
+**Response `200`**
+
+```json
+{
+  "data": [
+    {
+      "constraint": "orders_customer_fkey",
+      "sourceSchema": "public",
+      "sourceTable": "orders",
+      "sourceColumn": "customerId",
+      "targetSchema": "public",
+      "targetTable": "customers",
+      "targetColumn": "id"
+    }
+  ]
+}
+```
+
+---
+
+### POST /api/admin/relations
+
+Legt einen Fremdschlüssel an. Schemas Default: `public`.
+
+**Request-Body**
+
+```json
+{
+  "sourceTable": "orders",
+  "sourceColumn": "customerId",
+  "targetTable": "customers",
+  "targetColumn": "id"
+}
+```
+
+**Response `201`** – wie `GET /api/admin/relations` (ein Element in `data`)
+
+**Fehler**
+
+| Status | Bedingung                                |
+| ------ | ---------------------------------------- |
+| `400`  | Fehlende Felder · Spalte existiert nicht |
+
+---
+
+### DELETE /api/admin/relations/:constraint
+
+Entfernt den Fremdschlüssel `<constraint>` (`ALTER TABLE … DROP CONSTRAINT`).
+
+**Response `200`**
+
+```json
+{ "data": { "constraint": "orders_customer_fkey" } }
+```
+
+**Fehler**
+
+| Status | Bedingung                 |
+| ------ | ------------------------- |
+| `404`  | Constraint nicht gefunden |
 
 ---
 
