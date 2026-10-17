@@ -42,6 +42,26 @@ export interface ChatRequest {
 
 export type ChatResponse = ApiResponse<ChatMessage>;
 
+// ── Chatbot custom prompt (system prompt extension) ───────────────────────────
+
+/** Maximum length of the custom chatbot prompt in characters (~5 k tokens). */
+export const MAX_CUSTOM_PROMPT_CHARS = 20_000;
+
+/** GET /api/chat/custom-prompt → data. */
+export interface CustomPrompt {
+  /** Stored prompt text; `''` when unset. */
+  content: string;
+}
+
+/** PUT /api/chat/custom-prompt → request body. */
+export interface UpdateCustomPrompt {
+  /** New prompt text; `''` clears the stored prompt. */
+  content: string;
+}
+
+/** GET/PUT /api/chat/custom-prompt → response envelope. */
+export type CustomPromptResponse = ApiResponse<CustomPrompt>;
+
 // ── Voice (TTS + STT) ───────────────────────────────────────────────────────
 
 /** A single TTS voice option. */

@@ -101,29 +101,30 @@ Issue #56).
   `docs/DECISIONS.md` (On-Demand + Einmaligkeit/TTL).
 - Issue: #56.
 
-### Story-0036: Eigener Prompt für den Chatbot (vorbereitet)
+### Story-0036: Eigener Prompt für den Chatbot
 
-- 🟡 Status: vorbereitet – GitHub-Issue #60 (`Story-0036: …`) ist Single
-  Source of Truth. Ziel: Prompt-Erweiterung in den Einstellungen (neuer
-  Tab „Prompt"), serverseitige Persistenz auf dem Filesystem (gemeinsam
-  für alle Nutzer, nicht localStorage), Datei in `.gitignore`; der Text
-  wird dem LLM-Systemprompt hinzugefügt (Hilfe bei Begrifflichkeiten
-  importierter Tabellen/Spalten).
-- 10 Steps (Details im Issue #60):
-  1. shared-DTOs (`CustomPrompt`, `UpdateCustomPrompt`, `MAX_CUSTOM_PROMPT_CHARS`).
-  2. Store-Service `customPromptStore.ts` (atomares Schreiben, Env-Override, Tests).
-  3. `.gitignore` (`apps/api/data/`) + `.env.example` (Datei nie im Git-Index).
-  4. Routen `GET/PUT /api/chat/custom-prompt` (Validierung, Supertest).
-  5. Provider: `ReplyOptions.customPrompt` + Abschnitt `## Additional instructions`.
-  6. chatService-Wiring (Custom-Prompt pro Request laden).
-  7. Web: neuer Settings-Tab „Prompt“ (Editor, Zeichen-Zähler, Speichern, Status).
-  8. Web-API-Client (`fetchCustomPrompt` / `saveCustomPrompt`).
-  9. Doku-Sync (README, API, DECISIONS, PROGRESS).
-  10. `npm run check` + E2E grün, Conventional Commits, PR-Bereitschaft.
-- Offene Fragen (bei GO): Auth (Default: ohne Token), Dateipfad, Max-Länge.
+- ✅ Status: implementiert (2026-10-17) – GitHub-Issue #60 (`Story-0036: …`)
+  ist Single Source of Truth. Prompt-Erweiterung in den Einstellungen (neuer
+  Tab „Chatbot-Prompt“), serverseitige Persistenz auf dem Filesystem
+  (gemeinsam für alle Nutzer, nie localStorage), Datei in `.gitignore`;
+  der Text wird dem LLM-Systemprompt hinzugefügt (Hilfe bei
+  Begrifflichkeiten importierter Tabellen/Spalten).
+- Entscheidungen (2026-10-17): Auth über das **gleiche `ADMIN_TOKEN`** wie
+  die Admin-Routen (eigene Token-Prüfung `requireAdminToken`, ohne
+  `DATABASE_URL`-Pflicht); Dateipfad
+  `apps/api/data/chatbot-custom-prompt.md` (Override:
+  `CHATBOT_CUSTOM_PROMPT_FILE`); Max-Länge **20 000 Zeichen** (→ `400`).
+- Umsetzung: shared-DTOs + `customPromptStore` (atomares Schreiben) +
+  `GET/PUT /api/chat/custom-prompt` (Supertest) + Provider-Abschnitt
+  `## Additional instructions` (vor der Voice-Anweisung) + chatService
+  lädt den Prompt pro Request + Web-Tab mit Editor, Zeichen-Zähler,
+  Speichern/Zurücksetzen, Statusanzeige + Doku-Sync (README, API.md,
+  DECISIONS.md).
+- Tests: API `custom-prompt.test.ts` (Store, Routen, Wiring) +
+  Provider-Tests; Web `PromptTab.test.tsx` + `Settings.test.tsx`.
+- Issue: #60.
 
 ## Offene Punkte / Nächstes Ziel
 
 - [ ] Admin: weitere Typableitungen/Edge-Cases beim Import (z. B. Datumsformate).
 - [ ] UX-Details: Konversations-Historie über Session-Grenzen (Persistenz).
-- [ ] Story-0036: Eigener Prompt für den Chatbot – vorbereitet (Issue #60), wartet auf GO.

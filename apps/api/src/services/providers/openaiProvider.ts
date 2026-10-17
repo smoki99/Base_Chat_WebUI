@@ -228,6 +228,16 @@ const COMBINED_ALL_PROMPT = `You are a product, knowledge, and database assistan
 - Recipes/knowledge → Markdown headings + numbered steps; tables for comparisons.
 - Admin-DB results → Markdown table with the actual column names.`;
 
+/**
+ * Build the `## Additional instructions` section from a custom prompt
+ * extension (Story-0036). Empty/whitespace-only values → no section, so the
+ * system prompt stays exactly as before.
+ */
+function buildCustomPromptSection(customPrompt?: string): string {
+  const additional = (customPrompt ?? '').trim();
+  return additional ? `\n\n## Additional instructions\n${additional}` : '';
+}
+
 function resolveSystemPrompt(base: string, tools?: ToolDefinition[]): string {
   const hasSql = tools?.some((t) => t.name.startsWith('sql.'));
   const hasQmd = tools?.some((t) => t.name.startsWith('qmd.'));
@@ -388,6 +398,7 @@ export function createOpenAIProvider(options: OpenAIProviderOptions = {}): ChatP
       try {
         const effectivePrompt =
           (replyOpts?.systemPrompt ?? resolveSystemPrompt(systemPrompt, replyOpts?.tools)) +
+          buildCustomPromptSection(replyOpts?.customPrompt) +
           SPEECH_INSTRUCTION;
         // Build messages: system → history (oldest → newest) → current user message
         const messages: Array<Record<string, unknown>> = [

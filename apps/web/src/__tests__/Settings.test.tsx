@@ -62,6 +62,12 @@ describe('Settings', () => {
     expect(screen.queryByLabelText(VOICE_LABEL)).not.toBeInTheDocument();
   });
 
+  it('renders the Chatbot-Prompt tab button (Story-0036)', async () => {
+    mockCapabilities(caps);
+    renderSettings();
+    expect(await screen.findByRole('tab', { name: 'Chatbot-Prompt' })).toBeInTheDocument();
+  });
+
   it('persists the selected voice', async () => {
     mockCapabilities(caps);
     const user = userEvent.setup();

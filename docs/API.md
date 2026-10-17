@@ -83,6 +83,69 @@ Liefert den Status des aktiven Chat-Providers.
 }
 ```
 
+### GET /api/chat/custom-prompt
+
+Liefert die gespeicherte Custom-Prompt-Erweiterung (Story-0036).
+Admin-protected: `Authorization: Bearer <ADMIN_TOKEN>` (wie `/api/admin/*`),
+aber **ohne** `DATABASE_URL`-Pflicht. Leere Antwort (`""`) = keine
+Erweiterung hinterlegt.
+
+**Response `200`**
+
+```json
+{
+  "data": {
+    "content": "SKU = Artikelnummer"
+  }
+}
+```
+
+**Response `403`** (kein/ungenügender Admin-Token)
+
+```json
+{
+  "error": {
+    "message": "Invalid admin token"
+  }
+}
+```
+
+### PUT /api/chat/custom-prompt
+
+Speichert (oder mit `""` löscht) die Custom-Prompt-Erweiterung.
+Maximal **20 000 Zeichen** (Konstante `MAX_CUSTOM_PROMPT_CHARS` in
+`packages/shared`). Auth wie `GET`. Die Datei liegt auf dem API-Dateisystem
+(`apps/api/data/chatbot-custom-prompt.md`, Override:
+`CHATBOT_CUSTOM_PROMPT_FILE`) und ist gitignored.
+
+**Request Body**
+
+```json
+{
+  "content": "SKU = Artikelnummer"
+}
+```
+
+**Response `200`** (gespeicherter, getrimmter Text)
+
+```json
+{
+  "data": {
+    "content": "SKU = Artikelnummer"
+  }
+}
+```
+
+**Response `400`** (kein String oder zu lang)
+
+```json
+{
+  "error": {
+    "message": "content must be at most 20000 characters"
+  }
+}
+```
+
 ---
 
 ## Fehler-Format (gemeinsam)
