@@ -48,7 +48,29 @@ Die Regeln unten gelten ZWINGEND.
 | `"Kunde_seit"`                         | timestamp    | Kundenbeziehung seit                                     |
 | `"Rating"`                             | text         | AAA, AA-, A+, A, BBB+, BBB                               |
 
-## Deals (aktuell: `deal`, 28 Zeilen)
+## Bundesland-Zuordnung (aus der Stadt abgeleitet – keine Bundesland-Spalte!)
+
+Es gibt **keine Bundesland-Spalte** – Bundesland-Fragen werden über die
+Städte beantwortet. Städte, die in den Daten vorkommen:
+
+| Bundesland          | Städte in den Daten                  |
+| ------------------- | ------------------------------------ |
+| Bayern              | München, Nürnberg                    |
+| Baden-Württemberg   | Stuttgart, Karlsruhe                 |
+| Nordrhein-Westfalen | Köln, Dortmund, Düsseldorf, Duisburg |
+| Rheinland-Pfalz     | Mainz                                |
+| Sachsen             | Leipzig                              |
+| Niedersachsen       | Hannover, Bremen                     |
+| Berlin              | Berlin                               |
+
+**Regel:** Bundesland-Fragen IMMER mit einer Stadtliste filtern, z. B.
+„Kunden aus Bayern" →
+`SELECT "Name", "Ort" FROM business_partner WHERE "Ort" IN ('München','Nürnberg') ORDER BY "Ort", "Name";`
+NIE alle Kunden ausgeben, wenn nach einem Bundesland gefragt wurde.
+Ist ein Bundesland nicht in der Tabelle gelistet (z. B. „Thüringen"),
+heißt es: es gibt keine Kunden aus diesem Bundesland in den Daten.
+
+# Deals (aktuell: `deal`, 28 Zeilen)
 
 | Spalte                     | Typ              | Bedeutung                                             |
 | -------------------------- | ---------------- | ----------------------------------------------------- |
