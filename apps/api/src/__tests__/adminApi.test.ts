@@ -299,6 +299,24 @@ describe('admin API – Excel/CSV import', () => {
     expect(res.status).toBe(201);
     expect(res.body.data.columns).toEqual([{ name: 'big', dataType: 'text', nullable: false }]);
   });
+  it('201: maps empty cells to NULL so non-text types accept them', async () => {
+    const { pool, calls } = fakePool();
+    setPoolForTests(pool);
+    const csv = 'id,Erledigt_am\n1,\n2,2026-01-02\n';
+    const res = await request(app)
+      .post('/api/admin/tables/import')
+      .set('Authorization', `Bearer ${TOKEN}`)
+      .field('table', 'checks')
+      .attach('file', Buffer.from(csv), { filename: 'c.csv', contentType: 'text/csv' });
+    expect(res.status).toBe(201);
+    expect(res.body.data.columns).toEqual([
+      { name: 'id', dataType: 'integer', nullable: false },
+      { name: 'Erledigt_am', dataType: 'timestamp', nullable: true },
+    ]);
+    const insert = calls.find((c) => c.text.includes('INSERT INTO'));
+    expect(insert?.values).toEqual(['1', null, '2', '2026-01-02']);
+  });
+
   it('400 when no file field is attached', async () => {
     setPoolForTests(fakePool().pool);
     const res = await request(app)

@@ -224,7 +224,13 @@ function finalizeSheet(raw: unknown[][]): ParsedSheet {
     headers.push(unique);
   }
 
-  const rows = raw.slice(1).map((r) => Array.from({ length: width }, (_, i) => r[i] ?? null));
+  // Empty cells become NULL: Postgres cannot cast '' to non-text types
+  // (e.g. timestamp) and NULL is the correct semantics for an empty cell.
+  const rows = raw
+    .slice(1)
+    .map((r) =>
+      Array.from({ length: width }, (_, i) => (r[i] == null || r[i] === '' ? null : r[i]))
+    );
   return { headers, rows };
 }
 
