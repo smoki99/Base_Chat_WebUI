@@ -17,6 +17,8 @@ export interface McpServerConfig {
   command: string;
   args?: string[];
   env?: Record<string, string>;
+  /** Working directory for the spawned process (set by loadMcpConfig to the config file's dir). */
+  cwd?: string;
 }
 
 interface McpConnection {
@@ -55,6 +57,10 @@ async function connectMcpServer(config: McpServerConfig): Promise<McpConnection>
     // config.env = per-server additions (e.g. DATABASE_URL) on top of the
     // API's own environment.
     env: { ...process.env, ...config.env },
+    // cwd = config file's directory so relative script paths (e.g.
+    // "scripts/sql-mcp-server.mjs") resolve correctly in both dev (cwd=apps/api)
+    // and the container (cwd=/app, config at /app/apps/api/mcp-config.json).
+    cwd: config.cwd ?? process.cwd(),
   });
 
   let stdoutBuf = '';
@@ -161,7 +167,7 @@ async function connectMcpServer(config: McpServerConfig): Promise<McpConnection>
 // ── Config loading & multi-server orchestration ─────────────────────────────
 
 import { readFileSync, existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { resolve, dirname } from 'node:path';
 
 export interface McpContext {
   connections: McpConnection[];
@@ -188,7 +194,10 @@ export function loadMcpConfig(configPath?: string): McpServerConfig[] {
         );
       }
     }
-    return servers;
+    // Resolve relative script paths against the config file's directory so
+    // they work regardless of process.cwd() (dev: apps/api, container: /app).
+    const baseDir = dirname(resolve(path));
+    return servers.map((s) => ({ ...s, cwd: s.cwd ?? baseDir }));
   } catch (err) {
     console.error(`[mcp] Failed to parse ${path}:`, err);
     return [];

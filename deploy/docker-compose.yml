@@ -52,10 +52,10 @@ services:
       ADMIN_TOKEN: ${ADMIN_TOKEN:?set ADMIN_TOKEN in deploy/.env}
       # CORS – same origin via nginx normally suffices; set for direct access
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
-      # MCP: disabled in prod (no local MCP servers in the container).
-      # Empty MCP_ENABLED_SERVERS means "all" – point the config file at a
-      # non-existent path to force zero servers (see mcpClient.loadMcpConfig).
-      MCP_CONFIG_FILE: /etc/mcp-disabled.json
+      # MCP: SQL product search (tools: sql.search_products, sql.get_product).
+      # DATABASE_URL is inherited from the API container env (not hardcoded in the config).
+      MCP_CONFIG_FILE: /app/apps/api/mcp-config.json
+      MCP_ENABLED_SERVERS: sql,admin-db
     volumes:
       # Custom chatbot prompt (instance data, survives restarts)
       - prompt-data:/app/apps/api/data
