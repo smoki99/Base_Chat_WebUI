@@ -257,6 +257,32 @@ async function parseSheet(data: Uint8Array): Promise<ParsedSheet> {
   return finalizeSheet(raw);
 }
 
+/** Postgres integer boundaries for column type inference. */
+const INT4_MIN = -2147483648;
+const INT4_MAX = 2147483647;
+const INT8_MIN = -9223372036854775808n;
+const INT8_MAX = 9223372036854775807n;
+
+/** True when an integer value fits into Postgres `integer` (int4). */
+function fitsInt4(v: unknown): boolean {
+  if (typeof v === 'number') return v >= INT4_MIN && v <= INT4_MAX;
+  if (typeof v === 'string' && /^-?\d+$/.test(v)) {
+    const n = BigInt(v);
+    return n >= BigInt(INT4_MIN) && n <= BigInt(INT4_MAX);
+  }
+  return false;
+}
+
+/** True when an integer value fits into Postgres `bigint` (int8). */
+function fitsInt8(v: unknown): boolean {
+  if (typeof v === 'number') return Number.isSafeInteger(v);
+  if (typeof v === 'string' && /^-?\d+$/.test(v)) {
+    const n = BigInt(v);
+    return n >= INT8_MIN && n <= INT8_MAX;
+  }
+  return false;
+}
+
 /** Infer a Postgres column type from the values of one column. */
 function inferType(values: unknown[]): string {
   const vals = values.filter((v) => v !== null && v !== '');
@@ -272,7 +298,13 @@ function inferType(values: unknown[]): string {
     v instanceof Date ||
     (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v) && !Number.isNaN(Date.parse(v)));
   if (all(isBool)) return 'boolean';
-  if (all(isInt)) return 'integer';
+  if (all(isInt)) {
+    if (all(fitsInt4)) return 'integer';
+    if (all(fitsInt8)) return 'bigint';
+    // Integer literals beyond int8 fit no numeric type; keep them as text
+    // so the import still succeeds with exact values.
+    return 'text';
+  }
   if (all(isNum)) return 'double precision';
   if (all(isDate)) return 'timestamp';
   return 'text';
