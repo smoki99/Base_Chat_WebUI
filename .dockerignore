@@ -1,0 +1,46 @@
+# Repository-level .dockerignore (build context = repository root for api/web)
+# Keeps the build context small and secrets/out of the images.
+
+# VCS & tooling
+.git
+.github
+.husky
+.cline
+.clinerules
+.vscode
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.qmd
+.markdown-knowhow
+
+# Node (reinstalled in the image)
+node_modules
+**/node_modules
+apps/api/dist
+apps/web/dist
+apps/web/test-results
+apps/web/playwright-report
+
+# Python
+.venv
+__pycache__
+*.pyc
+*.pyo
+
+# Local environment & instance data (never in images)
+.env
+.env.*
+!.env.example
+apps/api/data
+markdown-knowhow
+
+# Docs & misc (not needed for the build)
+docs
+markdown-knowhow
+*.log
+.DS_Store
+coverage
+**/coverage
+test-results
+playwright-report

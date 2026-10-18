@@ -9,18 +9,12 @@
     {
       "name": "sql",
       "command": "node",
-      "args": ["scripts/sql-mcp-server.mjs"],
-      "env": {
-        "DATABASE_URL": "postgres://chatbot:chatbot@localhost:5432/chatbot"
-      }
+      "args": ["scripts/sql-mcp-server.mjs"]
     },
     {
       "name": "admin-db",
       "command": "node",
-      "args": ["scripts/admin-db-mcp-server.mjs"],
-      "env": {
-        "DATABASE_URL": "postgres://chatbot:chatbot@localhost:5432/chatbot"
-      }
+      "args": ["scripts/admin-db-mcp-server.mjs"]
     }
   ]
 }

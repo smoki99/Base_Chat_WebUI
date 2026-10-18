@@ -1,0 +1,88 @@
+# base-chat-webui – main stack (Portainer host)
+#
+# Only host-exposed port: web (default 5173 → container 8080).
+# api (4001) and postgres (5432) stay in the internal Compose network.
+#
+# Usage:
+#   cp deploy/.env.example deploy/.env   # adjust values!
+#   docker compose -f deploy/docker-compose.yml up -d --build
+#
+# External services (LAN-only, never internet):
+#   LLM  = LM Studio on the 5090 machine (192.168.178.117:1234)
+#   voz  = voice sidecar on the 5090 machine (192.168.178.117:8765,
+#          see deploy/voz/docker-compose.yml)
+
+name: base-chat-webui
+
+services:
+  web:
+    image: ghcr.io/smoki99/base-chat-webui-web:latest
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - '${WEB_PORT:-5173}:8080'
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  api:
+    image: ghcr.io/smoki99/base-chat-webui-api:latest
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    # No `ports:` – internal only, reached via the web reverse proxy
+    expose:
+      - '4001'
+    environment:
+      NODE_ENV: production
+      # Bind the whole Compose network (container-local, not host-exposed)
+      HOST: 0.0.0.0
+      PORT: '4001'
+      # LLM (LM Studio on the 5090 machine)
+      CHAT_PROVIDER: ${CHAT_PROVIDER:-openai}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-http://192.168.178.117:1234/v1}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-lm-studio}
+      OPENAI_MODEL: ${OPENAI_MODEL:-local-model}
+      # Voice sidecar (voz on the 5090 machine)
+      VOICE_SERVICE_URL: ${VOICE_SERVICE_URL:-http://192.168.178.117:8765}
+      # Database (internal service name)
+      DATABASE_URL: postgres://chatbot:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/.env}@postgres:5432/chatbot
+      # Admin dialog (DB-Admin) – enable with a strong secret
+      ADMIN_TOKEN: ${ADMIN_TOKEN:?set ADMIN_TOKEN in deploy/.env}
+      # CORS – same origin via nginx normally suffices; set for direct access
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      # MCP: SQL product search (tools: sql.search_products, sql.get_product).
+      # DATABASE_URL is inherited from the API container env (not hardcoded in the config).
+      MCP_CONFIG_FILE: /app/apps/api/mcp-config.json
+      MCP_ENABLED_SERVERS: sql,admin-db
+    volumes:
+      # Custom chatbot prompt (instance data, survives restarts)
+      - prompt-data:/app/apps/api/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    # No `ports:` – internal only
+    environment:
+      POSTGRES_USER: chatbot
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/.env}
+      POSTGRES_DB: chatbot
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # One-time init on the first start (empty data volume)
+      - ../apps/api/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ../apps/api/db/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U chatbot -d chatbot']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  prompt-data:

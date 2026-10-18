@@ -1,0 +1,20 @@
+# voz – GPU override (5090 machine)
+#
+# Add to the base file to reserve the NVIDIA GPU for voz. Requires the
+# nvidia-container-toolkit installed on the host (Docker `nvidia` runtime):
+#
+#   docker compose -f deploy/voz/docker-compose.yml \
+#                  -f deploy/voz/docker-compose.gpu.yml up -d
+#
+# Without it, voz runs on CPU (torch auto-detects, uses whisper-small).
+#
+# GPU note: with CUDA detected, voz.py auto-selects whisper-large-v3-turbo.
+
+services:
+  voz:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
