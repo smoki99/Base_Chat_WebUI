@@ -1,0 +1,29 @@
+DealId,DealName,Gesamtbetrag,Schließung,Jahreszins,Laufzeit_Jahre,Objekttyp,LTV_Prozent,LAM_Name,LAM_Mail,Status
+20-0001,Einkaufszentrum Lindenquartier,23700000,2020-11-25,3.07,19,Einzelhandel,58,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+20-0002,Krone Quartiere GmbH & Co. KG (2 Objekte),21900000,2020-03-23,3.78,21,Gewerbe,83,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+20-0003,Logistikpark Main GmbH (2 Objekte),7500000,2020-12-20,3.22,20,Büro,64,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+20-0004,Rheinland Grundbesitz GmbH (5 Objekte),11700000,2020-11-22,3.52,11,Mischnutzung,64,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+21-0005,Eichenhof Residential GmbH (2 Objekte),48100000,2021-03-04,3.85,7,Logistik,60,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+21-0006,Nordlicht Properties GmbH (5 Objekte),9000000,2021-07-06,3.26,22,Wohnanlage,63,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+21-0007,Hotel Blumenau – Ruhr Industrie-Immobilien GmbH,27500000,2021-04-29,3.03,5,Hotel,65,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+21-0008,Stadthafen Entwicklung GmbH (4 Objekte),37600000,2021-07-09,3.04,8,Büro,63,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+22-0009,Donauufer Hotels GmbH (3 Objekte),1800000,2022-01-10,3.49,20,Büro,69,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+22-0010,Elbseite Wohnbau GmbH (3 Objekte),5700000,2022-02-23,3.02,29,Hotel,72,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+22-0011,Lindenhof Estates GmbH (3 Objekte),35500000,2022-12-06,3.33,5,Büro,73,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+22-0012,Westfalen Gewerbebau AG (2 Objekte),46900000,2022-04-05,3.91,9,Logistik,69,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+23-0013,Hanseatic Living GmbH & Co. KG (2 Objekte),30500000,2023-09-30,2.86,8,Einzelhandel,70,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+23-0014,Lahnau Grundstücke GmbH (3 Objekte),39600000,2023-12-04,3.25,17,Einzelhandel,72,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+23-0015,Logistikzentrum Passage,41900000,2023-02-05,3.07,21,Logistik,60,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+23-0016,Weser Quartier GmbH (2 Objekte),34100000,2023-08-21,2.24,22,Logistik,71,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+24-0017,Büropark Markthalle,43200000,2024-04-05,2.76,5,Gewerbe,82,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+24-0018,Edergrund Gewerbe GmbH (3 Objekte),49800000,2024-09-11,3.49,9,Büro,55,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+24-0019,Mühlental Projektgesellschaft mbH (3 Objekte),49800000,2024-09-22,3.48,23,Einzelhandel,60,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+24-0020,Logistikzentrum Arkaden – Spree City Estates GmbH,2600000,2024-05-24,3.72,8,Logistik,69,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+25-0021,Alpenblick Immobilien KG (2 Objekte),45800000,2025-06-06,2.20,29,Büro,59,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+25-0022,Quartier Handelsring,22400000,2025-01-18,4.29,19,Mischnutzung,83,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+25-0023,Mühlental Projektgesellschaft mbH (3 Objekte),49200000,2025-02-21,3.15,22,Mischnutzung,67,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+25-0024,Neckar Park Immobilien AG (2 Objekte),22700000,2025-08-03,3.73,28,Wohnanlage,55,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+26-0025,Burgblick Bau & Immobilien GmbH (3 Objekte),31900000,2026-01-09,1.92,22,Hotel,70,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+26-0026,Mühlental Projektgesellschaft mbH (4 Objekte),33700000,2026-04-11,3.07,17,Büro,68,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+26-0027,Neckar Park Immobilien AG (4 Objekte),45800000,2026-01-15,2.84,16,Mischnutzung,73,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
+26-0028,Südkurve Hotelbetriebe GmbH (4 Objekte),8800000,2026-04-28,2.15,6,Logistik,63,Anantha Padmanaban,anantha.padmanaban@pfandbriefbank.com,Ausgezahlt
