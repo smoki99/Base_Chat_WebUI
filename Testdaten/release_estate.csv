@@ -1,0 +1,73 @@
+EstateId,ObjektName,Straße,PLZ,Ort,Land,Marktwert,LoanId,Fläche_m2,Baujahr,Nutzungsart,Vermietungsgrad_Prozent
+1,Einkaufszentrum Lindenquartier,Hafenweg 171,04275,Leipzig,Deutschland,41100000,1,7850,2005,Einzelhandel,91
+2,Büropark Gartenstadt,Sonnenallee 73,10179,Berlin,Deutschland,13300000,2,7750,2010,Büro,63
+3,Bürogebäude Galerie,Brückenstraße 182,53113,Bonn,Deutschland,13150000,3,4050,1980,Büro,60
+4,Büropark Börsenring,Tannenweg 131,51103,Köln,Deutschland,6350000,4,4900,2016,Büro,91
+5,Bürogebäude Tower,Hauptstraße 35,60386,Frankfurt am Main,Deutschland,5300000,5,4900,2002,Büro,88
+6,Quartier Rheinterrasse,Lindenstraße 215,20095,Hamburg,Deutschland,4150000,6,3500,2012,Mischnutzung,75
+7,Quartier Tannenfeld,Hauptstraße 163,80686,München,Deutschland,3250000,7,3900,1969,Mischnutzung,93
+8,Quartier Nord,Bergstraße 180,30159,Hannover,Deutschland,5300000,8,2900,2016,Mischnutzung,73
+9,Quartier Maschinenweg,Bergstraße 37,10557,Berlin,Deutschland,3300000,9,9650,1969,Mischnutzung,67
+10,Quartier Forum 10,Hafenweg 162,81477,München,Deutschland,2400000,10,6950,1998,Mischnutzung,95
+11,Logistikzentrum Stadtgalerie,Brückenstraße 18,28215,Bremen,Deutschland,52000000,11,4500,1966,Logistik,72
+12,Logistikzentrum Nord 12,Waldweg 190,10179,Berlin,Deutschland,28350000,12,23100,2020,Logistik,84
+13,Wohnanlage Krone,Mühlenweg 213,68161,Mannheim,Deutschland,2450000,13,1950,2009,Wohnen,62
+14,Wohnpark Seenufer,Hauptstraße 157,12103,Berlin,Deutschland,2900000,14,4650,1997,Wohnen,77
+15,Wohnanlage Klostergarten,Am Stadtpark 52,68159,Mannheim,Deutschland,2100000,15,1100,1973,Wohnen,68
+16,Wohnanlage Tannenfeld,Industriestraße 174,45131,Essen,Deutschland,3750000,16,4400,1989,Wohnen,86
+17,Wohnanlage Hofgarten,Kastanienallee 56,44137,Dortmund,Deutschland,3050000,17,2250,2019,Wohnen,91
+18,Hotel Blumenau,Industriestraße 125,40476,Düsseldorf,Deutschland,42150000,18,10750,1972,Hotel,82
+19,Bürogebäude Börsenring,Lindenstraße 91,50679,Köln,Deutschland,16400000,19,6600,2019,Büro,62
+20,Büropark Lindenquartier,Hauptstraße 5,50996,Köln,Deutschland,14050000,20,9650,2025,Büro,69
+21,Büropark Parkseite,Hauptstraße 41,28239,Bremen,Deutschland,16900000,21,3150,2021,Büro,67
+22,Bürogebäude Gartenstadt,Waldweg 160,68165,Mannheim,Deutschland,12100000,22,11650,1968,Büro,81
+23,Büropark Seeblick,Rheinstraße 83,30173,Hannover,Deutschland,850000,23,4950,1985,Büro,94
+24,Bürogebäude Campus,Gartenstraße 132,10557,Berlin,Deutschland,850000,24,5900,2010,Büro,89
+25,Büropark Marktgalerie,Sonnenallee 202,68159,Mannheim,Deutschland,900000,25,9200,1965,Büro,90
+26,Hotel Terminal,Hafenweg 93,76133,Karlsruhe,Deutschland,1900000,26,14500,1988,Hotel,99
+27,Hotel Parkseite,Brückenstraße 207,28239,Bremen,Deutschland,2700000,27,13000,1999,Hotel,87
+28,Hotel Uferzone,Gartenstraße 150,40597,Düsseldorf,Deutschland,3350000,28,8850,2021,Hotel,98
+29,Büropark Rheinterrasse,Tannenweg 33,53115,Bonn,Deutschland,10700000,29,10400,1975,Büro,93
+30,Bürogebäude Blumenau,Tannenweg 79,55131,Mainz,Deutschland,18550000,30,3800,2011,Büro,67
+31,Büropark Gartenstadt 31,Lindenstraße 45,40597,Düsseldorf,Deutschland,19050000,31,10600,2014,Büro,70
+32,Logistikzentrum Süd,Bahnhofstraße 111,40547,Düsseldorf,Deutschland,22700000,32,8350,2009,Logistik,88
+33,Logistikzentrum Eichenruh,Sonnenallee 219,01099,Dresden,Deutschland,45350000,33,17600,1964,Logistik,62
+34,Einkaufszentrum Galerie,Hafenweg 125,65185,Wiesbaden,Deutschland,26150000,34,7300,1958,Einzelhandel,76
+35,Einkaufszentrum Tannenfeld,Parkallee 117,30159,Hannover,Deutschland,17700000,35,4500,1987,Einzelhandel,77
+36,Einkaufszentrum Tor,Lindenstraße 209,47058,Duisburg,Deutschland,15900000,36,4950,2008,Einzelhandel,90
+37,Einkaufszentrum Marktgalerie,Parkallee 43,01219,Dresden,Deutschland,21800000,37,5650,2023,Einzelhandel,83
+38,Einkaufszentrum Hof,Lindenstraße 4,10557,Berlin,Deutschland,17300000,38,1050,2019,Einzelhandel,78
+39,Logistikzentrum Passage,Hafenweg 166,65183,Wiesbaden,Deutschland,69950000,39,7700,1977,Logistik,63
+40,Logistikzentrum Markthalle,Mühlenweg 161,04315,Leipzig,Deutschland,27200000,40,22100,2013,Logistik,79
+41,Logistikzentrum Hofgarten,Kronenstraße 21,45127,Essen,Deutschland,20600000,41,9750,2010,Logistik,66
+42,Büropark Markthalle,Industriestraße 115,04229,Leipzig,Deutschland,52450000,42,7050,1979,Büro,83
+43,Bürogebäude Klostergarten,Eichendorffstraße 54,47228,Duisburg,Deutschland,27950000,43,4450,1970,Büro,92
+44,Bürogebäude Gate,Bahnhofstraße 53,60487,Frankfurt am Main,Deutschland,33600000,44,4050,2013,Büro,83
+45,Büropark Burgblick,Gartenstraße 101,90429,Nürnberg,Deutschland,28700000,45,7650,2002,Büro,70
+46,Einkaufszentrum Stern,Kronenstraße 28,44227,Dortmund,Deutschland,25500000,46,2000,2008,Einzelhandel,81
+47,Einkaufszentrum Terminal,Hauptstraße 41,53113,Bonn,Deutschland,22950000,47,7250,1987,Einzelhandel,80
+48,Einkaufszentrum Drehscheibe 48,Sonnenallee 35,14482,Potsdam,Deutschland,34200000,48,6350,1994,Einzelhandel,67
+49,Logistikzentrum Arkaden,Am Stadtpark 174,55131,Mainz,Deutschland,3750000,49,18650,1957,Logistik,87
+50,Büropark Handelsring,Eichendorffstraße 81,30173,Hannover,Deutschland,36100000,50,9000,1973,Büro,84
+51,Büropark Tannenfeld,Kronenstraße 40,53113,Bonn,Deutschland,40950000,51,3800,2022,Büro,100
+52,Quartier Handelsring,Kronenstraße 108,28195,Bremen,Deutschland,27050000,52,7950,1968,Mischnutzung,62
+53,Quartier Burgblick,Kastanienallee 104,22083,Hamburg,Deutschland,32500000,53,5800,1983,Mischnutzung,91
+54,Quartier Markthalle,Parkallee 180,01099,Dresden,Deutschland,20100000,54,10400,1970,Mischnutzung,61
+55,Quartier Seeblick,Hauptstraße 147,60386,Frankfurt am Main,Deutschland,20850000,55,5200,1972,Mischnutzung,74
+56,Wohnquartier Aumühle,Tannenweg 208,01099,Dresden,Deutschland,20950000,56,4700,2025,Wohnen,82
+57,Wohnquartier Hofgarten,Eichendorffstraße 40,01219,Dresden,Deutschland,20050000,57,3650,1991,Wohnen,64
+58,Hotel Gartenstadt,Hafenweg 96,44137,Dortmund,Deutschland,14150000,58,12900,2007,Hotel,63
+59,Hotel Börsenring,Tannenweg 55,70192,Stuttgart,Deutschland,16900000,59,10900,1962,Hotel,98
+60,Hotel Aumühle,Werkstraße 34,51103,Köln,Deutschland,14700000,60,14900,1962,Hotel,80
+61,Büropark Blumenau,Eichendorffstraße 162,76133,Karlsruhe,Deutschland,12350000,61,8150,2010,Büro,73
+62,Büropark Maschinenweg,Lindenstraße 68,90461,Nürnberg,Deutschland,13900000,62,9700,1982,Büro,60
+63,Büropark Campus,Gartenstraße 123,51103,Köln,Deutschland,11400000,63,1800,1968,Büro,98
+64,Büropark Aumühle,Bergstraße 156,60594,Frankfurt am Main,Deutschland,12250000,64,5600,1977,Büro,87
+65,Quartier Seenufer,Parkallee 156,55110,Mainz,Deutschland,17800000,65,7900,2016,Mischnutzung,69
+66,Quartier Börsenring,Hafenweg 81,80539,München,Deutschland,15600000,66,4200,1991,Mischnutzung,87
+67,Quartier Eichenruh,Kronenstraße 202,01099,Dresden,Deutschland,15000000,67,6850,1960,Mischnutzung,77
+68,Quartier Kaiserhof,Tannenweg 121,50667,Köln,Deutschland,13950000,68,2450,1975,Mischnutzung,90
+69,Logistikzentrum Rheinterrasse,Bahnhofstraße 60,01099,Dresden,Deutschland,3900000,69,18200,2015,Logistik,80
+70,Logistikzentrum Uferzone,Gartenstraße 148,80686,München,Deutschland,3550000,70,5150,1967,Logistik,74
+71,Logistikzentrum Passage 71,Rheinstraße 58,76137,Karlsruhe,Deutschland,2850000,71,3750,1997,Logistik,63
+72,Logistikzentrum Stern,Hauptstraße 172,55595,Mainz,Deutschland,3750000,72,17550,1987,Logistik,98

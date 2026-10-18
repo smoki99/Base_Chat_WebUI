@@ -1,0 +1,67 @@
+KWG18CheckId,BusinessPartnerID,CheckJahr,DueDate,Status,Erledigt_am,Prüfer,Prüfumfang,Bemerkung
+1,3108090487,2010,2010-01-12,Erledigt,2010-01-01,A. Hoffmann,Vollprüfung,Dokumentation nachgereicht
+2,3101674118,2010,2010-06-23,Erledigt,2010-06-02,K. Brandt,Stichprobe,Dokumentation nachgereicht
+3,3108846523,2010,2010-08-25,Erledigt,2010-08-24,S. Yilmaz,Vollprüfung,Keine Auffälligkeiten
+4,3106954343,2011,2011-07-13,Erledigt,2011-07-05,M. Steinbach,Stichprobe,Keine Auffälligkeiten
+5,3106431652,2011,2011-07-16,Erledigt,2011-06-27,L. Petersen,Vollprüfung,
+6,3104309883,2011,2011-10-28,Erledigt,2011-10-17,S. Yilmaz,Vollprüfung,
+7,3108846523,2011,2011-10-29,Erledigt,2011-10-27,K. Brandt,Stichprobe,Keine Auffälligkeiten
+8,3109742696,2012,2012-01-17,Erledigt,2012-01-04,L. Petersen,Vollprüfung,Keine Auffälligkeiten
+9,3104916475,2012,2012-04-20,Erledigt,2012-04-17,K. Brandt,Stichprobe,Keine Auffälligkeiten
+10,3104321846,2012,2012-06-08,Erledigt,2012-05-29,S. Yilmaz,Stichprobe,Keine Auffälligkeiten
+11,3101371716,2013,2013-02-21,Erledigt,2013-02-09,L. Petersen,Stichprobe,Rating bestätigt
+12,3106431652,2013,2013-04-29,Erledigt,2013-04-18,S. Yilmaz,Stichprobe,
+13,3108090487,2013,2013-05-19,Erledigt,2013-05-02,L. Petersen,Vollprüfung,Keine Auffälligkeiten
+14,3109824761,2013,2013-11-04,Erledigt,2013-11-02,K. Brandt,Stichprobe,Keine Auffälligkeiten
+15,3109742696,2013,2013-12-09,Erledigt,2013-12-05,L. Petersen,Vollprüfung,Keine Auffälligkeiten
+16,3106431652,2014,2014-03-03,Erledigt,2014-02-27,K. Brandt,Stichprobe,Rating bestätigt
+17,3100597217,2014,2014-03-19,Erledigt,2014-03-13,A. Hoffmann,Vollprüfung,Rating bestätigt
+18,3104309883,2014,2014-05-29,Erledigt,2014-05-24,M. Steinbach,Stichprobe,Rating bestätigt
+19,3104321846,2014,2014-06-19,Erledigt,2014-06-13,A. Hoffmann,Stichprobe,Keine Auffälligkeiten
+20,3101368572,2014,2014-09-08,Erledigt,2014-09-02,S. Yilmaz,Vollprüfung,Dokumentation nachgereicht
+21,3100625010,2014,2014-10-06,Erledigt,2014-10-06,S. Yilmaz,Stichprobe,
+22,3101371716,2015,2015-04-30,Erledigt,2015-04-16,L. Petersen,Vollprüfung,Rating bestätigt
+23,3106241667,2015,2015-06-21,Erledigt,2015-06-12,J. Weber,Vollprüfung,Dokumentation nachgereicht
+24,3109742696,2015,2015-07-22,Erledigt,2015-07-02,A. Hoffmann,Stichprobe,Keine Auffälligkeiten
+25,3101371716,2016,2016-02-03,Erledigt,2016-01-21,J. Weber,Vollprüfung,Dokumentation nachgereicht
+26,3100625010,2016,2016-02-17,Erledigt,2016-02-15,J. Weber,Vollprüfung,Keine Auffälligkeiten
+27,3106447872,2017,2017-01-14,Erledigt,2017-01-11,J. Weber,Vollprüfung,
+28,3109119209,2017,2017-04-21,Erledigt,2017-04-16,M. Steinbach,Stichprobe,Rating bestätigt
+29,3104309883,2017,2017-07-15,Erledigt,2017-06-24,A. Hoffmann,Vollprüfung,Keine Auffälligkeiten
+30,3107861058,2017,2017-09-17,Erledigt,2017-09-12,A. Hoffmann,Stichprobe,
+31,3106595046,2018,2018-02-05,Erledigt,2018-01-21,J. Weber,Stichprobe,Dokumentation nachgereicht
+32,3108090487,2018,2018-11-14,Erledigt,2018-11-09,S. Yilmaz,Vollprüfung,
+33,3104916475,2019,2019-07-26,Erledigt,2019-07-25,K. Brandt,Stichprobe,Dokumentation nachgereicht
+34,3107889979,2020,2020-01-30,Erledigt,2020-01-20,J. Weber,Vollprüfung,
+35,3100625010,2020,2020-02-06,Erledigt,2020-02-04,M. Steinbach,Vollprüfung,Keine Auffälligkeiten
+36,3109119209,2020,2020-05-28,Erledigt,2020-05-27,A. Hoffmann,Vollprüfung,Keine Auffälligkeiten
+37,3104582738,2020,2020-12-10,Erledigt,2020-11-19,L. Petersen,Stichprobe,Keine Auffälligkeiten
+38,3106954343,2021,2021-10-07,Erledigt,2021-10-06,A. Hoffmann,Vollprüfung,Rating bestätigt
+39,3101368572,2021,2021-11-30,Erledigt,2021-11-23,S. Yilmaz,Vollprüfung,
+40,3101956489,2022,2022-06-08,Erledigt,2022-05-27,A. Hoffmann,Stichprobe,Dokumentation nachgereicht
+41,3106954343,2023,2023-07-09,Erledigt,2023-06-25,K. Brandt,Vollprüfung,Dokumentation nachgereicht
+42,3106964233,2023,2023-07-23,Erledigt,2023-07-08,K. Brandt,Vollprüfung,
+43,3106595046,2023,2023-09-23,Erledigt,2023-09-10,S. Yilmaz,Vollprüfung,Keine Auffälligkeiten
+44,3101368572,2024,2024-08-02,Erledigt,2024-07-28,L. Petersen,Vollprüfung,Dokumentation nachgereicht
+45,3104321846,2024,2024-11-15,Erledigt,2024-11-01,A. Hoffmann,Stichprobe,Dokumentation nachgereicht
+46,3106964233,2025,2025-02-02,Erledigt,2025-01-27,L. Petersen,Stichprobe,
+47,3106595046,2025,2025-08-25,Erledigt,2025-08-05,J. Weber,Vollprüfung,Rating bestätigt
+48,3101368572,2026,2026-01-16,Erledigt,2026-01-05,S. Yilmaz,Vollprüfung,
+49,3104916475,2026,2026-04-18,Erledigt,2026-04-10,M. Steinbach,Vollprüfung,Rating bestätigt
+50,3106954343,2026,2026-10-12,Erledigt,2026-10-12,K. Brandt,Vollprüfung,Rating bestätigt
+51,3106241667,2026,2026-11-16,Offen,,J. Weber,Stichprobe,Unterlagen angefordert
+52,3104916475,2026,2026-12-04,Offen,,M. Steinbach,Stichprobe,Unterlagen angefordert
+53,3104321846,2026,2026-12-18,Offen,,L. Petersen,Vollprüfung,Prüfung geplant
+54,3106595046,2026,2026-12-28,Offen,,S. Yilmaz,Stichprobe,Termin mit Kunde vereinbart
+55,3104582738,2027,2027-01-09,Offen,,L. Petersen,Vollprüfung,Termin mit Kunde vereinbart
+56,3106595046,2027,2027-01-22,Offen,,A. Hoffmann,Vollprüfung,Termin mit Kunde vereinbart
+57,3101674118,2027,2027-03-15,Offen,,L. Petersen,Vollprüfung,Termin mit Kunde vereinbart
+58,3106431652,2027,2027-04-20,Offen,,J. Weber,Vollprüfung,Unterlagen angefordert
+59,3101956489,2027,2027-05-28,Offen,,A. Hoffmann,Vollprüfung,Prüfung geplant
+60,3100597217,2027,2027-08-07,Offen,,K. Brandt,Vollprüfung,Termin mit Kunde vereinbart
+61,3107861058,2027,2027-10-05,Offen,,S. Yilmaz,Vollprüfung,Termin mit Kunde vereinbart
+62,3106447872,2027,2027-11-30,Offen,,K. Brandt,Stichprobe,
+63,3101371716,2028,2028-02-14,Offen,,J. Weber,Stichprobe,Prüfung geplant
+64,3107889979,2028,2028-09-30,Offen,,K. Brandt,Vollprüfung,Prüfung geplant
+65,3100625010,2029,2029-06-12,Offen,,S. Yilmaz,Stichprobe,
+66,3109824761,2030,2030-03-25,Offen,,A. Hoffmann,Vollprüfung,Unterlagen angefordert
