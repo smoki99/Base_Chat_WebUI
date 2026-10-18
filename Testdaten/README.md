@@ -9,14 +9,14 @@ KWG18-Checks ist auf dieses Datum zugeschnitten.
 
 ## Dateien
 
-| Datei                  | Zeilen | Inhalt                                                             |
-| ---------------------- | ------ | ------------------------------------------------------------------ |
-| `deal.csv`             | 28     | Deals (1–50 Mio. EUR, LAM: Anantha Padmanaban, Status: Ausgezahlt) |
-| `loan.csv`             | 72     | Loans (SAPID, Beträge = exakte Summe je Deal)                      |
-| `release_estate.csv`   | 72     | Objekte (Marktwert ≈ 1,2–2,0× Loan-Betrag)                         |
-| `business_partner.csv` | 23     | BusinessPartner (meist 1 Deal, teils mehrere)                      |
-| `kwg18_check.csv`      | 66     | KWG18-Checks (Jahre 2010–2030, Offen/Erledigt)                     |
-| `SYSTEM_PROMPT.md`     | –      | System Prompt für den Chatbot (Beziehungen, Aliase, SQL)           |
+| Datei                  | Zeilen | Inhalt                                                                        |
+| ---------------------- | ------ | ----------------------------------------------------------------------------- |
+| `deal.csv`             | 28     | Deals (1–50 Mio. EUR, LAM: Anantha Padmanaban, Status: Ausgezahlt)            |
+| `loan.csv`             | 72     | Loans (SAPID = Kunden-ID = BusinessPartnerID, Beträge = exakte Summe je Deal) |
+| `release_estate.csv`   | 72     | Objekte (Marktwert ≈ 1,2–2,0× Loan-Betrag)                                    |
+| `business_partner.csv` | 23     | BusinessPartner (meist 1 Deal, teils mehrere)                                 |
+| `kwg18_check.csv`      | 66     | KWG18-Checks (Jahre 2010–2030, Offen/Erledigt)                                |
+| `SYSTEM_PROMPT.md`     | –      | System Prompt für den Chatbot (Beziehungen, Aliase, SQL)                      |
 
 Format: RFC-4180-CSV (Komma), UTF-8, ISO-Daten (JJJJ-MM-TT), Beträge als
 ganze EUR-Zahlen. Alle Namen, Adressen und Kennzahlen sind erfunden.
