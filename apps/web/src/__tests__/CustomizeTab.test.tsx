@@ -191,6 +191,26 @@ describe('CustomizeTab', () => {
     expect(preview).toHaveStyle({ fontWeight: '900', color: 'rgb(255, 0, 0)' });
   });
 
+  it('marks the line text as a fallback while segments carry text', async () => {
+    renderCustomizeTab();
+    const user = userEvent.setup();
+    const w1 = within(screen.getByRole('group', { name: 'Zeile 1' }));
+    const hint = /Wird nur angezeigt, wenn alle Segmente leer sind/;
+
+    // No segments → plain "Text" field, no fallback hint.
+    expect(screen.queryByText(hint)).not.toBeInTheDocument();
+    expect(w1.queryByLabelText('Text (Fallback)')).not.toBeInTheDocument();
+
+    // First active segment → the text field becomes an explicit fallback.
+    await user.click(w1.getByRole('button', { name: 'Segment aus Zeilen-Text anlegen' }));
+    expect(w1.getByLabelText('Text (Fallback)')).toHaveClass('customize-text-fallback');
+    expect(screen.getByText(hint)).toBeInTheDocument();
+
+    // All segments empty again → the hint disappears (text renders normally).
+    await user.clear(w1.getByLabelText('Segment 1: Text'));
+    expect(screen.queryByText(hint)).not.toBeInTheDocument();
+  });
+
   it('adds, reorders and removes draft segments', async () => {
     renderCustomizeTab();
     const user = userEvent.setup();

@@ -151,7 +151,8 @@ function SegmentEditor({
     <div className="customize-segments">
       <div className="customize-segments-head">
         <span className="form-text">
-          Text-Segmente (optional) – ohne Segmente wird der Zeilen-Text im Zeilen-Stil gerendert.
+          Text-Segmente (optional) – Segmente mit Text werden angezeigt und ersetzen den Text oben
+          (der dient nur als Fallback ohne Segmente).
         </span>
         <span className="form-text" aria-live="polite">
           {totalChars}/{HEADER_LINE_MAX_CHARS} Zeichen
@@ -342,22 +343,30 @@ function HeaderLineEditor({
 }) {
   const idBase = `customize-header-line${line}`;
   const themeInherited = value.color === '';
+  /** Segments with text take over the rendering – the line text is only a fallback. */
+  const segmentsActive = value.segments.some((segment) => segment.text.trim() !== '');
 
   return (
     <fieldset className="customize-header-line">
       <legend className="customize-header-line-legend">Zeile {line}</legend>
       <div className="customize-colors">
         <div className="customize-color customize-color--wide">
-          <label htmlFor={`${idBase}-text`}>Text</label>
+          <label htmlFor={`${idBase}-text`}>{segmentsActive ? 'Text (Fallback)' : 'Text'}</label>
           <input
             id={`${idBase}-text`}
-            className="form-control"
+            className={`form-control${segmentsActive ? ' customize-text-fallback' : ''}`}
             type="text"
             maxLength={HEADER_LINE_MAX_CHARS}
             placeholder={line === 1 ? 'z. B. Base Chat' : "z. B. Let's talk realestate."}
             value={value.text}
             onChange={(event) => onUpdate({ text: event.target.value })}
           />
+          {segmentsActive && (
+            <div className="form-text" id={`${idBase}-text-hint`}>
+              Wird nur angezeigt, wenn alle Segmente leer sind – aktuell zeigen die Segmente diese
+              Zeile.
+            </div>
+          )}
         </div>
         <div className="customize-color">
           <label htmlFor={`${idBase}-font`}>Schriftart</label>

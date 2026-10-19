@@ -130,6 +130,35 @@ export const HEADER_FONT_FAMILIES = [
     value: 'ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace',
   },
   { id: 'rounded', label: 'Rounded', value: "ui-rounded, 'SF Pro Rounded', system-ui, sans-serif" },
+  {
+    id: 'liberation-sans',
+    label: 'Liberation Sans',
+    value: '"Liberation Sans", "Helvetica Neue", Arial, sans-serif',
+  },
+  {
+    id: 'liberation-serif',
+    label: 'Liberation Serif',
+    value: '"Liberation Serif", "Times New Roman", Georgia, serif',
+  },
+  {
+    id: 'liberation-mono',
+    label: 'Liberation Mono',
+    value: '"Liberation Mono", Consolas, "Courier New", monospace',
+  },
+  { id: 'verdana', label: 'Verdana', value: 'Verdana, Geneva, Tahoma, sans-serif' },
+  { id: 'tahoma', label: 'Tahoma', value: 'Tahoma, Verdana, "Segoe UI", sans-serif' },
+  {
+    id: 'trebuchet',
+    label: 'Trebuchet MS',
+    value: '"Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande", sans-serif',
+  },
+  { id: 'georgia', label: 'Georgia', value: 'Georgia, "Times New Roman", serif' },
+  {
+    id: 'palatino',
+    label: 'Palatino',
+    value: '"Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif',
+  },
+  { id: 'courier', label: 'Courier New', value: '"Courier New", Courier, monospace' },
 ] as const;
 
 // - Value checks (used by strict and lenient validation) -

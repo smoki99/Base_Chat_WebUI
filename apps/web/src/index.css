@@ -994,6 +994,13 @@ body {
   grid-column: 1 / -1;
 }
 
+/* Line text is a fallback while styled segments carry the visible text –
+   dim it so it is clear the segments (not this field) are rendered. */
+.customize-text-fallback {
+  opacity: 0.55;
+  border-style: dashed;
+}
+
 .customize-header-line input[type='range'] {
   width: 100%;
 }

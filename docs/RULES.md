@@ -36,6 +36,17 @@ npx playwright install chromium   # einmalig, Browser-Binaries
 npm run test:e2e -w web
 ```
 
+> **E2E mit laufendem Dev-Server (Pflicht!):**
+>
+> ```bash
+> E2E_API_PORT=4101 E2E_WEB_PORT=5273 UI_CUSTOMIZATION_FILE=/tmp/e2e-customization.json npm run test:e2e -w web
+> ```
+>
+> **Warum:** Playwright (`reuseExistingServer: !CI`) verwendet den Dev-Server auf
+> 4001/5173 – die Tests überschreiben dann **live** Daten-Dateien (z. B.
+> `apps/api/data/ui-customization.json`) und hängen am Dev-Server-Env
+> (ADMIN_TOKEN). Regel nach Vorfal bei Story-0038 (Nutzerdatenverlust, 2026-10-19).
+
 ## 4. CI-Parität
 
 > **Bevor** der erste Commit in einem neuen Feature-Branch erfolgt:
@@ -141,4 +152,4 @@ gh pr diff <PR-Nummer> > /tmp/pr-diff.txt
 
 ---
 
-_Letzte Aktualisierung: 2026-10-17_
+_Letzte Aktualisierung: 2026-10-19_
