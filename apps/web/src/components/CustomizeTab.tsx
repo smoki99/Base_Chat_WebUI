@@ -152,7 +152,8 @@ function SegmentEditor({
       <div className="customize-segments-head">
         <span className="form-text">
           Text-Segmente (optional) – Segmente mit Text werden angezeigt und ersetzen den Text oben
-          (der dient nur als Fallback ohne Segmente).
+          (der dient nur als Fallback ohne Segmente). Tipp: Abstände zwischen Segmente per
+          Leerzeichen in den Segment-Text setzen (z. B. „Service “ + „Hub“).
         </span>
         <span className="form-text" aria-live="polite">
           {totalChars}/{HEADER_LINE_MAX_CHARS} Zeichen

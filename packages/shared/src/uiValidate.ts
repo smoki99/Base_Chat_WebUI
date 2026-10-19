@@ -92,13 +92,15 @@ function validateSegment(raw: unknown, label: string): UiHeaderSegment {
   if (
     typeof text !== 'string' ||
     text.trim().length === 0 ||
-    text.trim().length > HEADER_SEGMENT_MAX_CHARS
+    text.length > HEADER_SEGMENT_MAX_CHARS
   ) {
     throw new InvalidUiCustomizationError(
       `${label}.text must be a non-empty string with at most ${HEADER_SEGMENT_MAX_CHARS} characters`
     );
   }
-  const segment: UiHeaderSegment = { text: text.trim() };
+  // Kept as-is: leading/trailing spaces are meaningful (spaces between
+  // segments are part of the segment text, e.g. "Service " + "Hub").
+  const segment: UiHeaderSegment = { text };
   if (raw.color !== undefined) {
     if (!isHeaderColor(raw.color)) {
       throw new InvalidUiCustomizationError(
@@ -249,8 +251,8 @@ export function sanitizeColors(raw: unknown): UiThemeColors {
 
 /**
  * Lenient segment picking: keeps only well-formed segments (valid text,
- * optional style fields), trims text, caps count at {@link HEADER_MAX_SEGMENTS}
- * and total text at {@link HEADER_LINE_MAX_CHARS}. Never throws.
+ * optional style fields), caps count at {@link HEADER_MAX_SEGMENTS} and
+ * total text at {@link HEADER_LINE_MAX_CHARS}. Never throws.
  */
 function pickSegments(raw: unknown): UiHeaderSegment[] {
   if (!Array.isArray(raw)) return [];
@@ -272,8 +274,8 @@ function pickSegments(raw: unknown): UiHeaderSegment[] {
  */
 function pickSegment(raw: unknown, maxTextLength: number): UiHeaderSegment | null {
   if (!isRecord(raw) || typeof raw.text !== 'string') return null;
-  const text = raw.text.trim();
-  if (text.length === 0 || text.length > HEADER_SEGMENT_MAX_CHARS) return null;
+  const text = raw.text;
+  if (text.trim().length === 0 || text.length > HEADER_SEGMENT_MAX_CHARS) return null;
   if (text.length > maxTextLength) return null;
   const segment: UiHeaderSegment = { text };
   if (isHeaderColor(raw.color)) segment.color = raw.color;

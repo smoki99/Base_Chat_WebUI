@@ -34,7 +34,7 @@ export type UiFontStyle = 'normal' | 'italic';
  * which itself falls back to the theme text color).
  */
 export interface UiHeaderSegment {
-  /** Visible text; max {@link HEADER_SEGMENT_MAX_CHARS} after trim. */
+  /** Visible text, kept as-is (spaces are meaningful); max {@link HEADER_SEGMENT_MAX_CHARS}. */
   text: string;
   /** Hex color (`#rgb`/`#rrggbb`); omitted/`''` = line color. */
   color?: string;
@@ -50,7 +50,8 @@ export interface UiHeaderSegment {
  * One configurable line of the chat header.
  *
  * Rendering: when `segments` is non-empty the segments are concatenated
- * (directly – no automatic spaces) and each one inherits the line's base
+ * (directly – no automatic spaces; boundary spaces belong to the segment
+ * text, e.g. a trailing space) and each one inherits the line's base
  * style, overridden by its own fields. When `segments` is empty the line
  * renders `text` with the line style (classic, pre-segment behavior).
  */

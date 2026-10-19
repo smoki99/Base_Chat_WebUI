@@ -283,19 +283,19 @@ describe('header segments (Story-0038 rich header)', () => {
   const withLine1 = (line1: Record<string, unknown>) =>
     ({ ...VALID, header: { ...VALID.header, line1 } }) as unknown as UiCustomization;
 
-  it('accepts styled segments and normalizes (trims) their text', () => {
+  it('accepts styled segments and keeps their text as-is (spaces between segments)', () => {
     const doc = validateUiCustomization(
       withLine1({
         ...VALID.header.line1,
         segments: [
-          { text: '  Base ' },
-          { text: 'Chat', color: '#15803d', fontWeight: 800, fontStyle: 'italic', fontSize: 20 },
+          { text: 'Service ' },
+          { text: 'Hub', color: '#15803d', fontWeight: 800, fontStyle: 'italic', fontSize: 20 },
         ],
       })
     );
     expect(doc.header.line1.segments).toEqual([
-      { text: 'Base' },
-      { text: 'Chat', color: '#15803d', fontWeight: 800, fontStyle: 'italic', fontSize: 20 },
+      { text: 'Service ' },
+      { text: 'Hub', color: '#15803d', fontWeight: 800, fontStyle: 'italic', fontSize: 20 },
     ]);
   });
 
@@ -393,7 +393,7 @@ describe('header segments (Story-0038 rich header)', () => {
         ],
       })
     ).header.line1;
-    expect(line.segments).toEqual([{ text: 'good' }, { text: 'bad-color' }]);
+    expect(line.segments).toEqual([{ text: '  good ' }, { text: 'bad-color' }]);
   });
 
   it('lenient sanitize: legacy line without segments gets segments: []', () => {
