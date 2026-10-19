@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { DEFAULT_HEADER, type UiHeader } from 'shared';
-import { headerLineStyle } from '../appearance';
+import { HeaderLineView } from '../appearance';
 import { useChat, type ChatMessage } from '../hooks/useChat';
 import { useVoiceContext } from '../voice/VoiceContext';
 import { Markdown } from './Markdown';
@@ -146,22 +146,14 @@ export function Chat({
       <header className="chat-header">
         {logo && <img className="chat-header-logo" src={logo} alt="Logo" />}
         <div className="chat-header-titles">
-          {header.line1.text !== '' && (
-            <span
-              className="chat-header-title chat-header-title--line1"
-              style={headerLineStyle(header.line1)}
-            >
-              {header.line1.text}
-            </span>
-          )}
-          {header.line2.text !== '' && (
-            <span
-              className="chat-header-title chat-header-title--line2"
-              style={headerLineStyle(header.line2)}
-            >
-              {header.line2.text}
-            </span>
-          )}
+          <HeaderLineView
+            line={header.line1}
+            className="chat-header-title chat-header-title--line1"
+          />
+          <HeaderLineView
+            line={header.line2}
+            className="chat-header-title chat-header-title--line2"
+          />
         </div>
       </header>
       <div

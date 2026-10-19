@@ -5,6 +5,6 @@
 export { AppearanceProvider, useAppearance } from './AppearanceContext';
 export { COLOR_PRESETS, findMatchingPresetId } from './themes';
 export { ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from './imageUtils';
-export { headerLineStyle } from './headerStyle';
+export { HeaderLineView } from './headerPreview';
 export { useImageUpload } from './useImageUpload';
 export type { UiHeaderLine, UiThemeColors } from './types';

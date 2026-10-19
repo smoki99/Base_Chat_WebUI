@@ -15,10 +15,14 @@ import {
   DEFAULT_UI_CUSTOMIZATION,
   HEADER_FONT_FAMILIES,
   HEADER_LINE_MAX_CHARS,
+  HEADER_MAX_SEGMENTS,
+  HEADER_SEGMENT_MAX_CHARS,
   InvalidUiCustomizationError,
   sanitizeUiCustomization,
+  splitTextToSegments,
   validateUiCustomization,
   type UiCustomization,
+  type UiHeaderSegment,
 } from 'shared';
 
 import app from '../app';
@@ -49,6 +53,7 @@ const VALID: UiCustomization = {
       fontWeight: 700,
       fontStyle: 'normal',
       color: '#0f172a',
+      segments: [],
     },
     line2: {
       text: "Let's talk realestate.",
@@ -57,6 +62,7 @@ const VALID: UiCustomization = {
       fontWeight: 400,
       fontStyle: 'italic',
       color: '',
+      segments: [],
     },
   },
 };
@@ -270,5 +276,164 @@ describe('PUT /api/chat/appearance', () => {
     // No side effect: nothing was stored yet.
     const get = await request(app).get('/api/chat/appearance');
     expect(get.body.data).toEqual(DEFAULT_UI_CUSTOMIZATION);
+  });
+});
+
+describe('header segments (Story-0038 rich header)', () => {
+  const withLine1 = (line1: Record<string, unknown>) =>
+    ({ ...VALID, header: { ...VALID.header, line1 } }) as unknown as UiCustomization;
+
+  it('accepts styled segments and normalizes (trims) their text', () => {
+    const doc = validateUiCustomization(
+      withLine1({
+        ...VALID.header.line1,
+        segments: [
+          { text: '  Base ' },
+          { text: 'Chat', color: '#15803d', fontWeight: 800, fontStyle: 'italic', fontSize: 20 },
+        ],
+      })
+    );
+    expect(doc.header.line1.segments).toEqual([
+      { text: 'Base' },
+      { text: 'Chat', color: '#15803d', fontWeight: 800, fontStyle: 'italic', fontSize: 20 },
+    ]);
+  });
+
+  it('accepts a PUT without segments (legacy web client stays compatible)', () => {
+    const legacy = { ...VALID, header: { ...VALID.header } } as Record<string, unknown>;
+    const line1 = { ...(VALID.header.line1 as unknown as Record<string, unknown>) };
+    delete line1.segments;
+    legacy.header = { ...VALID.header, line1 } as never;
+    const doc = validateUiCustomization(legacy);
+    expect(doc.header.line1.segments).toEqual([]);
+    expect(doc.header.line1.text).toBe(VALID.header.line1.text);
+  });
+
+  it('rejects each segment contract violation', () => {
+    const seg = (patch: Record<string, unknown>): UiHeaderSegment => ({ text: 'ok', ...patch });
+    const bad = (segments: unknown) =>
+      expect(() => validateUiCustomization(withLine1({ ...VALID.header.line1, segments }))).toThrow(
+        InvalidUiCustomizationError
+      );
+    const max = 'x'.repeat(HEADER_SEGMENT_MAX_CHARS);
+    expect(() =>
+      validateUiCustomization(withLine1({ ...VALID.header.line1, segments: [{ text: max }] }))
+    ).not.toThrow();
+
+    bad(Array.from({ length: HEADER_MAX_SEGMENTS + 1 }, () => seg({})));
+    bad([seg({ text: max + 'y' })]);
+    bad([seg({ text: '   ' })]);
+    bad([seg({ text: 42 })]);
+    bad([seg({ color: 'red' })]);
+    bad([seg({ fontWeight: 95 })]);
+    bad([seg({ fontWeight: 905 })]);
+    bad([seg({ fontStyle: 'oblique' })]);
+    bad([seg({ fontSize: 7 })]);
+    bad([seg({ fontSize: 97 })]);
+    bad('nope');
+    bad(null);
+    // 8 x 24 = 192 > 120 total limit
+    bad(Array.from({ length: HEADER_MAX_SEGMENTS }, () => seg({ text: max })));
+  });
+
+  it('answers 400 for segment violations with field-specific messages', async () => {
+    process.env.ADMIN_TOKEN = 'secret-token';
+    const auth = { Authorization: 'Bearer secret-token' };
+    const put = (segments: unknown) =>
+      request(app)
+        .put('/api/chat/appearance')
+        .set(auth)
+        .send(withLine1({ ...VALID.header.line1, segments }));
+
+    const tooMany = await put(Array.from({ length: 9 }, () => ({ text: 'a' })));
+    expect(tooMany.status).toBe(400);
+    expect(tooMany.body.error.message).toMatch(/segments/);
+
+    const tooLong = await put([{ text: 'x'.repeat(25) }]);
+    expect(tooLong.status).toBe(400);
+    expect(tooLong.body.error.message).toMatch(/text/);
+
+    const badColor = await put([{ text: 'a', color: 'red' }]);
+    expect(badColor.status).toBe(400);
+    expect(badColor.body.error.message).toMatch(/color/);
+
+    // No side effect
+    const get = await request(app).get('/api/chat/appearance');
+    expect(get.body.data).toEqual(DEFAULT_UI_CUSTOMIZATION);
+  });
+
+  it('stores a valid document with segments (readable via GET afterwards)', async () => {
+    process.env.ADMIN_TOKEN = 'secret-token';
+    const doc = withLine1({
+      ...VALID.header.line1,
+      segments: [{ text: 'PASH' }, { text: '- CRE', color: '#15803d' }],
+    });
+    const res = await request(app)
+      .put('/api/chat/appearance')
+      .set('Authorization', 'Bearer secret-token')
+      .send(doc);
+    expect(res.status).toBe(200);
+    const get = await request(app).get('/api/chat/appearance');
+    expect(get.body.data.header.line1.segments).toEqual([
+      { text: 'PASH' },
+      { text: '- CRE', color: '#15803d' },
+    ]);
+  });
+
+  it('lenient sanitize: keeps valid segments, drops invalid, caps count and total', () => {
+    const line = sanitizeUiCustomization(
+      withLine1({
+        ...VALID.header.line1,
+        segments: [
+          { text: '  good ' },
+          'garbage',
+          { text: 42 },
+          { text: 'x'.repeat(HEADER_SEGMENT_MAX_CHARS + 1) },
+          { text: 'bad-color', color: 'red' },
+        ],
+      })
+    ).header.line1;
+    expect(line.segments).toEqual([{ text: 'good' }, { text: 'bad-color' }]);
+  });
+
+  it('lenient sanitize: legacy line without segments gets segments: []', () => {
+    const legacyLine = { ...(VALID.header.line1 as unknown as Record<string, unknown>) };
+    delete legacyLine.segments;
+    const line = sanitizeUiCustomization(withLine1(legacyLine)).header.line1;
+    expect(line.segments).toEqual([]);
+    expect(line.text).toBe(VALID.header.line1.text);
+  });
+
+  it('lenient sanitize: non-array segments fall back to []', () => {
+    const line = sanitizeUiCustomization(withLine1({ ...VALID.header.line1, segments: 'nope' }))
+      .header.line1;
+    expect(line.segments).toEqual([]);
+  });
+
+  it('loads a legacy stored file (no segments) with segments: []', async () => {
+    const legacy = {
+      ...VALID,
+      header: {
+        line1: { ...(VALID.header.line1 as unknown as Record<string, unknown>) },
+        line2: { ...(VALID.header.line2 as unknown as Record<string, unknown>) },
+      },
+    };
+    delete (legacy.header.line1 as Record<string, unknown>).segments;
+    delete (legacy.header.line2 as Record<string, unknown>).segments;
+    await fs.writeFile(dataFile(), JSON.stringify(legacy), 'utf8');
+    const get = await request(app).get('/api/chat/appearance');
+    expect(get.status).toBe(200);
+    expect(get.body.data.header.line1.segments).toEqual([]);
+    expect(get.body.data.header.line1.text).toBe(VALID.header.line1.text);
+  });
+
+  it('splitTextToSegments chunks line text into <=24-char segments (max 8)', () => {
+    expect(splitTextToSegments('')).toEqual([]);
+    expect(splitTextToSegments('Base Chat')).toEqual([{ text: 'Base Chat' }]);
+    const text = 'a'.repeat(HEADER_SEGMENT_MAX_CHARS + 10);
+    const chunks = splitTextToSegments(text);
+    expect(chunks.map((s) => s.text.length)).toEqual([HEADER_SEGMENT_MAX_CHARS, 10]);
+    expect(splitTextToSegments('b'.repeat(120))).toHaveLength(5);
+    expect(splitTextToSegments('c'.repeat(1000))).toHaveLength(HEADER_MAX_SEGMENTS);
   });
 });

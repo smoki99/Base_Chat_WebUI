@@ -41,6 +41,7 @@ describe('AppearanceProvider (server-persisted settings)', () => {
         <span data-testid="line1">{appearance.header.line1.text}</span>
         <span data-testid="line1-size">{appearance.header.line1.fontSize}</span>
         <span data-testid="line2">{appearance.header.line2.text}</span>
+        <span data-testid="line1-segments">{JSON.stringify(appearance.header.line1.segments)}</span>
         <span data-testid="saveState">{appearance.saveState}</span>
         <span data-testid="saveError">{appearance.saveError ?? ''}</span>
         <button type="button" onClick={() => appearance.setColor('primary', '#123456')}>
@@ -53,6 +54,23 @@ describe('AppearanceProvider (server-persisted settings)', () => {
           }
         >
           change header
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            appearance.setHeaderSegments('line1', [
+              { text: 'Bold ', fontWeight: 900 },
+              { text: 'Draft' },
+            ])
+          }
+        >
+          set segments
+        </button>
+        <button
+          type="button"
+          onClick={() => appearance.setHeaderSegments('line1', [{ text: '  ' }])}
+        >
+          set draft-only segments
         </button>
         <button type="button" onClick={() => appearance.reset()}>
           reset
@@ -75,6 +93,12 @@ describe('AppearanceProvider (server-persisted settings)', () => {
       },
     },
   });
+
+  /** Reads the live line1 segments from the probe render. */
+  function appearanceLine1Segments(): unknown {
+    const span = screen.getByTestId('line1-segments');
+    return JSON.parse(span.textContent ?? '[]');
+  }
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -165,6 +189,45 @@ describe('AppearanceProvider (server-persisted settings)', () => {
     const [, doc] = saveUiCustomization.mock.calls[0] as [string, UiCustomization];
     expect(doc.header.line1).toMatchObject({ text: 'Neuer Titel', fontSize: 40 });
     expect(doc.header.line2).toEqual(SERVER_DOC.header.line2);
+  });
+
+  it('replaces the header segments via setHeaderSegments and persists them', async () => {
+    await renderHarness();
+    act(() => {
+      screen.getByRole('button', { name: 'set segments' }).click();
+    });
+    expect(appearanceLine1Segments()).toEqual([
+      { text: 'Bold ', fontWeight: 900 },
+      { text: 'Draft' },
+    ]);
+
+    act(() => {
+      vi.advanceTimersByTime(SAVE_DEBOUNCE_MS);
+    });
+    await act(async () => {});
+    const [, doc] = saveUiCustomization.mock.calls[0] as [string, UiCustomization];
+    expect(doc.header.line1.segments).toEqual([
+      { text: 'Bold ', fontWeight: 900 },
+      { text: 'Draft' },
+    ]);
+    // The classic line text is untouched.
+    expect(doc.header.line1.text).toBe(SERVER_DOC.header.line1.text);
+  });
+
+  it('filters empty draft segments out of the persisted document', async () => {
+    await renderHarness();
+    act(() => {
+      screen.getByRole('button', { name: 'set draft-only segments' }).click();
+    });
+    // Locally the draft is kept…
+    expect(appearanceLine1Segments()).toEqual([{ text: '  ' }]);
+    // …but the save strips it so the server contract stays valid.
+    act(() => {
+      vi.advanceTimersByTime(SAVE_DEBOUNCE_MS);
+    });
+    await act(async () => {});
+    const [, doc] = saveUiCustomization.mock.calls[0] as [string, UiCustomization];
+    expect(doc.header.line1.segments).toEqual([]);
   });
 
   it('reports a save failure (e.g. 403 without token) with the API message', async () => {

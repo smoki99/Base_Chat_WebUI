@@ -4,13 +4,17 @@ import {
   HEADER_FONT_SIZE_MAX,
   HEADER_FONT_SIZE_MIN,
   HEADER_LINE_MAX_CHARS,
+  HEADER_MAX_SEGMENTS,
+  HEADER_SEGMENT_MAX_CHARS,
+  splitTextToSegments,
+  type UiHeaderSegment,
 } from 'shared';
 import {
   ALLOWED_IMAGE_TYPES,
   COLOR_PRESETS,
   MAX_IMAGE_BYTES,
+  HeaderLineView,
   findMatchingPresetId,
-  headerLineStyle,
   useAppearance,
   useImageUpload,
 } from '../appearance';
@@ -104,39 +108,265 @@ function ImageSection({
 const FONT_WEIGHT_OPTIONS = [100, 200, 300, 400, 500, 600, 700, 800, 900];
 
 /**
+ * Editor for the styled text segments of one header line (rich header,
+ * Story-0038). Segments inherit the line's base style; every field can be
+ * overridden per segment. Draft segments with empty text are local only –
+ * they are filtered out before saving.
+ */
+function SegmentEditor({
+  line,
+  value,
+  themeText,
+  onSegmentsChange,
+}: {
+  line: 1 | 2;
+  value: UiHeaderLine;
+  /** Current theme text color – the "inherit" value for color pickers. */
+  themeText: string;
+  onSegmentsChange: (segments: UiHeaderSegment[]) => void;
+}) {
+  const idBase = `customize-header-seg-line${line}`;
+  const segments = value.segments;
+  const totalChars = segments.reduce((sum, segment) => sum + segment.text.length, 0);
+  const lineColor = value.color !== '' ? value.color : themeText;
+
+  const patchSegment = (index: number, patch: Partial<UiHeaderSegment>) =>
+    onSegmentsChange(
+      segments.map((segment, i) => (i === index ? { ...segment, ...patch } : segment))
+    );
+
+  const removeSegment = (index: number) => onSegmentsChange(segments.filter((_, i) => i !== index));
+
+  const moveSegment = (index: number, delta: -1 | 1) => {
+    const target = index + delta;
+    if (target < 0 || target >= segments.length) return;
+    const entry = segments[index];
+    if (!entry) return;
+    const next = segments.filter((_, i) => i !== index);
+    next.splice(target, 0, entry);
+    onSegmentsChange(next);
+  };
+
+  return (
+    <div className="customize-segments">
+      <div className="customize-segments-head">
+        <span className="form-text">
+          Text-Segmente (optional) – Segmente mit Text werden angezeigt und ersetzen den Text oben
+          (der dient nur als Fallback ohne Segmente).
+        </span>
+        <span className="form-text" aria-live="polite">
+          {totalChars}/{HEADER_LINE_MAX_CHARS} Zeichen
+        </span>
+      </div>
+      {segments.length === 0 ? (
+        value.text.trim() !== '' && (
+          <button
+            type="button"
+            className="btn btn-outline-primary"
+            onClick={() => onSegmentsChange(splitTextToSegments(value.text))}
+          >
+            Segment aus Zeilen-Text anlegen
+          </button>
+        )
+      ) : (
+        <ul className="customize-segment-list">
+          {segments.map((segment, index) => {
+            const colorInherited = segment.color === undefined;
+            const sizeInherited = segment.fontSize === undefined;
+            return (
+              <li key={index} className="customize-segment">
+                <input
+                  id={`${idBase}-${index}-text`}
+                  className="form-control"
+                  type="text"
+                  maxLength={HEADER_SEGMENT_MAX_CHARS}
+                  placeholder={`Segment ${index + 1}`}
+                  aria-label={`Segment ${index + 1}: Text`}
+                  value={segment.text}
+                  onChange={(event) => patchSegment(index, { text: event.target.value })}
+                />
+                <div className="customize-segment-style">
+                  <label className="form-check-inline" htmlFor={`${idBase}-${index}-color-inherit`}>
+                    <input
+                      id={`${idBase}-${index}-color-inherit`}
+                      type="checkbox"
+                      checked={colorInherited}
+                      onChange={(event) =>
+                        patchSegment(index, { color: event.target.checked ? undefined : lineColor })
+                      }
+                    />
+                    Zeilenfarbe
+                  </label>
+                  <input
+                    className="form-control"
+                    type="color"
+                    aria-label={`Segment ${index + 1}: Farbe`}
+                    value={toColorInputValue(
+                      colorInherited ? lineColor : (segment.color ?? lineColor)
+                    )}
+                    disabled={colorInherited}
+                    onChange={(event) => patchSegment(index, { color: event.target.value })}
+                  />
+                  <select
+                    className="form-select"
+                    aria-label={`Segment ${index + 1}: Stärke`}
+                    value={
+                      segment.fontWeight === undefined ? 'inherit' : String(segment.fontWeight)
+                    }
+                    onChange={(event) =>
+                      patchSegment(index, {
+                        fontWeight:
+                          event.target.value === 'inherit' ? undefined : Number(event.target.value),
+                      })
+                    }
+                  >
+                    <option value="inherit">Stärke: erben</option>
+                    {FONT_WEIGHT_OPTIONS.map((weight) => (
+                      <option key={weight} value={weight}>
+                        {weight}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    className="form-select"
+                    aria-label={`Segment ${index + 1}: Stil`}
+                    value={segment.fontStyle ?? 'inherit'}
+                    onChange={(event) =>
+                      patchSegment(index, {
+                        fontStyle:
+                          event.target.value === 'inherit'
+                            ? undefined
+                            : (event.target.value as 'normal' | 'italic'),
+                      })
+                    }
+                  >
+                    <option value="inherit">Stil: erben</option>
+                    <option value="normal">Normal</option>
+                    <option value="italic">Kursiv</option>
+                  </select>
+                  <label className="form-check-inline" htmlFor={`${idBase}-${index}-size-inherit`}>
+                    <input
+                      id={`${idBase}-${index}-size-inherit`}
+                      type="checkbox"
+                      checked={sizeInherited}
+                      onChange={(event) =>
+                        patchSegment(index, {
+                          fontSize: event.target.checked ? undefined : value.fontSize,
+                        })
+                      }
+                    />
+                    Zeilengröße
+                  </label>
+                  <input
+                    type="range"
+                    aria-label={`Segment ${index + 1}: Größe`}
+                    min={HEADER_FONT_SIZE_MIN}
+                    max={HEADER_FONT_SIZE_MAX}
+                    step={1}
+                    value={sizeInherited ? value.fontSize : segment.fontSize}
+                    disabled={sizeInherited}
+                    onChange={(event) =>
+                      patchSegment(index, { fontSize: Number(event.target.value) })
+                    }
+                  />
+                </div>
+                <div className="customize-segment-actions">
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    aria-label={`Segment ${index + 1} nach oben`}
+                    disabled={index === 0}
+                    onClick={() => moveSegment(index, -1)}
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    aria-label={`Segment ${index + 1} nach unten`}
+                    disabled={index === segments.length - 1}
+                    onClick={() => moveSegment(index, 1)}
+                  >
+                    ↓
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-outline-danger"
+                    aria-label={`Segment ${index + 1} entfernen`}
+                    onClick={() => removeSegment(index)}
+                  >
+                    ×
+                  </button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <div className="customize-segments-foot">
+        <button
+          type="button"
+          className="btn btn-outline-primary"
+          disabled={segments.length >= HEADER_MAX_SEGMENTS}
+          onClick={() => onSegmentsChange([...segments, { text: '' }])}
+        >
+          + Segment
+        </button>
+        {segments.length > 0 && (
+          <button type="button" className="btn btn-outline" onClick={() => onSegmentsChange([])}>
+            Segmente entfernen
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
  * Editor for one configurable header line (Story-0038): text, font family,
- * size, weight, color (or theme color) and italic.
+ * size, weight, color (or theme color), italic – and optional styled
+ * text segments (rich header).
  */
 function HeaderLineEditor({
   line,
   value,
   themeText,
   onUpdate,
+  onSegmentsChange,
 }: {
   line: 1 | 2;
   value: UiHeaderLine;
   /** Current theme text color – the "inherit" value for the color picker. */
   themeText: string;
   onUpdate: (patch: Partial<UiHeaderLine>) => void;
+  onSegmentsChange: (segments: UiHeaderSegment[]) => void;
 }) {
   const idBase = `customize-header-line${line}`;
   const themeInherited = value.color === '';
+  /** Segments with text take over the rendering – the line text is only a fallback. */
+  const segmentsActive = value.segments.some((segment) => segment.text.trim() !== '');
 
   return (
     <fieldset className="customize-header-line">
       <legend className="customize-header-line-legend">Zeile {line}</legend>
       <div className="customize-colors">
         <div className="customize-color customize-color--wide">
-          <label htmlFor={`${idBase}-text`}>Text</label>
+          <label htmlFor={`${idBase}-text`}>{segmentsActive ? 'Text (Fallback)' : 'Text'}</label>
           <input
             id={`${idBase}-text`}
-            className="form-control"
+            className={`form-control${segmentsActive ? ' customize-text-fallback' : ''}`}
             type="text"
             maxLength={HEADER_LINE_MAX_CHARS}
             placeholder={line === 1 ? 'z. B. Base Chat' : "z. B. Let's talk realestate."}
             value={value.text}
             onChange={(event) => onUpdate({ text: event.target.value })}
           />
+          {segmentsActive && (
+            <div className="form-text" id={`${idBase}-text-hint`}>
+              Wird nur angezeigt, wenn alle Segmente leer sind – aktuell zeigen die Segmente diese
+              Zeile.
+            </div>
+          )}
         </div>
         <div className="customize-color">
           <label htmlFor={`${idBase}-font`}>Schriftart</label>
@@ -215,6 +445,12 @@ function HeaderLineEditor({
           Kursiv
         </label>
       </div>
+      <SegmentEditor
+        line={line}
+        value={value}
+        themeText={themeText}
+        onSegmentsChange={onSegmentsChange}
+      />
     </fieldset>
   );
 }
@@ -238,6 +474,7 @@ export function CustomizeTab() {
     setBanner,
     setBannerVisible,
     updateHeaderLine,
+    setHeaderSegments,
     reset,
   } = useAppearance();
 
@@ -342,22 +579,14 @@ export function CustomizeTab() {
         <div className="customize-header-preview" aria-hidden="true">
           <div className="chat-header chat-header--preview">
             <div className="chat-header-titles">
-              {header.line1.text !== '' && (
-                <span
-                  className="chat-header-title chat-header-title--line1"
-                  style={headerLineStyle(header.line1)}
-                >
-                  {header.line1.text}
-                </span>
-              )}
-              {header.line2.text !== '' && (
-                <span
-                  className="chat-header-title chat-header-title--line2"
-                  style={headerLineStyle(header.line2)}
-                >
-                  {header.line2.text}
-                </span>
-              )}
+              <HeaderLineView
+                line={header.line1}
+                className="chat-header-title chat-header-title--line1"
+              />
+              <HeaderLineView
+                line={header.line2}
+                className="chat-header-title chat-header-title--line2"
+              />
             </div>
           </div>
         </div>
@@ -366,12 +595,14 @@ export function CustomizeTab() {
           value={header.line1}
           themeText={colors.text}
           onUpdate={(patch) => updateHeaderLine('line1', patch)}
+          onSegmentsChange={(segments) => setHeaderSegments('line1', segments)}
         />
         <HeaderLineEditor
           line={2}
           value={header.line2}
           themeText={colors.text}
           onUpdate={(patch) => updateHeaderLine('line2', patch)}
+          onSegmentsChange={(segments) => setHeaderSegments('line2', segments)}
         />
         <div className="form-text">Leere Zeilen werden im Chat nicht angezeigt.</div>
       </section>

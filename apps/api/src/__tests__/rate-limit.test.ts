@@ -4,6 +4,8 @@ import request from 'supertest';
 // Limits must be set BEFORE importing the app (app.ts reads them at module load).
 process.env.RATE_LIMIT_GENERAL = '3';
 process.env.RATE_LIMIT_VOICE = '2';
+// Tests assume the mock provider (deterministic, no external LLM).
+process.env.CHAT_PROVIDER = 'mock';
 
 const { default: app, resetRateLimits } = await import('../app');
 

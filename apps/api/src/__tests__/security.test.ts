@@ -2,6 +2,9 @@ import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import app from '../app';
 
+// Tests assume the mock provider (deterministic, no external LLM).
+process.env.CHAT_PROVIDER = 'mock';
+
 describe('Security headers (helmet)', () => {
   it('responds with X-Content-Type-Options: nosniff on GET /health', async () => {
     const res = await request(app).get('/health');

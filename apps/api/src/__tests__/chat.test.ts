@@ -3,6 +3,11 @@ import request from 'supertest';
 import app from '../app';
 import { chatService } from '../services/chatService';
 
+// Tests assume the mock provider (deterministic, no external LLM). Force it
+// regardless of the developer's CHAT_PROVIDER env – same convention as
+// appearance.test.ts / custom-prompt.test.ts.
+process.env.CHAT_PROVIDER = 'mock';
+
 describe('POST /api/chat', () => {
   it('responds with 201 and a { data: { id, content } } payload', async () => {
     const res = await request(app).post('/api/chat').send({ message: 'Hallo' });
