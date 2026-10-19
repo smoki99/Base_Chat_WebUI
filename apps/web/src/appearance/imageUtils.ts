@@ -1,7 +1,10 @@
+import { MAX_IMAGE_BYTES } from 'shared';
+
+/** Re-exported from `shared` (single source for web + API). */
+export { MAX_IMAGE_BYTES };
+
 /** Accepted image formats: PNG (raster) and SVG (vector, validated at upload). */
 export const ALLOWED_IMAGE_TYPES: readonly string[] = ['image/png', 'image/svg+xml'];
-/** Maximum input size: 512 kB (per issue #49). */
-export const MAX_IMAGE_BYTES = 512 * 1024;
 /** Maximum raster dimension after processing: 1024 px (PNG only – SVG stays vector). */
 export const MAX_IMAGE_DIMENSION = 1024;
 

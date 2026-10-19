@@ -108,5 +108,6 @@ export interface SttResult {
   text: string;
 }
 
-// ── UI customization (Story-0032) ────────────────────────────────────────────
-export type { UiCustomization, UiThemeColors } from './ui';
+// ── UI customization (Story-0032, extended by Story-0038) ──────────────────
+export * from './ui';
+export * from './uiValidate';

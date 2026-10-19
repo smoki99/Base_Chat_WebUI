@@ -1,13 +1,20 @@
 import type { ChangeEvent } from 'react';
 import {
+  HEADER_FONT_FAMILIES,
+  HEADER_FONT_SIZE_MAX,
+  HEADER_FONT_SIZE_MIN,
+  HEADER_LINE_MAX_CHARS,
+} from 'shared';
+import {
   ALLOWED_IMAGE_TYPES,
   COLOR_PRESETS,
   MAX_IMAGE_BYTES,
   findMatchingPresetId,
+  headerLineStyle,
   useAppearance,
   useImageUpload,
 } from '../appearance';
-import type { UiThemeColors } from '../appearance';
+import type { UiHeaderLine, UiThemeColors } from '../appearance';
 
 const COLOR_FIELDS = [
   'primary',
@@ -93,8 +100,126 @@ function ImageSection({
     </section>
   );
 }
+/** Font weight options offered in the settings (any 100-900 is accepted). */
+const FONT_WEIGHT_OPTIONS = [100, 200, 300, 400, 500, 600, 700, 800, 900];
+
 /**
- * "Erscheinungsbild" settings panel: color customization with presets +
+ * Editor for one configurable header line (Story-0038): text, font family,
+ * size, weight, color (or theme color) and italic.
+ */
+function HeaderLineEditor({
+  line,
+  value,
+  themeText,
+  onUpdate,
+}: {
+  line: 1 | 2;
+  value: UiHeaderLine;
+  /** Current theme text color – the "inherit" value for the color picker. */
+  themeText: string;
+  onUpdate: (patch: Partial<UiHeaderLine>) => void;
+}) {
+  const idBase = `customize-header-line${line}`;
+  const themeInherited = value.color === '';
+
+  return (
+    <fieldset className="customize-header-line">
+      <legend className="customize-header-line-legend">Zeile {line}</legend>
+      <div className="customize-colors">
+        <div className="customize-color customize-color--wide">
+          <label htmlFor={`${idBase}-text`}>Text</label>
+          <input
+            id={`${idBase}-text`}
+            className="form-control"
+            type="text"
+            maxLength={HEADER_LINE_MAX_CHARS}
+            placeholder={line === 1 ? 'z. B. Base Chat' : "z. B. Let's talk realestate."}
+            value={value.text}
+            onChange={(event) => onUpdate({ text: event.target.value })}
+          />
+        </div>
+        <div className="customize-color">
+          <label htmlFor={`${idBase}-font`}>Schriftart</label>
+          <select
+            id={`${idBase}-font`}
+            className="form-select"
+            value={value.fontFamily}
+            onChange={(event) => onUpdate({ fontFamily: event.target.value })}
+          >
+            {HEADER_FONT_FAMILIES.map((font) => (
+              <option key={font.id} value={font.value}>
+                {font.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="customize-color">
+          <label htmlFor={`${idBase}-size`}>Größe ({value.fontSize} px)</label>
+          <input
+            id={`${idBase}-size`}
+            type="range"
+            min={HEADER_FONT_SIZE_MIN}
+            max={HEADER_FONT_SIZE_MAX}
+            step={1}
+            value={value.fontSize}
+            onChange={(event) => onUpdate({ fontSize: Number(event.target.value) })}
+          />
+        </div>
+        <div className="customize-color">
+          <label htmlFor={`${idBase}-weight`}>Stärke</label>
+          <select
+            id={`${idBase}-weight`}
+            className="form-select"
+            value={String(value.fontWeight)}
+            onChange={(event) => onUpdate({ fontWeight: Number(event.target.value) })}
+          >
+            {FONT_WEIGHT_OPTIONS.map((weight) => (
+              <option key={weight} value={weight}>
+                {weight}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="customize-color">
+          <label htmlFor={`${idBase}-color`}>Farbe</label>
+          <input
+            id={`${idBase}-color`}
+            type="color"
+            value={toColorInputValue(themeInherited ? themeText : value.color)}
+            disabled={themeInherited}
+            onChange={(event) => onUpdate({ color: event.target.value })}
+          />
+        </div>
+      </div>
+      <div className="form-check">
+        <input
+          className="form-check-input"
+          id={`${idBase}-inherit`}
+          type="checkbox"
+          checked={themeInherited}
+          onChange={(event) => onUpdate({ color: event.target.checked ? '' : themeText })}
+        />
+        <label className="form-check-label" htmlFor={`${idBase}-inherit`}>
+          Theme-Textfarbe verwenden
+        </label>
+      </div>
+      <div className="form-check">
+        <input
+          className="form-check-input"
+          id={`${idBase}-italic`}
+          type="checkbox"
+          checked={value.fontStyle === 'italic'}
+          onChange={(event) => onUpdate({ fontStyle: event.target.checked ? 'italic' : 'normal' })}
+        />
+        <label className="form-check-label" htmlFor={`${idBase}-italic`}>
+          Kursiv
+        </label>
+      </div>
+    </fieldset>
+  );
+}
+
+/** color customization with presets +
  * live preview, logo/banner upload (PNG or SVG) and the factory reset.
  * All state comes from the AppearanceProvider (persistence included).
  */
@@ -104,11 +229,15 @@ export function CustomizeTab() {
     logo,
     banner,
     bannerVisible,
+    header,
+    saveState,
+    saveError,
     setColor,
     setColors,
     setLogo,
     setBanner,
     setBannerVisible,
+    updateHeaderLine,
     reset,
   } = useAppearance();
 
@@ -116,6 +245,15 @@ export function CustomizeTab() {
 
   return (
     <div className="customize-tab">
+      {/* ── Save state (server persistence, Story-0038) ─────────── */}
+      {saveState === 'error' && (
+        <div className="customize-error" role="alert">
+          Speichern fehlgeschlagen: {saveError ?? 'Unbekannter Fehler'}. Für das Speichern ist ein
+          Admin-Token erforderlich (Admin-Panel → Token setzen).
+        </div>
+      )}
+      {saveState === 'saving' && <div className="form-text">Wird gespeichert …</div>}
+
       {/* ── Colors ─────────────────────────────────────────────── */}
       <section className="customize-section" aria-labelledby="customize-colors-title">
         <h3 id="customize-colors-title" className="customize-section-title">
@@ -195,6 +333,48 @@ export function CustomizeTab() {
           </label>
         </div>
       )}
+
+      {/* ── Header (two lines, Story-0038) ───────────────────── */}
+      <section className="customize-section" aria-labelledby="customize-header-title">
+        <h3 id="customize-header-title" className="customize-section-title">
+          Header
+        </h3>
+        <div className="customize-header-preview" aria-hidden="true">
+          <div className="chat-header chat-header--preview">
+            <div className="chat-header-titles">
+              {header.line1.text !== '' && (
+                <span
+                  className="chat-header-title chat-header-title--line1"
+                  style={headerLineStyle(header.line1)}
+                >
+                  {header.line1.text}
+                </span>
+              )}
+              {header.line2.text !== '' && (
+                <span
+                  className="chat-header-title chat-header-title--line2"
+                  style={headerLineStyle(header.line2)}
+                >
+                  {header.line2.text}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+        <HeaderLineEditor
+          line={1}
+          value={header.line1}
+          themeText={colors.text}
+          onUpdate={(patch) => updateHeaderLine('line1', patch)}
+        />
+        <HeaderLineEditor
+          line={2}
+          value={header.line2}
+          themeText={colors.text}
+          onUpdate={(patch) => updateHeaderLine('line2', patch)}
+        />
+        <div className="form-text">Leere Zeilen werden im Chat nicht angezeigt.</div>
+      </section>
 
       {/* ── Reset ──────────────────────────────────────────────── */}
       <section className="customize-section" aria-labelledby="customize-reset-title">

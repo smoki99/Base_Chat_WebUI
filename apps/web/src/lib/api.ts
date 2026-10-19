@@ -5,7 +5,12 @@
  * to the API server in dev; the reverse proxy does the same in prod) and
  * respond with `{ "data": ... }` or `{ "error": { "message": ... } }`.
  */
-import type { CustomPrompt, SystemStatus } from 'shared';
+import {
+  sanitizeUiCustomization,
+  type CustomPrompt,
+  type SystemStatus,
+  type UiCustomization,
+} from 'shared';
 
 /** Error thrown for non-2xx admin responses (or network failures). */
 export class ApiError extends Error {
@@ -152,4 +157,28 @@ export async function saveCustomPrompt(token: string, content: string): Promise<
     body: JSON.stringify({ content }),
   });
   return data.content;
+}
+
+/**
+ * Load the shared UI customization (Story-0038). Public endpoint – every
+ * session reads the same server-side settings, no token required.
+ * The response is sanitized so a malformed payload can never break the UI.
+ */
+export async function fetchUiCustomization(): Promise<UiCustomization> {
+  const data = await apiRequest<UiCustomization>('/api/chat/appearance', '');
+  return sanitizeUiCustomization(data);
+}
+
+/**
+ * Save the shared UI customization (Story-0038). Replaces the server-side
+ * document; requires the admin token (403 without it, 400 on violations).
+ */
+export async function saveUiCustomization(
+  token: string,
+  customization: UiCustomization
+): Promise<UiCustomization> {
+  return apiRequest<UiCustomization>('/api/chat/appearance', token, {
+    method: 'PUT',
+    body: JSON.stringify(customization),
+  });
 }

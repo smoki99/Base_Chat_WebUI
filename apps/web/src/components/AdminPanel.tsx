@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 import type { AdminImportResult, AdminRelation, AdminTable, AdminTablePreview } from 'shared';
 import { ApiError, adminDownload, adminRequest } from '../lib/api';
+import { persistToken, readStoredToken } from '../lib/adminToken';
 
 interface AdminPanelProps {
   /** Controls whether the dialog is visible. */
@@ -30,26 +31,6 @@ const EMPTY_RELATION: RelationDraft = {
   targetTable: '',
   targetColumn: '',
 };
-
-const TOKEN_STORAGE_KEY = 'admin_token';
-
-/** Read the persisted admin token (empty string when unset). */
-function readStoredToken(): string {
-  try {
-    return window.localStorage.getItem(TOKEN_STORAGE_KEY) ?? '';
-  } catch {
-    return '';
-  }
-}
-
-function persistToken(token: string) {
-  try {
-    if (token) window.localStorage.setItem(TOKEN_STORAGE_KEY, token);
-    else window.localStorage.removeItem(TOKEN_STORAGE_KEY);
-  } catch {
-    // localStorage unavailable (private mode) – token stays in memory only.
-  }
-}
 
 /** Render a cell value for the preview table. */
 function cellText(value: unknown): string {

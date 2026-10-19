@@ -101,6 +101,16 @@ export const env = {
   },
 
   /**
+   * File path for the stored UI customization (Story-0038: server-persisted
+   * appearance settings).
+   * Default: `<api package>/data/ui-customization.json`.
+   * The file is gitignored and shared across all users of the instance.
+   */
+  get UI_CUSTOMIZATION_FILE(): string | undefined {
+    return optionalString('UI_CUSTOMIZATION_FILE');
+  },
+
+  /**
    * Max rows per admin table export (CSV/XLSX). Default: 10000.
    * The per-request `limit` can only go lower, never above this cap.
    */

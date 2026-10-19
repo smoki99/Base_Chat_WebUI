@@ -954,6 +954,50 @@ body {
   margin-bottom: 1.25rem;
 }
 
+/* ── Story-0038: two-line chat header ─────────────────────────── */
+.chat-header-titles {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.chat-header-title--line2 {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+/* ── Story-0038: header line editor (settings) ────────────────── */
+.customize-header-preview {
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+}
+
+.customize-header-preview .chat-header--preview {
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.customize-header-line {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 0.75rem;
+  min-inline-size: 0;
+}
+
+.customize-header-line .customize-colors {
+  margin-bottom: 0.25rem;
+}
+
+.customize-header-line .customize-color--wide {
+  grid-column: 1 / -1;
+}
+
+.customize-header-line input[type='range'] {
+  width: 100%;
+}
+
 /* ── Story-0037: status dot (sidebar + diagnostics tab) ─────────────── */
 .status-dot {
   display: inline-block;

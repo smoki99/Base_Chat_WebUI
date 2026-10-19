@@ -3,109 +3,212 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
-import type { UiCustomization, UiThemeColors } from './types';
-import { applyColors, clearColors, sanitizeColors, DEFAULT_COLORS } from './themes';
-import { loadCustomization, resetCustomization, saveCustomization } from './storage';
+import {
+  DEFAULT_UI_CUSTOMIZATION,
+  sanitizeUiCustomization,
+  type UiCustomization,
+  type UiFontStyle,
+  type UiHeader,
+  type UiHeaderLine,
+  type UiThemeColors,
+} from 'shared';
+import { fetchUiCustomization, saveUiCustomization } from '../lib/api';
+import { readStoredToken } from '../lib/adminToken';
+import { applyColors } from './themes';
 
-/** Public context value (single source of truth for UI customization). */
+/** Which header line a setter targets. */
+export type HeaderLineKey = 'line1' | 'line2';
+
+/** Outcome of the last server save (for the settings UI hint). */
+export type SaveState = 'idle' | 'saving' | 'error';
+
 export interface AppearanceContextValue {
+  /** True while the server settings are still loading (defaults shown meanwhile). */
+  loading: boolean;
   colors: UiThemeColors;
   logo: string | null;
   banner: string | null;
-  /** Effective banner visibility (false when no banner is set). */
   bannerVisible: boolean;
-  /** Update a single color (live preview + persistence). */
-  setColor: (key: keyof UiThemeColors, value: string) => void;
-  /** Apply a whole preset / custom color set at once. */
-  setColors: (colors: UiThemeColors) => void;
-  /** Set or remove (null) the logo (PNG/SVG data URL). */
-  setLogo: (logo: string | null) => void;
-  /** Set or remove (null) the banner (PNG/SVG data URL). */
-  setBanner: (banner: string | null) => void;
-  /** Toggle the "show banner" switch. */
-  setBannerVisible: (visible: boolean) => void;
-  /** Restore factory defaults (colors, logo, banner, visibility). */
-  reset: () => void;
+  header: UiHeader;
+  saveState: SaveState;
+  /** Human-readable error of the last failed save (null when idle/saving). */
+  saveError: string | null;
+  setColor(key: keyof UiThemeColors, value: string): void;
+  setColors(colors: UiThemeColors): void;
+  setLogo(logo: string | null): void;
+  setBanner(banner: string | null): void;
+  setBannerVisible(visible: boolean): void;
+  /** Merge a patch into one header line (text, font, size, weight, italic, color). */
+  updateHeaderLine(line: HeaderLineKey, patch: Partial<UiHeaderLine>): void;
+  /** Restore the factory defaults (and persist them). */
+  reset(): void;
 }
 
 const AppearanceContext = createContext<AppearanceContextValue | null>(null);
 
+/** Debounce for server saves – color pickers fire many events per drag. */
+const SAVE_DEBOUNCE_MS = 400;
+
 /**
- * Provides the UI customization state (colors, logo, banner).
- * State is loaded from localStorage once, applied as CSS custom properties
- * live, and persisted on every change.
+ * Loads the shared UI settings from the server on mount (Story-0038: the
+ * server is the single source of truth – no localStorage) and persists every
+ * change back with a debounced PUT. Without an admin token the save fails
+ * with 403 – the local state still updates so the preview keeps working.
  */
 export function AppearanceProvider({ children }: { children: ReactNode }) {
-  const [customization, setCustomization] = useState<UiCustomization>(() => loadCustomization());
+  // Start with valid defaults so the UI renders immediately.
+  const [customization, setCustomization] = useState<UiCustomization>(() =>
+    sanitizeUiCustomization(DEFAULT_UI_CUSTOMIZATION)
+  );
+  const [loading, setLoading] = useState(true);
+  const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Persist on every change (quota errors are swallowed inside saveCustomization).
+  // The always-fresh document for the debounced PUT closure.
+  const customizationRef = useRef(customization);
+  customizationRef.current = customization;
+
+  // Only user-initiated changes are persisted (not the initial hydration).
+  const dirtyRef = useRef(false);
+  const hydratedRef = useRef(false);
+  const saveTimer = useRef<number | null>(null);
+
+  // ── Initial load from the server ──────────────────────────────────────────
   useEffect(() => {
-    saveCustomization(customization);
-  }, [customization]);
+    let cancelled = false;
+    fetchUiCustomization()
+      .then((data) => {
+        if (cancelled) return;
+        setCustomization(data);
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        // API unreachable (e.g. offline dev run) – keep defaults, still allow saving.
+        console.warn('[AppearanceProvider] Using default settings (API load failed):', error);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        hydratedRef.current = true;
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-  // Apply colors live to the document root.
+  // ── Live color application (unchanged behavior) ───────────────────────────
   useEffect(() => {
     applyColors(customization.colors);
   }, [customization.colors]);
 
-  const setColor = useCallback((key: keyof UiThemeColors, value: string) => {
-    setCustomization((prev) => ({
-      ...prev,
-      colors: { ...prev.colors, [key]: value },
-    }));
+  // ── Debounced persistence (PUT /api/chat/appearance) ──────────────────────
+  useEffect(() => {
+    if (!hydratedRef.current || !dirtyRef.current) return;
+    setSaveState('saving');
+    if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
+    saveTimer.current = window.setTimeout(async () => {
+      try {
+        await saveUiCustomization(readStoredToken(), customizationRef.current);
+        dirtyRef.current = false;
+        setSaveState('idle');
+        setSaveError(null);
+      } catch (error: unknown) {
+        setSaveState('error');
+        setSaveError(error instanceof Error ? error.message : 'Speichern fehlgeschlagen');
+      }
+    }, SAVE_DEBOUNCE_MS);
+    return () => {
+      if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
+    };
+  }, [customization, loading]);
+
+  const applyChange = useCallback((updater: (prev: UiCustomization) => UiCustomization) => {
+    dirtyRef.current = true;
+    setCustomization((prev) => updater(prev));
   }, []);
 
-  const setColors = useCallback((colors: UiThemeColors) => {
-    setCustomization((prev) => ({ ...prev, colors: sanitizeColors(colors) }));
-  }, []);
+  const setColor = useCallback(
+    (key: keyof UiThemeColors, value: string) => {
+      applyChange((prev) => ({ ...prev, colors: { ...prev.colors, [key]: value } }));
+    },
+    [applyChange]
+  );
 
-  const setLogo = useCallback((logo: string | null) => {
-    setCustomization((prev) => ({ ...prev, logo }));
-  }, []);
+  const setColors = useCallback(
+    (colors: UiThemeColors) => {
+      applyChange((prev) => ({ ...prev, colors: { ...colors } }));
+    },
+    [applyChange]
+  );
 
-  const setBanner = useCallback((banner: string | null) => {
-    setCustomization((prev) => ({ ...prev, banner }));
-  }, []);
+  const setLogo = useCallback(
+    (logo: string | null) => {
+      applyChange((prev) => ({ ...prev, logo }));
+    },
+    [applyChange]
+  );
 
-  const setBannerVisible = useCallback((visible: boolean) => {
-    setCustomization((prev) => ({ ...prev, bannerVisible: visible }));
-  }, []);
+  const setBanner = useCallback(
+    (banner: string | null) => {
+      applyChange((prev) => ({ ...prev, banner }));
+    },
+    [applyChange]
+  );
+
+  const setBannerVisible = useCallback(
+    (visible: boolean) => {
+      applyChange((prev) => ({ ...prev, bannerVisible: visible }));
+    },
+    [applyChange]
+  );
+
+  const updateHeaderLine = useCallback(
+    (line: HeaderLineKey, patch: Partial<UiHeaderLine>) => {
+      applyChange((prev) => ({
+        ...prev,
+        header: {
+          ...prev.header,
+          [line]: {
+            ...prev.header[line],
+            ...patch,
+            fontStyle: (patch.fontStyle ?? prev.header[line].fontStyle) as UiFontStyle,
+          },
+        },
+      }));
+    },
+    [applyChange]
+  );
 
   const reset = useCallback(() => {
-    setCustomization({
-      colors: { ...DEFAULT_COLORS },
-      logo: null,
-      banner: null,
-      bannerVisible: false,
-    });
-    clearColors();
-    resetCustomization();
+    dirtyRef.current = true;
+    setCustomization(sanitizeUiCustomization(DEFAULT_UI_CUSTOMIZATION));
   }, []);
 
-  const value = useMemo<AppearanceContextValue>(
-    () => ({
-      colors: customization.colors,
-      logo: customization.logo,
-      banner: customization.banner,
-      bannerVisible: customization.bannerVisible && customization.banner !== null,
-      setColor,
-      setColors,
-      setLogo,
-      setBanner,
-      setBannerVisible,
-      reset,
-    }),
-    [customization, setColor, setColors, setLogo, setBanner, setBannerVisible, reset]
-  );
+  const value: AppearanceContextValue = {
+    loading,
+    colors: customization.colors,
+    logo: customization.logo,
+    banner: customization.banner,
+    bannerVisible: customization.bannerVisible,
+    header: customization.header,
+    saveState,
+    saveError,
+    setColor,
+    setColors,
+    setLogo,
+    setBanner,
+    setBannerVisible,
+    updateHeaderLine,
+    reset,
+  };
 
   return <AppearanceContext.Provider value={value}>{children}</AppearanceContext.Provider>;
 }
 
-/** Access the UI customization state. Must be used inside `AppearanceProvider`. */
 export function useAppearance(): AppearanceContextValue {
   const ctx = useContext(AppearanceContext);
   if (!ctx) {
