@@ -1,4 +1,8 @@
+import { DEFAULT_COLORS, isValidHexColor, sanitizeColors } from 'shared';
 import type { UiThemeColors } from './types';
+
+/** Re-exported from `shared` for backward compatibility. */
+export { DEFAULT_COLORS, isValidHexColor, sanitizeColors };
 
 /** CSS custom properties set by `applyColors` (consumed by index.css). */
 export const COLOR_CSS_VARS = {
@@ -8,15 +12,6 @@ export const COLOR_CSS_VARS = {
   surfaceDim: '--ui-surface-dim',
   text: '--ui-text',
 } as const;
-
-/** Factory defaults – match the light design tokens shipped in index.css. */
-export const DEFAULT_COLORS: UiThemeColors = {
-  primary: '#4f46e5',
-  primaryHover: '#4338ca',
-  surface: '#ffffff',
-  surfaceDim: '#f8fafc',
-  text: '#1e1e2e',
-};
 
 /** A named color combination offered as a preset in the settings. */
 export interface ColorPreset {
@@ -73,25 +68,6 @@ export const COLOR_PRESETS: readonly ColorPreset[] = [
     },
   },
 ];
-
-/** Accepts `#rgb` or `#rrggbb` (case-insensitive) CSS hex colors. */
-export function isValidHexColor(value: unknown): value is string {
-  return typeof value === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value);
-}
-
-/** Merges untrusted data (e.g. localStorage) with the defaults, field by field. */
-export function sanitizeColors(raw: unknown): UiThemeColors {
-  const source = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
-  const pick = (key: keyof UiThemeColors): string =>
-    isValidHexColor(source[key]) ? (source[key] as string) : DEFAULT_COLORS[key];
-  return {
-    primary: pick('primary'),
-    primaryHover: pick('primaryHover'),
-    surface: pick('surface'),
-    surfaceDim: pick('surfaceDim'),
-    text: pick('text'),
-  };
-}
 
 /** Rough relative luminance (0–1) of a hex color – used for the color-scheme hint. */
 export function hexLuminance(hex: string): number {

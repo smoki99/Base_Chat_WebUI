@@ -9,13 +9,17 @@ const root = path.resolve(import.meta.dirname, '../..');
 // E2E_API_PORT when 4001 is occupied locally (e.g. by another service).
 const apiPort = process.env.E2E_API_PORT || '4001';
 
+// Web (vite) port. Defaults to 5173; override with E2E_WEB_PORT when 5173 is
+// occupied locally (e.g. by another service).
+const webPort = process.env.E2E_WEB_PORT || '5173';
+
 export default defineConfig({
   testDir: './e2e',
   timeout: 30_000,
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? 'github' : 'list',
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: `http://localhost:${webPort}`,
     headless: true,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
@@ -33,12 +37,19 @@ export default defineConfig({
       url: `http://localhost:${apiPort}/health`,
       reuseExistingServer: !process.env.CI,
       timeout: 30_000,
-      env: { ...process.env, CHAT_PROVIDER: 'mock', PORT: apiPort },
+      env: {
+        ...process.env,
+        CHAT_PROVIDER: 'mock',
+        PORT: apiPort,
+        // Story-0038: PUT /api/chat/appearance needs the admin token – the
+        // e2e spec stores this token in the browser and expects saves to work.
+        ADMIN_TOKEN: 'e2e-admin-token',
+      },
     },
     {
-      command: 'npm run dev -w web',
+      command: `npm run dev -w web -- --port ${webPort}`,
       cwd: root,
-      url: 'http://localhost:5173',
+      url: `http://localhost:${webPort}`,
       reuseExistingServer: !process.env.CI,
       timeout: 30_000,
     },

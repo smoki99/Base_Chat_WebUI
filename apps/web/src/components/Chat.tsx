@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react';
+import { DEFAULT_HEADER, type UiHeader } from 'shared';
+import { headerLineStyle } from '../appearance';
 import { useChat, type ChatMessage } from '../hooks/useChat';
 import { useVoiceContext } from '../voice/VoiceContext';
 import { Markdown } from './Markdown';
@@ -45,6 +47,11 @@ interface ChatProps {
   onMessagesChange?: (messages: ChatMessage[]) => void;
   /** Custom logo (PNG/SVG data URL) shown in the chat header, or `null`. */
   logo?: string | null;
+  /**
+   * Configurable two-line header (Story-0038). Defaults to the classic
+   * single-line "Base Chat" title; empty lines are not rendered.
+   */
+  header?: UiHeader;
 }
 
 /**
@@ -57,6 +64,7 @@ export function Chat({
   chatId = null,
   onMessagesChange,
   logo = null,
+  header = DEFAULT_HEADER,
 }: ChatProps) {
   const { messages, input, setInput, isLoading, error, send } = useChat({
     initialMessages,
@@ -137,7 +145,24 @@ export function Chat({
     <section className="chat" aria-label="Chat">
       <header className="chat-header">
         {logo && <img className="chat-header-logo" src={logo} alt="Logo" />}
-        <span className="chat-header-title">Base Chat</span>
+        <div className="chat-header-titles">
+          {header.line1.text !== '' && (
+            <span
+              className="chat-header-title chat-header-title--line1"
+              style={headerLineStyle(header.line1)}
+            >
+              {header.line1.text}
+            </span>
+          )}
+          {header.line2.text !== '' && (
+            <span
+              className="chat-header-title chat-header-title--line2"
+              style={headerLineStyle(header.line2)}
+            >
+              {header.line2.text}
+            </span>
+          )}
+        </div>
       </header>
       <div
         ref={messagesRef}

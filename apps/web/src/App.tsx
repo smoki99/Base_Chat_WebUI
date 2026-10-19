@@ -10,7 +10,7 @@ import { VoiceProvider } from './voice/VoiceContext';
 
 export default function App() {
   const history = useChatHistory();
-  const { banner, bannerVisible, logo } = useAppearance();
+  const { banner, bannerVisible, header, logo } = useAppearance();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
@@ -87,6 +87,7 @@ export default function App() {
             chatId={history.activeChatId}
             onMessagesChange={handleMessagesChange}
             logo={logo}
+            header={header}
           />
         </div>
 

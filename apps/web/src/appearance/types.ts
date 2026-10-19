@@ -1,2 +1,8 @@
-/** UI customization types – shared with the API (single source of truth). */
-export type { UiCustomization, UiThemeColors } from 'shared';
+/**
+ * Appearance types – the source of truth lives in `shared` (Story-0038:
+ * consumed by both the web app and the API). Re-exported here so existing
+ * `../appearance` imports keep working.
+ */
+import type { UiCustomization, UiFontStyle, UiHeader, UiHeaderLine, UiThemeColors } from 'shared';
+
+export type { UiCustomization, UiFontStyle, UiHeader, UiHeaderLine, UiThemeColors };

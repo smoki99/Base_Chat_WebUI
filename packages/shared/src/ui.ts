@@ -1,6 +1,17 @@
-// ── UI customization (Story-0032) ────────────────────────────────────────────
+/**
+ * Shared UI-customization types, defaults, limits and value checks.
+ *
+ * Story-0032 introduced color/logo/banner customization; Story-0038 extends
+ * it with a two-line header (text + font family/size/weight/style/color per
+ * line) and makes the whole document server-persisted:
+ *
+ *   GET  /api/chat/appearance   - public, read by every session
+ *   PUT  /api/chat/appearance   - admin token, replaces the document
+ *
+ * The web app and the API both consume these definitions so the persisted
+ * shape stays identical on both sides (single source of truth).
+ */
 
-/** Theme colors as CSS color values (hex). Applied via CSS custom properties. */
 export interface UiThemeColors {
   /** Main accent color (buttons, highlights). */
   primary: string;
@@ -14,16 +25,147 @@ export interface UiThemeColors {
   text: string;
 }
 
+/** `fontStyle` values accepted for a header line. */
+export type UiFontStyle = 'normal' | 'italic';
+
+/** One configurable line of the chat header. */
+export interface UiHeaderLine {
+  /** Visible text; max {@link HEADER_LINE_MAX_CHARS}. Empty = line not rendered. */
+  text: string;
+  /** CSS font-family from {@link HEADER_FONT_FAMILIES}; `''` = app default. */
+  fontFamily: string;
+  /** Font size in px ({@link HEADER_FONT_SIZE_MIN}-{@link HEADER_FONT_SIZE_MAX}). */
+  fontSize: number;
+  /** Font weight ({@link HEADER_FONT_WEIGHT_MIN}-{@link HEADER_FONT_WEIGHT_MAX}). */
+  fontWeight: number;
+  fontStyle: UiFontStyle;
+  /** Hex color (`#rgb`/`#rrggbb`); `''` = theme text color. */
+  color: string;
+}
+
+/** The two independent lines of the chat header. */
+export interface UiHeader {
+  line1: UiHeaderLine;
+  line2: UiHeaderLine;
+}
+
 /**
- * Persisted UI customization (localStorage key `base-chat.ui-customization.v1`).
- * Logo and banner are PNG or validated SVG data URLs (max 512 kB each) or `null` when unset.
+ * The full, server-persisted UI customization document.
+ * Logo and banner are PNG or validated SVG data URLs (max 512 kB each)
+ * or `null` when unset.
  */
 export interface UiCustomization {
   colors: UiThemeColors;
-  /** PNG or SVG data URL of the company logo, or `null`. */
   logo: string | null;
-  /** PNG or SVG data URL of the banner, or `null`. */
   banner: string | null;
   /** Whether the banner is shown above the message list. */
   bannerVisible: boolean;
+  header: UiHeader;
 }
+
+// - Limits (validated on the server, used for UI bounds) -
+
+/** Maximum image size for logo/banner uploads: 512 kB. */
+export const MAX_IMAGE_BYTES = 512 * 1024;
+
+/** Maximum characters per header line. */
+export const HEADER_LINE_MAX_CHARS = 120;
+
+/** Header font size bounds (px). */
+export const HEADER_FONT_SIZE_MIN = 8;
+export const HEADER_FONT_SIZE_MAX = 96;
+
+/** Header font weight bounds. */
+export const HEADER_FONT_WEIGHT_MIN = 100;
+export const HEADER_FONT_WEIGHT_MAX = 900;
+
+/**
+ * Allowed font families for header lines. Fixed whitelist (validated
+ * server-side); `value` is the exact CSS value, `''` = app default stack.
+ */
+export const HEADER_FONT_FAMILIES = [
+  { id: 'system', label: 'Standard', value: '' },
+  {
+    id: 'sans',
+    label: 'Sans',
+    value: "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif",
+  },
+  { id: 'serif', label: 'Serif', value: 'ui-serif, Georgia, Cambria, "Times New Roman", serif' },
+  {
+    id: 'mono',
+    label: 'Mono',
+    value: 'ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace',
+  },
+  { id: 'rounded', label: 'Rounded', value: "ui-rounded, 'SF Pro Rounded', system-ui, sans-serif" },
+] as const;
+
+// - Value checks (used by strict and lenient validation) -
+
+/** Accepts `#rgb` or `#rrggbb` (case-insensitive) CSS hex colors. */
+export function isValidHexColor(value: unknown): value is string {
+  return typeof value === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value);
+}
+
+/**
+ * Accepts the image data URLs the web app can produce: PNG (base64) and
+ * SVG (base64 or UTF-8). Rejects everything else (incl. `javascript:` etc.).
+ */
+export function isAllowedImageDataUrl(value: unknown): value is string {
+  if (typeof value !== 'string' || value.length === 0) return false;
+  const isImage =
+    value.startsWith('data:image/png;base64,') ||
+    value.startsWith('data:image/svg+xml;base64,') ||
+    value.startsWith('data:image/svg+xml;charset=utf-8,');
+  if (!isImage) return false;
+  // base64 expands ~4/3 -> keep a hard upper bound slightly above MAX_IMAGE_BYTES
+  return value.length <= MAX_IMAGE_BYTES * 4 + 256;
+}
+
+// - Factory defaults -
+
+/** Factory default colors - match the light design tokens shipped in index.css. */
+export const DEFAULT_COLORS: UiThemeColors = {
+  primary: '#4f46e5',
+  primaryHover: '#4338ca',
+  surface: '#ffffff',
+  surfaceDim: '#f8fafc',
+  text: '#1e1e2e',
+};
+
+/**
+ * Factory defaults for a header line - visually identical to the original
+ * hard-coded "Base Chat" header (16 px / 700 / theme text color).
+ */
+export const DEFAULT_HEADER_LINE: UiHeaderLine = {
+  text: 'Base Chat',
+  fontFamily: '',
+  fontSize: 16,
+  fontWeight: 700,
+  fontStyle: 'normal',
+  color: '',
+};
+
+/** Factory default header: classic title on line 1, line 2 empty. */
+export const DEFAULT_HEADER: UiHeader = {
+  line1: { ...DEFAULT_HEADER_LINE },
+  line2: {
+    text: '',
+    fontFamily: '',
+    fontSize: 14,
+    fontWeight: 400,
+    fontStyle: 'normal',
+    color: '',
+  },
+};
+
+/** Full factory-default customization document. */
+export const DEFAULT_UI_CUSTOMIZATION: UiCustomization = {
+  colors: { ...DEFAULT_COLORS },
+  logo: null,
+  banner: null,
+  bannerVisible: false,
+  header: {
+    line1: { ...DEFAULT_HEADER.line1 },
+    line2: { ...DEFAULT_HEADER.line2 },
+  },
+};

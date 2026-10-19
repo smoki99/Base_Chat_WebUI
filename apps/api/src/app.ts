@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import { env } from './env';
 import rateLimit, { MemoryStore } from 'express-rate-limit';
 import { healthRouter } from './routes/health';
+import { appearanceRouter } from './routes/appearance';
 import { chatRouter } from './routes/chat';
 import { voiceRouter } from './routes/voice';
 import { adminRouter } from './routes/admin';
@@ -78,6 +79,7 @@ app.use(statusRouter);
 app.use('/api/voice', voiceLimiter);
 app.use(generalLimiter);
 app.use('/api/admin', adminRouter);
+app.use(appearanceRouter);
 app.use(chatRouter);
 app.use(voiceRouter);
 

@@ -1,180 +1,203 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { AppearanceProvider, useAppearance } from '../appearance/AppearanceContext';
-import { CUSTOMIZATION_KEY } from '../appearance/storage';
-import { DEFAULT_COLORS } from '../appearance/themes';
+import { act, render, screen } from '@testing-library/react';
+import type { UiCustomization } from 'shared';
+import { DEFAULT_UI_CUSTOMIZATION, sanitizeUiCustomization } from 'shared';
+import { AppearanceProvider, useAppearance } from '../appearance';
+import { clearColors, COLOR_CSS_VARS } from '../appearance/themes';
 
-/** jsdom's localStorage is a Proxy – swap it for a plain fake (see appearance-storage.test.ts). */
-function installStorage() {
-  const store = new Map<string, string>();
-  vi.stubGlobal('localStorage', {
-    getItem: (key: string) => (store.has(key) ? (store.get(key) as string) : null),
-    setItem: (key: string, value: string) => void store.set(key, String(value)),
-    removeItem: (key: string) => void store.delete(key),
-    clear: () => store.clear(),
-    key: (index: number) => Array.from(store.keys())[index] ?? null,
-    get length() {
-      return store.size;
+/** Debounce in AppearanceContext (keep in sync with the implementation). */
+const SAVE_DEBOUNCE_MS = 400;
+
+// Mock the API + token helpers BEFORE importing anything that uses them.
+const fetchUiCustomization = vi.fn<() => Promise<UiCustomization>>();
+const saveUiCustomization =
+  vi.fn<(token: string, customization: UiCustomization) => Promise<UiCustomization>>();
+const readStoredToken = vi.fn<() => string>(() => 'test-token');
+
+vi.mock('../lib/api', () => ({
+  fetchUiCustomization: () => fetchUiCustomization(),
+  saveUiCustomization: (token: string, doc: UiCustomization) => saveUiCustomization(token, doc),
+}));
+vi.mock('../lib/adminToken', () => ({
+  readStoredToken: () => readStoredToken(),
+  ADMIN_TOKEN_KEY: 'admin_token',
+}));
+
+describe('AppearanceProvider (server-persisted settings)', () => {
+  function TestHarness() {
+    return (
+      <AppearanceProvider>
+        <Probe />
+      </AppearanceProvider>
+    );
+  }
+
+  function Probe() {
+    const appearance = useAppearance();
+    return (
+      <div>
+        <span data-testid="loading">{String(appearance.loading)}</span>
+        <span data-testid="primary">{appearance.colors.primary}</span>
+        <span data-testid="line1">{appearance.header.line1.text}</span>
+        <span data-testid="line1-size">{appearance.header.line1.fontSize}</span>
+        <span data-testid="line2">{appearance.header.line2.text}</span>
+        <span data-testid="saveState">{appearance.saveState}</span>
+        <span data-testid="saveError">{appearance.saveError ?? ''}</span>
+        <button type="button" onClick={() => appearance.setColor('primary', '#123456')}>
+          change color
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            appearance.updateHeaderLine('line1', { fontSize: 40, text: 'Neuer Titel' })
+          }
+        >
+          change header
+        </button>
+        <button type="button" onClick={() => appearance.reset()}>
+          reset
+        </button>
+      </div>
+    );
+  }
+
+  const SERVER_DOC: UiCustomization = sanitizeUiCustomization({
+    colors: { ...DEFAULT_UI_CUSTOMIZATION.colors, primary: '#aabbcc' },
+    header: {
+      line1: {
+        ...DEFAULT_UI_CUSTOMIZATION.header.line1,
+        text: 'PASH - Actual Intelligence in CRE',
+      },
+      line2: {
+        ...DEFAULT_UI_CUSTOMIZATION.header.line2,
+        text: "Let's talk realestate.",
+        fontStyle: 'italic',
+      },
     },
-  } satisfies Storage);
-}
+  });
 
-/** Probe component: renders the current context values + actions as buttons. */
-function Probe() {
-  const appearance = useAppearance();
-  return (
-    <div>
-      <span data-testid="colors">{JSON.stringify(appearance.colors)}</span>
-      <span data-testid="logo">{String(appearance.logo)}</span>
-      <span data-testid="banner">{String(appearance.banner)}</span>
-      <span data-testid="bannerVisible">{String(appearance.bannerVisible)}</span>
-      <button onClick={() => appearance.setColor('primary', '#abcdef')}>set-color</button>
-      <button
-        onClick={() =>
-          appearance.setColors({
-            primary: '#111111',
-            primaryHover: '#222222',
-            surface: '#333333',
-            surfaceDim: '#444444',
-            text: '#555555',
-          })
-        }
-      >
-        set-colors
-      </button>
-      <button onClick={() => appearance.setLogo('data:image/png;base64,LOGO')}>set-logo</button>
-      <button onClick={() => appearance.setBanner('data:image/png;base64,BANNER')}>
-        set-banner
-      </button>
-      <button onClick={() => appearance.setBannerVisible(false)}>hide-banner</button>
-      <button onClick={() => appearance.setBanner(null)}>clear-banner</button>
-      <button onClick={() => appearance.setLogo(null)}>clear-logo</button>
-      <button onClick={() => appearance.reset()}>reset</button>
-    </div>
-  );
-}
-
-function renderProbe() {
-  return render(
-    <AppearanceProvider>
-      <Probe />
-    </AppearanceProvider>
-  );
-}
-
-describe('AppearanceProvider', () => {
   beforeEach(() => {
-    installStorage();
-    document.documentElement.style.cssText = '';
+    vi.useFakeTimers();
+    fetchUiCustomization.mockReset().mockResolvedValue(SERVER_DOC);
+    saveUiCustomization
+      .mockReset()
+      .mockImplementation((_token: string, doc: UiCustomization) => Promise.resolve(doc));
+    readStoredToken.mockReset().mockReturnValue('test-token');
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    vi.useRealTimers();
+    clearColors();
   });
 
-  it('starts with factory defaults and applies them as CSS variables', () => {
-    renderProbe();
-    expect(JSON.parse(screen.getByTestId('colors').textContent ?? '{}')).toEqual(DEFAULT_COLORS);
-    expect(screen.getByTestId('logo').textContent).toBe('null');
-    expect(screen.getByTestId('bannerVisible').textContent).toBe('false');
-    // Live application to <html>
-    expect(document.documentElement.style.getPropertyValue('--ui-primary')).toBe(
-      DEFAULT_COLORS.primary
+  async function renderHarness() {
+    render(<TestHarness />);
+    // Flush the initial fetch (async hydration – promise microtasks).
+    await await act(async () => {});
+  }
+
+  it('loads the shared settings from the server into the context', async () => {
+    await renderHarness();
+    expect(screen.getByTestId('loading').textContent).toBe('false');
+    expect(screen.getByTestId('primary').textContent).toBe('#aabbcc');
+    expect(screen.getByTestId('line1').textContent).toBe('PASH - Actual Intelligence in CRE');
+    expect(screen.getByTestId('line2').textContent).toBe("Let's talk realestate.");
+    expect(fetchUiCustomization).toHaveBeenCalledTimes(1);
+  });
+
+  it('applies the loaded colors to the CSS custom properties', async () => {
+    await renderHarness();
+    expect(document.documentElement.style.getPropertyValue(COLOR_CSS_VARS.primary)).toBe('#aabbcc');
+  });
+
+  it('falls back to the factory defaults when the API is unavailable', async () => {
+    fetchUiCustomization.mockReset().mockRejectedValue(new Error('API unreachable'));
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    await renderHarness();
+    expect(screen.getByTestId('loading').textContent).toBe('false');
+    expect(screen.getByTestId('line1').textContent).toBe(
+      DEFAULT_UI_CUSTOMIZATION.header.line1.text
     );
+    expect(screen.getByTestId('primary').textContent).toBe(DEFAULT_UI_CUSTOMIZATION.colors.primary);
+    vi.restoreAllMocks();
   });
 
-  it('loads persisted state from localStorage on mount', () => {
-    window.localStorage.setItem(
-      CUSTOMIZATION_KEY,
-      JSON.stringify({
-        colors: { ...DEFAULT_COLORS, primary: '#abcdef' },
-        logo: 'data:image/png;base64,LOGO',
-        banner: 'data:image/png;base64,BANNER',
-        bannerVisible: true,
-      })
-    );
-    renderProbe();
-    const colors = JSON.parse(screen.getByTestId('colors').textContent ?? '{}');
-    expect(colors.primary).toBe('#abcdef');
-    expect(screen.getByTestId('logo').textContent).toBe('data:image/png;base64,LOGO');
-    expect(screen.getByTestId('bannerVisible').textContent).toBe('true');
-  });
-
-  it('setColor updates the state, the DOM and localStorage', async () => {
-    const user = userEvent.setup();
-    renderProbe();
-    await user.click(screen.getByRole('button', { name: 'set-color' }));
-    const colors = JSON.parse(screen.getByTestId('colors').textContent ?? '{}');
-    expect(colors.primary).toBe('#abcdef');
-    expect(document.documentElement.style.getPropertyValue('--ui-primary')).toBe('#abcdef');
-    await waitFor(() => {
-      const stored = JSON.parse(window.localStorage.getItem(CUSTOMIZATION_KEY) ?? '{}');
-      expect(stored.colors.primary).toBe('#abcdef');
+  it('does NOT persist the initial hydration (no PUT without user changes)', async () => {
+    await renderHarness();
+    act(() => {
+      vi.advanceTimersByTime(SAVE_DEBOUNCE_MS);
     });
+    await act(async () => {});
+    expect(saveUiCustomization).not.toHaveBeenCalled();
   });
 
-  it('setColors sanitizes invalid values', async () => {
-    const user = userEvent.setup();
-    renderProbe();
-    await user.click(screen.getByRole('button', { name: 'set-colors' }));
-    const colors = JSON.parse(screen.getByTestId('colors').textContent ?? '{}');
-    expect(colors).toEqual({
-      primary: '#111111',
-      primaryHover: '#222222',
-      surface: '#333333',
-      surfaceDim: '#444444',
-      text: '#555555',
+  it('persists user changes with the stored token (debounced)', async () => {
+    await renderHarness();
+    act(() => {
+      screen.getByRole('button', { name: 'change color' }).click();
     });
-  });
+    expect(saveUiCustomization).not.toHaveBeenCalled(); // debounce still pending
 
-  it('banner visibility is effective only while a banner exists', async () => {
-    const user = userEvent.setup();
-    renderProbe();
-    expect(screen.getByTestId('bannerVisible').textContent).toBe('false');
-
-    await user.click(screen.getByRole('button', { name: 'set-banner' }));
-    expect(screen.getByTestId('banner').textContent).toBe('data:image/png;base64,BANNER');
-
-    await user.click(screen.getByRole('button', { name: 'hide-banner' }));
-    expect(screen.getByTestId('bannerVisible').textContent).toBe('false');
-
-    await user.click(screen.getByRole('button', { name: 'clear-banner' }));
-    expect(screen.getByTestId('banner').textContent).toBe('null');
-  });
-
-  it('reset restores defaults and clears the stored payload', async () => {
-    const user = userEvent.setup();
-    window.localStorage.setItem(
-      CUSTOMIZATION_KEY,
-      JSON.stringify({
-        colors: { ...DEFAULT_COLORS, primary: '#abcdef' },
-        logo: 'data:image/png;base64,LOGO',
-        banner: null,
-        bannerVisible: false,
-      })
-    );
-    renderProbe();
-    await user.click(screen.getByRole('button', { name: 'reset' }));
-    expect(JSON.parse(screen.getByTestId('colors').textContent ?? '{}')).toEqual(DEFAULT_COLORS);
-    expect(screen.getByTestId('logo').textContent).toBe('null');
-    // The factory defaults are persisted again.
-    const stored = JSON.parse(window.localStorage.getItem(CUSTOMIZATION_KEY) ?? '{}');
-    expect(stored).toEqual({
-      colors: DEFAULT_COLORS,
-      logo: null,
-      banner: null,
-      bannerVisible: false,
+    act(() => {
+      vi.advanceTimersByTime(SAVE_DEBOUNCE_MS);
     });
-    // The provider re-applies the factory palette as CSS variables.
-    expect(document.documentElement.style.getPropertyValue('--ui-primary')).toBe(
-      DEFAULT_COLORS.primary
-    );
+    await act(async () => {});
+
+    expect(saveUiCustomization).toHaveBeenCalledTimes(1);
+    const [token, doc] = saveUiCustomization.mock.calls[0] as [string, UiCustomization];
+    expect(token).toBe('test-token');
+    expect(doc.colors.primary).toBe('#123456');
+    expect(screen.getByTestId('saveState').textContent).toBe('idle');
   });
 
-  it('useAppearance throws outside the provider', () => {
-    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    expect(() => render(<Probe />)).toThrow(/AppearanceProvider/);
-    spy.mockRestore();
+  it('updates the header line via updateHeaderLine and persists it', async () => {
+    await renderHarness();
+    act(() => {
+      screen.getByRole('button', { name: 'change header' }).click();
+    });
+    expect(screen.getByTestId('line1').textContent).toBe('Neuer Titel');
+    expect(screen.getByTestId('line1-size').textContent).toBe('40');
+
+    act(() => {
+      vi.advanceTimersByTime(SAVE_DEBOUNCE_MS);
+    });
+    await act(async () => {});
+    const [, doc] = saveUiCustomization.mock.calls[0] as [string, UiCustomization];
+    expect(doc.header.line1).toMatchObject({ text: 'Neuer Titel', fontSize: 40 });
+    expect(doc.header.line2).toEqual(SERVER_DOC.header.line2);
+  });
+
+  it('reports a save failure (e.g. 403 without token) with the API message', async () => {
+    readStoredToken.mockReturnValue('');
+    saveUiCustomization.mockRejectedValue(new Error('Admin token fehlt oder ist ungültig (403)'));
+    await renderHarness();
+    act(() => {
+      screen.getByRole('button', { name: 'change color' }).click();
+    });
+    act(() => {
+      vi.advanceTimersByTime(SAVE_DEBOUNCE_MS);
+    });
+    await act(async () => {});
+    expect(screen.getByTestId('saveState').textContent).toBe('error');
+    expect(screen.getByTestId('saveError').textContent).toContain('403');
+  });
+
+  it('reset restores the factory defaults and persists them', async () => {
+    await renderHarness();
+    act(() => {
+      screen.getByRole('button', { name: 'reset' }).click();
+    });
+    expect(screen.getByTestId('primary').textContent).toBe(DEFAULT_UI_CUSTOMIZATION.colors.primary);
+    expect(screen.getByTestId('line1').textContent).toBe(
+      DEFAULT_UI_CUSTOMIZATION.header.line1.text
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(SAVE_DEBOUNCE_MS);
+    });
+    await act(async () => {});
+    expect(saveUiCustomization).toHaveBeenCalledTimes(1);
+    const [, doc] = saveUiCustomization.mock.calls[0] as [string, UiCustomization];
+    expect(doc).toEqual(DEFAULT_UI_CUSTOMIZATION);
   });
 });
