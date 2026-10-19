@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DEFAULT_UI_CUSTOMIZATION } from 'shared';
 import { CustomizeTab } from '../components/CustomizeTab';
@@ -154,6 +154,75 @@ describe('CustomizeTab', () => {
     const line2 = document.querySelector('.customize-header-preview .chat-header-title--line2');
     expect(line2).toHaveTextContent("Let's talk realestate.");
     expect(line2).toHaveStyle({ fontStyle: 'italic' });
+  });
+
+  // ── Rich header: styled segments (Story-0038) ─────────────────────────────
+
+  it('offers segment editing for lines with text, not for empty lines', () => {
+    renderCustomizeTab();
+    expect(
+      screen.getByRole('button', { name: 'Segment aus Zeilen-Text anlegen' })
+    ).toBeInTheDocument();
+    // Line 2 is empty by default → no "create segment" control there.
+    expect(screen.getAllByRole('button', { name: 'Segment aus Zeilen-Text anlegen' })).toHaveLength(
+      1
+    );
+  });
+
+  it('creates a segment from the line text and styles it per segment', async () => {
+    renderCustomizeTab();
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole('button', { name: 'Segment aus Zeilen-Text anlegen' }));
+    const segmentText = screen.getByLabelText('Segment 1: Text');
+    expect(segmentText).toHaveValue('Base Chat');
+
+    // Style the segment: weight 900 + own color.
+    await user.selectOptions(screen.getByLabelText('Segment 1: Stärke'), '900');
+    await fireEvent.change(screen.getByLabelText('Segment 1: Farbe'), {
+      target: { value: '#ff0000' },
+    });
+
+    // The preview renders the segment with the overrides on the line style.
+    const preview = document.querySelector(
+      '.customize-header-preview .chat-header-title--line1 span'
+    ) as HTMLElement;
+    expect(preview).toHaveTextContent('Base Chat');
+    expect(preview).toHaveStyle({ fontWeight: '900', color: 'rgb(255, 0, 0)' });
+  });
+
+  it('adds, reorders and removes draft segments', async () => {
+    renderCustomizeTab();
+    const user = userEvent.setup();
+    // Scope to the line-1 editor (each line has its own segment controls).
+    const w1 = within(screen.getByRole('group', { name: 'Zeile 1' }));
+
+    await user.click(w1.getByRole('button', { name: 'Segment aus Zeilen-Text anlegen' }));
+    await user.click(w1.getByRole('button', { name: '+ Segment' }));
+    expect(w1.getByLabelText('Segment 2: Text')).toBeInTheDocument();
+
+    // Move segment 2 up → it becomes segment 1.
+    await user.click(w1.getByRole('button', { name: 'Segment 2 nach oben' }));
+    expect((w1.getByLabelText('Segment 1: Text') as HTMLInputElement).value).toBe('');
+
+    // Remove both again → the "create from line text" offer returns.
+    await user.click(w1.getByRole('button', { name: 'Segment 1 entfernen' }));
+    await user.click(w1.getByRole('button', { name: 'Segment 1 entfernen' }));
+    expect(w1.getByRole('button', { name: 'Segment aus Zeilen-Text anlegen' })).toBeInTheDocument();
+  });
+
+  it('caps the number of segments at HEADER_MAX_SEGMENTS', async () => {
+    renderCustomizeTab();
+    const user = userEvent.setup();
+    const w1 = within(screen.getByRole('group', { name: 'Zeile 1' }));
+
+    await user.click(w1.getByRole('button', { name: 'Segment aus Zeilen-Text anlegen' }));
+    // One segment already exists → 7 more fit (max 8).
+    for (let i = 0; i < 7; i += 1) {
+      await user.click(w1.getByRole('button', { name: '+ Segment' }));
+    }
+    expect(w1.getByRole('button', { name: '+ Segment' })).toBeDisabled();
+    expect(w1.queryByLabelText('Segment 9: Text')).not.toBeInTheDocument();
   });
 
   it('limits the header text to 120 characters', async () => {

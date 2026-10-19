@@ -421,4 +421,87 @@ describe('Chat', () => {
 
     expect(await screen.findByText('Einfache Antwort ohne Marker.')).toBeInTheDocument();
   });
+
+  test('renders a rich header with per-segment styles (Story-0038)', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: { tts: false, stt: false, voices: [], languages: [], defaultVoiceByLanguage: {} },
+      }),
+    } as unknown as Response);
+
+    render(
+      <Chat
+        header={{
+          line1: {
+            text: 'Base Chat',
+            fontFamily: '',
+            fontSize: 16,
+            fontWeight: 700,
+            fontStyle: 'normal',
+            color: '',
+            segments: [
+              { text: 'Bold ', fontWeight: 900 },
+              { text: 'Blue', color: '#0000ff' },
+            ],
+          },
+          line2: {
+            text: '',
+            fontFamily: '',
+            fontSize: 14,
+            fontWeight: 400,
+            fontStyle: 'italic',
+            color: '',
+            segments: [{ text: "Let's talk realestate." }],
+          },
+        }}
+      />
+    );
+
+    const line1 = document.querySelector('.chat-header .chat-header-title--line1') as HTMLElement;
+    const [bold, blue] = Array.from(line1.querySelectorAll('span')) as HTMLElement[];
+    expect(bold).toHaveTextContent('Bold');
+    expect(bold).toHaveStyle({ fontWeight: '900', fontSize: '16px' });
+    expect(blue).toHaveStyle({ color: 'rgb(0, 0, 255)', fontWeight: '700' });
+
+    const line2 = document.querySelector('.chat-header .chat-header-title--line2') as HTMLElement;
+    expect(line2).toHaveTextContent("Let's talk realestate.");
+    expect(line2).toHaveStyle({ fontStyle: 'italic', fontSize: '14px' });
+  });
+
+  test('hides empty header lines in the chat header', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: { tts: false, stt: false, voices: [], languages: [], defaultVoiceByLanguage: {} },
+      }),
+    } as unknown as Response);
+
+    render(
+      <Chat
+        header={{
+          line1: {
+            text: '',
+            fontFamily: '',
+            fontSize: 16,
+            fontWeight: 700,
+            fontStyle: 'normal',
+            color: '',
+            segments: [],
+          },
+          line2: {
+            text: '',
+            fontFamily: '',
+            fontSize: 14,
+            fontWeight: 400,
+            fontStyle: 'normal',
+            color: '',
+            segments: [],
+          },
+        }}
+      />
+    );
+
+    expect(document.querySelector('.chat-header .chat-header-titles')).toBeEmptyDOMElement();
+  });
 });

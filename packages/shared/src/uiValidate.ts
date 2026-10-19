@@ -17,11 +17,14 @@ import {
   HEADER_FONT_WEIGHT_MAX,
   HEADER_FONT_WEIGHT_MIN,
   HEADER_LINE_MAX_CHARS,
+  HEADER_MAX_SEGMENTS,
+  HEADER_SEGMENT_MAX_CHARS,
   isAllowedImageDataUrl,
   isValidHexColor,
   type UiCustomization,
   type UiFontStyle,
   type UiHeaderLine,
+  type UiHeaderSegment,
   type UiThemeColors,
 } from './ui';
 
@@ -80,6 +83,85 @@ function validateImage(raw: unknown, field: string): string | null {
   return raw;
 }
 
+/** Strict validation of a single styled segment. */
+function validateSegment(raw: unknown, label: string): UiHeaderSegment {
+  if (!isRecord(raw)) {
+    throw new InvalidUiCustomizationError(`${label} must be an object`);
+  }
+  const text = raw.text;
+  if (
+    typeof text !== 'string' ||
+    text.trim().length === 0 ||
+    text.trim().length > HEADER_SEGMENT_MAX_CHARS
+  ) {
+    throw new InvalidUiCustomizationError(
+      `${label}.text must be a non-empty string with at most ${HEADER_SEGMENT_MAX_CHARS} characters`
+    );
+  }
+  const segment: UiHeaderSegment = { text: text.trim() };
+  if (raw.color !== undefined) {
+    if (!isHeaderColor(raw.color)) {
+      throw new InvalidUiCustomizationError(
+        `${label}.color must be a hex color (#rgb or #rrggbb) or ""`
+      );
+    }
+    segment.color = raw.color;
+  }
+  if (raw.fontWeight !== undefined) {
+    if (
+      !isInteger(raw.fontWeight) ||
+      !inBounds(raw.fontWeight, HEADER_FONT_WEIGHT_MIN, HEADER_FONT_WEIGHT_MAX)
+    ) {
+      throw new InvalidUiCustomizationError(
+        `${label}.fontWeight must be an integer between ${HEADER_FONT_WEIGHT_MIN} and ${HEADER_FONT_WEIGHT_MAX}`
+      );
+    }
+    segment.fontWeight = raw.fontWeight;
+  }
+  if (raw.fontStyle !== undefined) {
+    if (!isUiFontStyle(raw.fontStyle)) {
+      throw new InvalidUiCustomizationError(`${label}.fontStyle must be "normal" or "italic"`);
+    }
+    segment.fontStyle = raw.fontStyle;
+  }
+  if (raw.fontSize !== undefined) {
+    if (
+      !isInteger(raw.fontSize) ||
+      !inBounds(raw.fontSize, HEADER_FONT_SIZE_MIN, HEADER_FONT_SIZE_MAX)
+    ) {
+      throw new InvalidUiCustomizationError(
+        `${label}.fontSize must be an integer between ${HEADER_FONT_SIZE_MIN} and ${HEADER_FONT_SIZE_MAX}`
+      );
+    }
+    segment.fontSize = raw.fontSize;
+  }
+  return segment;
+}
+
+/**
+ * Strict validation of the segment list. `segments` may be omitted (legacy
+ * web clients) and then normalizes to `[]` (classic line rendering).
+ */
+function validateSegments(raw: unknown, label: string): UiHeaderSegment[] {
+  if (raw === undefined) return [];
+  if (!Array.isArray(raw)) {
+    throw new InvalidUiCustomizationError(`${label}.segments must be an array`);
+  }
+  if (raw.length > HEADER_MAX_SEGMENTS) {
+    throw new InvalidUiCustomizationError(
+      `${label}.segments must have at most ${HEADER_MAX_SEGMENTS} entries`
+    );
+  }
+  const segments = raw.map((entry, index) => validateSegment(entry, `${label}.segments[${index}]`));
+  const total = segments.reduce((sum, segment) => sum + segment.text.length, 0);
+  if (total > HEADER_LINE_MAX_CHARS) {
+    throw new InvalidUiCustomizationError(
+      `${label}.segments texts must total at most ${HEADER_LINE_MAX_CHARS} characters`
+    );
+  }
+  return segments;
+}
+
 function validateHeaderLine(raw: unknown, label: string): UiHeaderLine {
   if (!isRecord(raw)) {
     throw new InvalidUiCustomizationError(`${label} must be an object`);
@@ -124,6 +206,7 @@ function validateHeaderLine(raw: unknown, label: string): UiHeaderLine {
     fontWeight: raw.fontWeight,
     fontStyle: raw.fontStyle,
     color: raw.color,
+    segments: validateSegments(raw.segments, label),
   };
 }
 
@@ -164,6 +247,52 @@ export function sanitizeColors(raw: unknown): UiThemeColors {
   };
 }
 
+/**
+ * Lenient segment picking: keeps only well-formed segments (valid text,
+ * optional style fields), trims text, caps count at {@link HEADER_MAX_SEGMENTS}
+ * and total text at {@link HEADER_LINE_MAX_CHARS}. Never throws.
+ */
+function pickSegments(raw: unknown): UiHeaderSegment[] {
+  if (!Array.isArray(raw)) return [];
+  const segments: UiHeaderSegment[] = [];
+  let total = 0;
+  for (const entry of raw) {
+    if (segments.length >= HEADER_MAX_SEGMENTS) break;
+    const segment = pickSegment(entry, HEADER_LINE_MAX_CHARS - total);
+    if (!segment) continue;
+    total += segment.text.length;
+    segments.push(segment);
+  }
+  return segments;
+}
+
+/**
+ * Picks a single well-formed segment from an untrusted entry (or `null`).
+ * `maxTextLength` enforces the per-line total text budget.
+ */
+function pickSegment(raw: unknown, maxTextLength: number): UiHeaderSegment | null {
+  if (!isRecord(raw) || typeof raw.text !== 'string') return null;
+  const text = raw.text.trim();
+  if (text.length === 0 || text.length > HEADER_SEGMENT_MAX_CHARS) return null;
+  if (text.length > maxTextLength) return null;
+  const segment: UiHeaderSegment = { text };
+  if (isHeaderColor(raw.color)) segment.color = raw.color;
+  if (
+    isInteger(raw.fontWeight) &&
+    inBounds(raw.fontWeight, HEADER_FONT_WEIGHT_MIN, HEADER_FONT_WEIGHT_MAX)
+  ) {
+    segment.fontWeight = raw.fontWeight;
+  }
+  if (isUiFontStyle(raw.fontStyle)) segment.fontStyle = raw.fontStyle;
+  if (
+    isInteger(raw.fontSize) &&
+    inBounds(raw.fontSize, HEADER_FONT_SIZE_MIN, HEADER_FONT_SIZE_MAX)
+  ) {
+    segment.fontSize = raw.fontSize;
+  }
+  return segment;
+}
+
 function pickHeaderLine(raw: unknown, fallback: UiHeaderLine): UiHeaderLine {
   const source = isRecord(raw) ? raw : {};
   const text =
@@ -190,6 +319,7 @@ function pickHeaderLine(raw: unknown, fallback: UiHeaderLine): UiHeaderLine {
     fontWeight,
     fontStyle: isUiFontStyle(source.fontStyle) ? source.fontStyle : 'normal',
     color: isHeaderColor(source.color) ? source.color : fallback.color,
+    segments: pickSegments(source.segments),
   };
 }
 

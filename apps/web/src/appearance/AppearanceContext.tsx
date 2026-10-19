@@ -14,6 +14,7 @@ import {
   type UiFontStyle,
   type UiHeader,
   type UiHeaderLine,
+  type UiHeaderSegment,
   type UiThemeColors,
 } from 'shared';
 import { fetchUiCustomization, saveUiCustomization } from '../lib/api';
@@ -44,6 +45,8 @@ export interface AppearanceContextValue {
   setBannerVisible(visible: boolean): void;
   /** Merge a patch into one header line (text, font, size, weight, italic, color). */
   updateHeaderLine(line: HeaderLineKey, patch: Partial<UiHeaderLine>): void;
+  /** Replace the styled segment list of one header line (rich header). */
+  setHeaderSegments(line: HeaderLineKey, segments: UiHeaderSegment[]): void;
   /** Restore the factory defaults (and persist them). */
   reset(): void;
 }
@@ -52,6 +55,25 @@ const AppearanceContext = createContext<AppearanceContextValue | null>(null);
 
 /** Debounce for server saves – color pickers fire many events per drag. */
 const SAVE_DEBOUNCE_MS = 400;
+
+/**
+ * Strip local draft segments (empty text) before persisting: the server
+ * contract requires non-empty segment text, so a freshly added segment that
+ * was never filled in must not break the save.
+ */
+function documentForSave(document: UiCustomization): UiCustomization {
+  const cleanLine = (line: UiHeaderLine): UiHeaderLine => ({
+    ...line,
+    segments: line.segments.filter((segment) => segment.text.trim() !== ''),
+  });
+  return {
+    ...document,
+    header: {
+      line1: cleanLine(document.header.line1),
+      line2: cleanLine(document.header.line2),
+    },
+  };
+}
 
 /**
  * Loads the shared UI settings from the server on mount (Story-0038: the
@@ -112,7 +134,7 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
     if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(async () => {
       try {
-        await saveUiCustomization(readStoredToken(), customizationRef.current);
+        await saveUiCustomization(readStoredToken(), documentForSave(customizationRef.current));
         dirtyRef.current = false;
         setSaveState('idle');
         setSaveError(null);
@@ -183,6 +205,19 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
     [applyChange]
   );
 
+  const setHeaderSegments = useCallback(
+    (line: HeaderLineKey, segments: UiHeaderSegment[]) => {
+      applyChange((prev) => ({
+        ...prev,
+        header: {
+          ...prev.header,
+          [line]: { ...prev.header[line], segments: [...segments] },
+        },
+      }));
+    },
+    [applyChange]
+  );
+
   const reset = useCallback(() => {
     dirtyRef.current = true;
     setCustomization(sanitizeUiCustomization(DEFAULT_UI_CUSTOMIZATION));
@@ -203,6 +238,7 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
     setBanner,
     setBannerVisible,
     updateHeaderLine,
+    setHeaderSegments,
     reset,
   };
 

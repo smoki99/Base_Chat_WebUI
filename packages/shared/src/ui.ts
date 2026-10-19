@@ -28,9 +28,34 @@ export interface UiThemeColors {
 /** `fontStyle` values accepted for a header line. */
 export type UiFontStyle = 'normal' | 'italic';
 
-/** One configurable line of the chat header. */
+/**
+ * One styled segment of a header line. All style fields are optional and
+ * inherit the line's base style when omitted (empty `color` = line color,
+ * which itself falls back to the theme text color).
+ */
+export interface UiHeaderSegment {
+  /** Visible text; max {@link HEADER_SEGMENT_MAX_CHARS} after trim. */
+  text: string;
+  /** Hex color (`#rgb`/`#rrggbb`); omitted/`''` = line color. */
+  color?: string;
+  /** Font weight ({@link HEADER_FONT_WEIGHT_MIN}-{@link HEADER_FONT_WEIGHT_MAX}); omitted = line weight. */
+  fontWeight?: number;
+  /** Font style; omitted = line style. */
+  fontStyle?: UiFontStyle;
+  /** Font size in px ({@link HEADER_FONT_SIZE_MIN}-{@link HEADER_FONT_SIZE_MAX}); omitted = line size. */
+  fontSize?: number;
+}
+
+/**
+ * One configurable line of the chat header.
+ *
+ * Rendering: when `segments` is non-empty the segments are concatenated
+ * (directly – no automatic spaces) and each one inherits the line's base
+ * style, overridden by its own fields. When `segments` is empty the line
+ * renders `text` with the line style (classic, pre-segment behavior).
+ */
 export interface UiHeaderLine {
-  /** Visible text; max {@link HEADER_LINE_MAX_CHARS}. Empty = line not rendered. */
+  /** Visible text; max {@link HEADER_LINE_MAX_CHARS}. Fallback when no segments. */
   text: string;
   /** CSS font-family from {@link HEADER_FONT_FAMILIES}; `''` = app default. */
   fontFamily: string;
@@ -41,6 +66,8 @@ export interface UiHeaderLine {
   fontStyle: UiFontStyle;
   /** Hex color (`#rgb`/`#rrggbb`); `''` = theme text color. */
   color: string;
+  /** Styled segments; 0–{@link HEADER_MAX_SEGMENTS}. Empty = render `text`. */
+  segments: UiHeaderSegment[];
 }
 
 /** The two independent lines of the chat header. */
@@ -70,6 +97,12 @@ export const MAX_IMAGE_BYTES = 512 * 1024;
 
 /** Maximum characters per header line. */
 export const HEADER_LINE_MAX_CHARS = 120;
+
+/** Maximum characters per header segment (after trim). */
+export const HEADER_SEGMENT_MAX_CHARS = 24;
+
+/** Maximum styled segments per header line. */
+export const HEADER_MAX_SEGMENTS = 8;
 
 /** Header font size bounds (px). */
 export const HEADER_FONT_SIZE_MIN = 8;
@@ -143,6 +176,7 @@ export const DEFAULT_HEADER_LINE: UiHeaderLine = {
   fontWeight: 700,
   fontStyle: 'normal',
   color: '',
+  segments: [],
 };
 
 /** Factory default header: classic title on line 1, line 2 empty. */
@@ -155,6 +189,7 @@ export const DEFAULT_HEADER: UiHeader = {
     fontWeight: 400,
     fontStyle: 'normal',
     color: '',
+    segments: [],
   },
 };
 
@@ -169,3 +204,22 @@ export const DEFAULT_UI_CUSTOMIZATION: UiCustomization = {
     line2: { ...DEFAULT_HEADER.line2 },
   },
 };
+
+/**
+ * Split a header line's text into unstyled segments of at most
+ * {@link HEADER_SEGMENT_MAX_CHARS} characters (max {@link HEADER_MAX_SEGMENTS}).
+ * Used by the Customize tab to seed the segment editor from the classic
+ * line text. Returns `[]` for empty text.
+ */
+export function splitTextToSegments(text: string): UiHeaderSegment[] {
+  const trimmed = text.trim();
+  const segments: UiHeaderSegment[] = [];
+  for (
+    let offset = 0;
+    offset < trimmed.length && segments.length < HEADER_MAX_SEGMENTS;
+    offset += HEADER_SEGMENT_MAX_CHARS
+  ) {
+    segments.push({ text: trimmed.slice(offset, offset + HEADER_SEGMENT_MAX_CHARS) });
+  }
+  return segments;
+}
