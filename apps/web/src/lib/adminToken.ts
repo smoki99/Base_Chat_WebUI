@@ -25,6 +25,3 @@ export function persistToken(token: string): void {
     // localStorage unavailable (private mode) – token stays in memory only.
   }
 }
-
-/** localStorage key (exported for tests). */
-export const ADMIN_TOKEN_KEY = TOKEN_STORAGE_KEY;

@@ -3,6 +3,6 @@
  * consumed by both the web app and the API). Re-exported here so existing
  * `../appearance` imports keep working.
  */
-import type { UiCustomization, UiFontStyle, UiHeader, UiHeaderLine, UiThemeColors } from 'shared';
+import type { UiHeaderLine, UiThemeColors } from 'shared';
 
-export type { UiCustomization, UiFontStyle, UiHeader, UiHeaderLine, UiThemeColors };
+export type { UiHeaderLine, UiThemeColors };
